@@ -1,0 +1,205 @@
+
+<style>
+  .ideas-root { padding: 1.5rem 0; font-family: var(--font-sans); }
+  .section-label { font-size: 12px; color: var(--color-text-tertiary); letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 1.25rem; }
+  .idea-card { background: var(--color-background-primary); border: 0.5px solid var(--color-border-tertiary); border-radius: var(--border-radius-lg); padding: 1.25rem; margin-bottom: 1rem; cursor: pointer; transition: border-color 0.15s; }
+  .idea-card:hover { border-color: var(--color-border-secondary); }
+  .idea-card.open { border-color: var(--color-border-primary); }
+  .card-header { display: flex; align-items: flex-start; gap: 12px; }
+  .idea-num { font-size: 11px; font-weight: 500; color: var(--color-text-tertiary); min-width: 20px; padding-top: 3px; }
+  .card-meta { flex: 1; }
+  .card-title { font-size: 15px; font-weight: 500; color: var(--color-text-primary); margin: 0 0 4px; }
+  .card-tagline { font-size: 13px; color: var(--color-text-secondary); margin: 0; line-height: 1.5; }
+  .chevron { font-size: 16px; color: var(--color-text-tertiary); transition: transform 0.2s; margin-top: 2px; }
+  .idea-card.open .chevron { transform: rotate(180deg); }
+  .card-body { display: none; margin-top: 1.25rem; border-top: 0.5px solid var(--color-border-tertiary); padding-top: 1.25rem; }
+  .idea-card.open .card-body { display: block; }
+  .detail-section { margin-bottom: 1rem; }
+  .detail-label { font-size: 11px; font-weight: 500; color: var(--color-text-tertiary); text-transform: uppercase; letter-spacing: 0.07em; margin-bottom: 6px; }
+  .detail-text { font-size: 13px; color: var(--color-text-secondary); line-height: 1.6; }
+  .tags-row { display: flex; flex-wrap: wrap; gap: 6px; }
+  .tag { font-size: 11px; font-weight: 500; padding: 3px 10px; border-radius: var(--border-radius-md); }
+  .tag-bd { background: #EEEDFE; color: #3C3489; }
+  .tag-partner { background: #E1F5EE; color: #085041; }
+  .tag-signal { background: #FAEEDA; color: #633806; }
+  .wow-badge { display: inline-flex; align-items: center; gap: 5px; font-size: 11px; font-weight: 500; padding: 3px 10px; border-radius: var(--border-radius-md); background: #FAECE7; color: #712B13; margin-bottom: 10px; }
+  .step-row { display: flex; gap: 10px; align-items: flex-start; margin-bottom: 8px; }
+  .step-dot { width: 20px; height: 20px; border-radius: 50%; background: var(--color-background-secondary); border: 0.5px solid var(--color-border-secondary); display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 500; color: var(--color-text-secondary); flex-shrink: 0; margin-top: 2px; }
+  .step-text { font-size: 13px; color: var(--color-text-secondary); line-height: 1.5; }
+  .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+  @media (max-width: 500px) { .two-col { grid-template-columns: 1fr; } }
+</style>
+
+<div class="ideas-root">
+  <h2 class="sr-only">7 niche hackathon ideas for GTM Intelligence track</h2>
+  <p class="section-label">Track 1 · GTM Intelligence · 7 ideas</p>
+
+  <div id="cards"></div>
+</div>
+
+<script>
+const ideas = [
+  {
+    title: "Negative Space Competitive Monitor",
+    tagline: "Track what competitors have silently removed — deleted pricing tiers, pulled features, dead job reqs — and surface it as opportunity.",
+    wow: "Nobody builds this. All competitor tools track what's added, not what's gone.",
+    problem: "The most telling competitive signals aren't launches — they're quiet retreats. A competitor removing an enterprise plan, quietly deleting a feature page, or going silent on a hiring front reveals strategic failure or pivot before any analyst catches it.",
+    howItWorks: [
+      "Scraping Browser takes weekly snapshots of competitor site pages (pricing, features, team, careers)",
+      "Web Unlocker accesses JS-heavy pages where diff detection is hardest",
+      "Cognee stores versioned page memory and detects semantic deltas, not just HTML diffs",
+      "TriggerWare.ai fires a workflow when a statistically significant removal is detected",
+      "AI/ML API writes a plain-English brief: 'Acme quietly removed team pricing — likely losing SMB deals'"
+    ],
+    brightData: ["Scraping Browser", "Web Unlocker"],
+    partners: ["Cognee (versioned memory)", "TriggerWare.ai (diff triggers)", "AI/ML API (brief generation)"],
+    signals: ["Deleted pricing pages", "Removed features", "Frozen hiring", "Pulled case studies"],
+  },
+  {
+    title: "Regulatory Shockwave → Sales Signal Engine",
+    tagline: "The moment a new law drops, instantly surface every company that is suddenly in-market for compliance tooling — before they even know it.",
+    wow: "Turns regulatory news into a real-time, always-fresh TAM map with zero manual research.",
+    problem: "Compliance-adjacent SaaS teams have no systematic way to know which companies are suddenly in-market the moment a regulation passes. They rely on PR and conferences — which means they're 3-6 months late to every wave.",
+    howItWorks: [
+      "SERP API monitors regulatory feeds: Federal Register, EUR-Lex, state legislature sites, FINRA, SEC",
+      "AI/ML API extracts: which industries, which company sizes, which geographies, what compliance actions are required",
+      "Web Scraper API cross-references firmographic databases to identify affected companies",
+      "Cognee builds a persistent map of 'regulatory exposure by account' updated with every scrape",
+      "TriggerWare.ai pushes high-fit accounts directly into Salesforce/HubSpot with a pre-written outreach brief"
+    ],
+    brightData: ["SERP API", "Web Scraper API"],
+    partners: ["Cognee (exposure memory)", "TriggerWare.ai (CRM push)", "AI/ML API (law → ICP mapping)"],
+    signals: ["New federal rule posted", "State law signed", "Industry standard updated", "Enforcement action filed"],
+  },
+  {
+    title: "Job Posting Roadmap Decoder",
+    tagline: "Every job posting is a product roadmap in disguise. Decode what competitors are building next — before they announce anything.",
+    wow: "Turns public job boards into a continuous stream of strategic competitive intelligence no analyst report has.",
+    problem: "Hiring signals predict product direction 6-18 months ahead of launches. A competitor hiring 5 ML engineers with 'fraud detection' experience is 100% building a fraud product. But no GTM team systematically reads 500 job postings a week.",
+    howItWorks: [
+      "Web Scraper API continuously harvests job postings from LinkedIn, Greenhouse, Lever, Workday, Indeed for target companies",
+      "AI/ML API runs structured extraction: role cluster, technology keywords, seniority distribution, volume trends",
+      "Cognee tracks hiring velocity changes over time per company per function (e.g. 'Acme's ML hiring is up 3x in 60 days')",
+      "Agent synthesizes into product roadmap hypotheses: 'Building X, likely launching Q3 based on hiring pace'",
+      "Pushes weekly competitor roadmap briefs into Slack/Notion with confidence scores"
+    ],
+    brightData: ["Web Scraper API", "SERP API"],
+    partners: ["Cognee (hiring history memory)", "AI/ML API (intent extraction)", "TriggerWare.ai (Slack/CRM delivery)"],
+    signals: ["Hiring velocity spikes", "New role clusters", "Tech stack in JDs", "Leadership hires"],
+  },
+  {
+    title: "Champion Resurrection Engine",
+    tagline: "Your best buyers are people who already love your product but changed jobs. Find them the moment they land somewhere new.",
+    wow: "Warm outreach to a confirmed advocate beats cold outreach by 10x — this system automates the discovery of every one of them.",
+    problem: "When a champion leaves a customer account, most CRMs mark it as churn risk and stop there. But that champion just became a buyer at a new company — often a perfect ICP account — and reps never know in time.",
+    howItWorks: [
+      "Web Scraper API monitors public profile signals (LinkedIn-equivalent pages, company bios, press releases, 'welcome' posts) for known champions",
+      "Web Unlocker accesses harder-to-scrape professional network signals",
+      "Speechmatics transcribes company podcast/video appearances where execs announce new hires",
+      "Cognee maintains persistent champion relationship graph: who they are, what they bought, what they loved",
+      "TriggerWare.ai fires within 48h of a detected job change → routes to the original AE with full context and a pre-drafted outreach message"
+    ],
+    brightData: ["Web Scraper API", "Web Unlocker"],
+    partners: ["Cognee (champion relationship memory)", "Speechmatics (audio hire announcements)", "TriggerWare.ai (rep alerts)"],
+    signals: ["New company bio detected", "Press release name match", "LinkedIn-equivalent profile update", "Podcast appearance"],
+  },
+  {
+    title: "Vendor Consolidation Predictor",
+    tagline: "Before a company rips and replaces their stack, they leave a trail of signals 90 days out. Catch them before any competitor does.",
+    wow: "Predicts the most high-value, high-intent buying moment in B2B SaaS — the consolidation cycle — before it's visible to any sales team.",
+    problem: "Enterprise buying cycles for platform consolidation are the largest deals in SaaS — but they're invisible until an RFP lands. Companies signal their consolidation intent through hiring, content, and operational moves months before procurement starts.",
+    howItWorks: [
+      "SERP API monitors for 'Head of Vendor Management', 'tech rationalization', 'platform consolidation' job postings and blog content",
+      "Web Scraper API tracks new hires in procurement/IT titles on company career pages and press releases",
+      "AI/ML API scores consolidation likelihood: job posting language + recent layoff news + company growth stage",
+      "Cognee builds 'consolidation readiness score' per account, updated weekly",
+      "Automated brief delivered to AE: 'TechCorp is 73% likely to run a consolidation RFP in the next 90 days — here's why'"
+    ],
+    brightData: ["SERP API", "Web Scraper API"],
+    partners: ["Cognee (score memory)", "AI/ML API (scoring model)", "TriggerWare.ai (AE alert + CRM stage update)"],
+    signals: ["Procurement hiring", "Tech rationalization blog posts", "Layoffs in tool-heavy teams", "CFO/CTO change"],
+  },
+  {
+    title: "Subreddit Pain-to-Pipeline Agent",
+    tagline: "Monitor niche professional communities for live pain signals, extract the company, enrich the lead, and push it to your CRM — all in real time.",
+    wow: "Intercepts buyers before they even know they're in-market — at the exact moment they're suffering the problem you solve.",
+    problem: "Real buying intent surfaces in communities before it surfaces on any intent vendor's radar. Posts like 'our [competitor] contract is up and we're furious with X' or 'we're evaluating alternatives to Y, thoughts?' are liquid gold — but no GTM team has bandwidth to read 50 subreddits.",
+    howItWorks: [
+      "Scraping Browser monitors target subreddits, HN threads, niche Slack communities (public-facing), Stack Overflow, and product review forums",
+      "Web Unlocker accesses authenticated-looking community pages without breaking",
+      "AI/ML API classifies each post by: pain signal type, competitor mentioned, urgency, poster seniority inference",
+      "Agent researches the poster's company from their profile, bio, posting history — enriches with firmographics",
+      "TriggerWare.ai pushes to CRM as a new lead with conversation context, signal type, and suggested opening line"
+    ],
+    brightData: ["Scraping Browser", "Web Unlocker", "SERP API"],
+    partners: ["AI/ML API (pain signal classification)", "Cognee (poster history memory)", "TriggerWare.ai (lead creation)"],
+    signals: ["'Switching from X' posts", "Contract renewal frustration", "Feature gap complaints", "Vendor evaluation threads"],
+  },
+  {
+    title: "Ghost Competitor Early Warning Radar",
+    tagline: "Find your next competitor 12 months before they show up on G2 — when they're just a GitHub repo, a HN post, and a landing page.",
+    wow: "Gives product and sales teams a strategic head-start that no existing competitive intelligence tool provides.",
+    problem: "Every company discovers competitors too late — after they've already stolen deals. But stealth competitors leave breadcrumbs: ProductHunt drafts, GitHub star velocity, 'Show HN' posts, domain registrations, indie hacker forums, and angel.co job listings.",
+    howItWorks: [
+      "SERP API monitors ProductHunt upcoming/launched, HN 'Show HN', IndieHackers, GitHub trending daily",
+      "Web Scraper API extracts angel.co / Wellfound new company listings with adjacent keywords",
+      "Scraping Browser crawls new domain registrations in the category namespace (namecheap/WHOIS feeds)",
+      "AI/ML API scores competitive relevance: product category overlap, target customer match, feature similarity",
+      "Cognee tracks each ghost competitor's growth trajectory over time — tipping point alert when traction is detected",
+      "Weekly brief to product + sales leadership: 'These 3 pre-traction players are entering your space'"
+    ],
+    brightData: ["SERP API", "Web Scraper API", "Scraping Browser"],
+    partners: ["Cognee (traction trajectory memory)", "AI/ML API (relevance scoring)", "TriggerWare.ai (tipping point alerts)"],
+    signals: ["PH launch velocity", "GitHub star spikes", "HN upvote clusters", "New domain registrations"],
+  }
+];
+
+function renderIdea(idea, i) {
+  return `
+  <div class="idea-card" onclick="toggle(${i})" id="card-${i}">
+    <div class="card-header">
+      <span class="idea-num">${String(i+1).padStart(2,'0')}</span>
+      <div class="card-meta">
+        <p class="card-title">${idea.title}</p>
+        <p class="card-tagline">${idea.tagline}</p>
+      </div>
+      <i class="ti ti-chevron-down chevron" aria-hidden="true"></i>
+    </div>
+    <div class="card-body" id="body-${i}">
+      <div class="wow-badge"><i class="ti ti-bolt" aria-hidden="true"></i> Why this is different</div>
+      <p class="detail-text" style="margin-bottom:1.25rem">${idea.wow}</p>
+
+      <div class="two-col">
+        <div class="detail-section">
+          <div class="detail-label">The problem it solves</div>
+          <div class="detail-text">${idea.problem}</div>
+        </div>
+        <div class="detail-section">
+          <div class="detail-label">How it works</div>
+          ${idea.howItWorks.map((s,j) => `<div class="step-row"><div class="step-dot">${j+1}</div><div class="step-text">${s}</div></div>`).join('')}
+        </div>
+      </div>
+
+      <div class="detail-section">
+        <div class="detail-label">Bright Data tools</div>
+        <div class="tags-row">${idea.brightData.map(t=>`<span class="tag tag-bd"><i class="ti ti-database" aria-hidden="true"></i> ${t}</span>`).join('')}</div>
+      </div>
+      <div class="detail-section" style="margin-top:10px">
+        <div class="detail-label">Partner integrations</div>
+        <div class="tags-row">${idea.partners.map(t=>`<span class="tag tag-partner">${t}</span>`).join('')}</div>
+      </div>
+      <div class="detail-section" style="margin-top:10px">
+        <div class="detail-label">Key signals monitored</div>
+        <div class="tags-row">${idea.signals.map(t=>`<span class="tag tag-signal">${t}</span>`).join('')}</div>
+      </div>
+    </div>
+  </div>`;
+}
+
+document.getElementById('cards').innerHTML = ideas.map(renderIdea).join('');
+
+function toggle(i) {
+  const card = document.getElementById('card-'+i);
+  card.classList.toggle('open');
+}
+</script>
