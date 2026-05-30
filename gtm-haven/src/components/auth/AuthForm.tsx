@@ -51,14 +51,19 @@ export default function AuthForm({ onSuccess }: AuthFormProps) {
           const supabase = createSupabaseBrowserClient();
           
           if (tab === "signup") {
-            const { error } = await supabase.auth.signUp({
+            const { data, error } = await supabase.auth.signUp({
               email,
               password,
               options: { data: { name } },
             });
             if (error) throw error;
-            // Next step: typically check email
-            setError("Check your email for the confirmation link.");
+            
+            if (data.session) {
+              onSuccess?.();
+              window.location.href = "/onboarding";
+            } else {
+              setError("Check your email for the confirmation link.");
+            }
           } else {
             const { error } = await supabase.auth.signInWithPassword({
               email,

@@ -410,8 +410,22 @@ export default function UndertowDashboard() {
     }
   };
 
-  const handleSignOut = () => {
-    // Clear mock session cookie
+  const handleSignOut = async () => {
+    try {
+      await fetch("/api/auth/signout", { method: "POST" });
+    } catch (e) {
+      console.error(e);
+    }
+    
+    try {
+      const { createSupabaseBrowserClient } = await import("@/lib/supabase-client");
+      const supabase = createSupabaseBrowserClient();
+      await supabase.auth.signOut();
+    } catch (e) {
+      console.log("Supabase browser sign out skipped or failed", e);
+    }
+    
+    // Clear any local storage/cache just in case
     document.cookie = "undertow_mock_session=; path=/; max-age=0; SameSite=Lax";
     document.cookie = "undertow_onboarding_done=; path=/; max-age=0; SameSite=Lax";
     localStorage.removeItem("undertow_company_kdoc");
