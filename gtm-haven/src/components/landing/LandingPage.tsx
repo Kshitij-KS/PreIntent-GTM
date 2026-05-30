@@ -337,7 +337,7 @@ export default function LandingPage() {
         height: "64px",
         gap: "24px",
       }}>
-        <a href="/dashboard" style={{ display: "flex", alignItems: "center", gap: "10px", fontWeight: 800, fontSize: "18px", color: C.white, letterSpacing: "0.1em" }}>
+        <a href="/demo" style={{ display: "flex", alignItems: "center", gap: "10px", fontWeight: 800, fontSize: "18px", color: C.white, letterSpacing: "0.1em" }}>
           <span style={{ color: C.conv }}>▼</span>
           UNDERTOW
         </a>
@@ -489,7 +489,7 @@ export default function LandingPage() {
               Start Free — Onboard in 3 minutes →
             </a>
             <a
-              href="/dashboard"
+              href="/demo"
               id="hero-cta-demo"
               style={{
                 display: "inline-flex",

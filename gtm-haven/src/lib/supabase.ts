@@ -14,16 +14,7 @@ export function isSupabaseConfigured() {
   return Boolean(env.url && env.publishableKey);
 }
 
-export function createSupabaseBrowserClient() {
-  const env = getSupabaseEnv();
-  if (!env.url || !env.publishableKey) {
-    throw new Error(
-      "Supabase browser client requires NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY",
-    );
-  }
 
-  return createBrowserClient(env.url, env.publishableKey);
-}
 
 export async function createSupabaseServerClient() {
   const env = getSupabaseEnv();

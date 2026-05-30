@@ -189,15 +189,7 @@ function createAcmeProfile(account = ACCOUNTS[0]): AccountIntelligenceProfile {
 }
 
 function loadInitialProfile(): AccountIntelligenceProfile {
-  if (typeof window === "undefined") return createAcmeProfile();
-
-  try {
-    const raw = localStorage.getItem("undertow:cognee:profiles:v1");
-    const profiles = raw ? JSON.parse(raw) : {};
-    return profiles[ACCOUNTS[0].name] || createAcmeProfile();
-  } catch {
-    return createAcmeProfile();
-  }
+  return createAcmeProfile();
 }
 
 // ─── MAIN DASHBOARD (matching the exact requested aesthetic) ─────────────────
@@ -223,16 +215,7 @@ export default function UndertowDashboard() {
   const [sweepNotes, setSweepNotes] = useState<string[]>([]);
   const [sweepError, setSweepError] = useState("");
   const [slackDelivered, setSlackDelivered] = useState(false);
-  const [companyName] = useState(() => {
-    if (typeof window === "undefined") return "";
-    try {
-      const raw = localStorage.getItem("undertow_company_kdoc");
-      const doc = raw ? JSON.parse(raw) : null;
-      return (doc?.companyName as string) ?? "";
-    } catch {
-      return "";
-    }
-  });
+  const [companyName, setCompanyName] = useState("");
 
   const scanTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const triggerWorkflow = previewTriggerWareWorkflow(profile);
@@ -242,6 +225,25 @@ export default function UndertowDashboard() {
       .then((res) => res.json())
       .then((data) => setIntegrationStatuses(data.integrations || []))
       .catch(() => setIntegrationStatuses([]));
+
+    // Load browser-specific data on mount to avoid hydration mismatches
+    try {
+      const rawDoc = localStorage.getItem("undertow_company_kdoc");
+      const doc = rawDoc ? JSON.parse(rawDoc) : null;
+      if (doc?.companyName) {
+        const name = doc.companyName;
+        setTimeout(() => setCompanyName(name), 0);
+      }
+    } catch {}
+
+    try {
+      const rawProfiles = localStorage.getItem("undertow:cognee:profiles:v1");
+      const profiles = rawProfiles ? JSON.parse(rawProfiles) : {};
+      const savedProfile = profiles[ACCOUNTS[0].name];
+      if (savedProfile) {
+        setTimeout(() => setProfile(savedProfile), 0);
+      }
+    } catch {}
   }, []);
 
 

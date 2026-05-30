@@ -119,6 +119,16 @@ export async function signOut(): Promise<void> {
   const cookieStore = await cookies();
   cookieStore.delete(MOCK_SESSION_COOKIE);
   cookieStore.delete(ONBOARDING_DONE_COOKIE);
+
+  if (isSupabaseConfigured()) {
+    try {
+      const { createSupabaseServerClient } = await import("@/lib/supabase");
+      const supabase = await createSupabaseServerClient();
+      await supabase.auth.signOut();
+    } catch (e) {
+      console.error("Error signing out from Supabase", e);
+    }
+  }
 }
 
 /** Server-side: mark onboarding as complete */

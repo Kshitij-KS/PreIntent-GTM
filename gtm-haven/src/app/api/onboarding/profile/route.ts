@@ -28,7 +28,50 @@ export async function POST(request: Request) {
     try {
       const { markOnboardingComplete } = await import("@/lib/auth");
       await markOnboardingComplete();
-    } catch {
+
+      const hasSupabase = Boolean(process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY);
+      if (hasSupabase) {
+        const { createSupabaseServerClient } = await import("@/lib/supabase");
+        const supabase = await createSupabaseServerClient();
+        
+        // Fetch current user
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user) {
+          // Check if user has an org, if not create one, then save company knowledge
+          const { data: orgMember } = await supabase.from('organization_members')
+            .select('organization_id')
+            .eq('user_id', user.id)
+            .single();
+            
+          let orgId = orgMember?.organization_id;
+          
+          if (!orgId) {
+            const { data: newOrg } = await supabase.from('organizations')
+              .insert({
+                name: body.companyName,
+                slug: body.companyName.toLowerCase().replace(/[^a-z0-9]+/g, '-') + '-' + Math.floor(Math.random() * 1000),
+                company_knowledge: doc
+              })
+              .select('id')
+              .single();
+              
+            if (newOrg) {
+              orgId = newOrg.id;
+              await supabase.from('organization_members').insert({
+                organization_id: orgId,
+                user_id: user.id,
+                role: 'owner'
+              });
+            }
+          } else {
+            await supabase.from('organizations')
+              .update({ company_knowledge: doc })
+              .eq('id', orgId);
+          }
+        }
+      }
+    } catch (e) {
+      console.error("Error saving to supabase:", e);
       // non-fatal
     }
 
