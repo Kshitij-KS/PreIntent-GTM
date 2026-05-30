@@ -1,0 +1,32 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: gtm-haven/package-lock.json
+      - name: Install
+        working-directory: gtm-haven
+        run: npm ci
+      - name: Lint
+        working-directory: gtm-haven
+        run: npm run lint
+      - name: Typecheck
+        working-directory: gtm-haven
+        run: npm run typecheck
+      - name: Unit tests
+        working-directory: gtm-haven
+        run: npm run test
+      - name: Build
+        working-directory: gtm-haven
+        run: npm run build

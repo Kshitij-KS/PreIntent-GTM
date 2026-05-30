@@ -1,13 +1,36 @@
-'use client';
+"use client";
 
-import React, { useEffect, useState } from 'next';
+import { useEffect, useState, type CSSProperties } from "react";
+import type { ScoreContribution, Severity } from "@/lib/domain";
 
-export default function ScoreGauge({ score }: { score: number }) {
+interface ScoreGaugeProps {
+  score: number;
+  severity: Severity;
+  contributions: ScoreContribution[];
+  confidence: number;
+  evidenceCount: number;
+}
+
+const severityLabels: Record<Severity, string> = {
+  critical: "Critical",
+  high: "High",
+  medium: "Medium",
+  low: "Low",
+};
+
+export default function ScoreGauge({
+  score,
+  severity,
+  contributions,
+  confidence,
+  evidenceCount,
+}: ScoreGaugeProps) {
   const [animatedScore, setAnimatedScore] = useState(0);
+  const topDrivers = contributions.slice(0, 3);
 
   useEffect(() => {
     let current = 0;
-    const increment = score / 20;
+    const increment = Math.max(1, score / 18);
     const interval = setInterval(() => {
       current += increment;
       if (current >= score) {
@@ -16,38 +39,70 @@ export default function ScoreGauge({ score }: { score: number }) {
       } else {
         setAnimatedScore(Math.floor(current));
       }
-    }, 30);
+    }, 24);
+
     return () => clearInterval(interval);
   }, [score]);
 
-  // Determine color based on score severity
-  let color = 'text-green-400';
-  let glow = 'shadow-[0_0_30px_rgba(74,222,128,0.3)]';
-  let label = 'Low Risk';
-
-  if (score >= 60) {
-    color = 'text-red-500';
-    glow = 'shadow-[0_0_30px_rgba(239,68,68,0.3)]';
-    label = 'High Instability';
-  } else if (score >= 30) {
-    color = 'text-yellow-400';
-    glow = 'shadow-[0_0_30px_rgba(250,204,21,0.3)]';
-    label = 'Moderate Risk';
-  }
-
   return (
-    <div className={`glass-panel p-8 flex flex-col items-center justify-center animate-slide-up w-full max-w-sm mx-auto ${glow} transition-shadow duration-700`}>
-      <h2 className="text-sm uppercase tracking-wider text-gray-400 font-semibold mb-2">Strategic Instability Score</h2>
-      
-      <div className="relative flex items-center justify-center mt-4">
-        {/* Simple CSS gauge circle */}
-        <div className="w-40 h-40 rounded-full border-8 border-gray-800 flex items-center justify-center relative">
-          <div className="absolute inset-0 rounded-full border-8 border-transparent border-t-current opacity-70" style={{ color: 'inherit' }} />
-          <span className={`text-6xl font-bold ${color}`}>{animatedScore}</span>
+    <section className="surface score-card">
+      <div className="panel-header">
+        <div>
+          <p className="eyebrow">Selected company</p>
+          <h2>Strategic instability</h2>
+        </div>
+        <span className={`status-pill status-${severity}`}>
+          {severityLabels[severity]}
+        </span>
+      </div>
+
+      <div className="score-body">
+        <div className="score-hero">
+          <div>
+            <strong>{animatedScore}</strong>
+            <span>out of 100</span>
+          </div>
+          <div
+            className="score-ring"
+            style={{ "--score": score } as CSSProperties}
+          >
+            <span>{confidence}%</span>
+            <small>confidence</small>
+          </div>
+        </div>
+
+        <div className="score-bar">
+          <span style={{ width: `${Math.min(100, score)}%` }} />
+        </div>
+
+        <dl className="score-facts">
+          <div>
+            <dt>Evidence</dt>
+            <dd>{evidenceCount} sources</dd>
+          </div>
+          <div>
+            <dt>Decay</dt>
+            <dd>Applied</dd>
+          </div>
+          <div>
+            <dt>Caps</dt>
+            <dd>Active</dd>
+          </div>
+        </dl>
+
+        <div className="driver-list">
+          <p className="eyebrow">Top drivers</p>
+          {topDrivers.map((driver) => (
+            <div className="driver-row" key={driver.signalId}>
+              <div>
+                <span>{driver.title}</span>
+                <small>{driver.type.replaceAll("_", " ")}</small>
+              </div>
+              <strong>+{driver.finalScore}</strong>
+            </div>
+          ))}
         </div>
       </div>
-      
-      <p className={`mt-6 font-medium text-lg ${color}`}>{label}</p>
-    </div>
+    </section>
   );
 }

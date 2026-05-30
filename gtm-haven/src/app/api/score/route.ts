@@ -1,49 +1,48 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { simulatedCompanies, CompanyData } from '@/data/simulatedData';
+import { NextRequest, NextResponse } from "next/server";
+import { findDemoCompetitor } from "@/lib/demo-data";
+import { scoreQuerySchema } from "@/lib/domain";
 
 export async function GET(request: NextRequest) {
-  const searchParams = request.nextUrl.searchParams;
-  const companyName = searchParams.get('name');
-
-  if (!companyName) {
-    return NextResponse.json({ error: 'Company name is required' }, { status: 400 });
-  }
-
-  // Find the company (case-insensitive)
-  const company = simulatedCompanies.find(
-    c => c.name.toLowerCase() === companyName.toLowerCase()
-  );
-
-  if (!company) {
-    return NextResponse.json({ error: 'Company not found in simulated data' }, { status: 404 });
-  }
-
-  // Calculate score with decay factor
-  const today = new Date('2026-05-29'); // Mocking today's date for consistency with dataset
-  let totalScore = 0;
-
-  const eventsWithScores = company.events.map(event => {
-    const eventDate = new Date(event.date);
-    const diffTime = Math.abs(today.getTime() - eventDate.getTime());
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-    
-    // Decay logic: lose 1 point every 3 days (just an arbitrary MVP decay algorithm)
-    const decay = Math.floor(diffDays / 3);
-    const finalScore = Math.max(0, event.impactScore - decay);
-    
-    totalScore += finalScore;
-
-    return {
-      ...event,
-      calculatedScore: finalScore,
-      decayApplied: decay
-    };
+  const parsed = scoreQuerySchema.safeParse({
+    name: request.nextUrl.searchParams.get("name"),
   });
 
+  if (!parsed.success) {
+    return NextResponse.json(
+      { error: parsed.error.issues[0]?.message ?? "Company name is required" },
+      { status: 400 },
+    );
+  }
+
+  const competitor = findDemoCompetitor(parsed.data.name);
+  if (!competitor) {
+    return NextResponse.json(
+      { error: "Company not found in demo workspace" },
+      { status: 404 },
+    );
+  }
+
   return NextResponse.json({
-    companyName: company.name,
-    domain: company.domain,
-    instabilityScore: totalScore,
-    events: eventsWithScores
+    companyName: competitor.name,
+    domain: competitor.domain,
+    instabilityScore: competitor.scoreRun.score,
+    severity: competitor.scoreRun.severity,
+    explanation: competitor.scoreRun.explanation,
+    events: competitor.scoreRun.contributions.map((contribution) => {
+      const signal = competitor.signals.find(
+        (item) => item.id === contribution.signalId,
+      );
+      return {
+        id: contribution.signalId,
+        type: contribution.type,
+        title: contribution.title,
+        description: signal?.description ?? contribution.title,
+        date: contribution.eventTime,
+        calculatedScore: contribution.finalScore,
+        decayApplied: contribution.recencyDecay,
+        confidence: signal?.confidence ?? 0,
+        sourceUrl: signal?.source.url ?? "",
+      };
+    }),
   });
 }
