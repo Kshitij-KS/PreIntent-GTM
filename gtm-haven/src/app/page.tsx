@@ -1,6 +1,7 @@
 import DemoDashboard from "@/components/DemoDashboard";
-import { getDemoCommandCenterData } from "@/lib/demo-data";
 
 export default function Home() {
-  return <DemoDashboard initialData={getDemoCommandCenterData()} />;
+  // Undertow MVP: fully self-contained demo (localStorage + in-memory fixtures).
+  // No external data or Supabase required for the hackathon zero-cost build.
+  return <DemoDashboard />;
 }

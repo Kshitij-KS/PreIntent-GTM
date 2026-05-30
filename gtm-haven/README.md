@@ -1,17 +1,24 @@
-# GTM Haven
+# Undertow
 
-Predictive competitive intelligence for revenue leaders. GTM Haven fuses public competitor signals into an explainable Strategic Instability Score, then routes action briefs into Slack and HubSpot.
+**The Convergent GTM Intelligence Platform**
 
-## What Works Now
+> **Three invisible forces. One unfair pipeline advantage.**
 
-- Production-shaped Next.js command center with portfolio overview, competitor risk board, alert center, signal evidence, recommended plays, and integration health.
-- Deterministic demo workspace for Acme, Zenith, Initech, and Globex.
-- Typed signal, scoring, provider, and integration contracts.
-- Explainable score service with recency decay, confidence adjustment, source-quality adjustment, category weighting, and category caps.
-- Hybrid provider mode contract: `real`, `mock`, or `disabled`.
-- Supabase migration scaffold with workspaces, memberships, competitors, signals, scoring runs, recommendations, alerts, integrations, sync logs, indexes, and RLS.
-- Slack and HubSpot payload builders with idempotency keys.
-- Unit tests, Playwright smoke test, CI workflow, and env template.
+Undertow is an always-on GTM intelligence system that simultaneously monitors competitor retreats (Void Scanner), regulatory shockwaves (Compliance Radar), and community pain signals (Pain Listener) — triangulating them against your target account list and surfacing accounts where all three forces converge into a single high-confidence buying event, delivered as an AI-generated Intel Brief to your CRM and Slack before any intent vendor, analyst, or sales rep knows the signal exists.
+
+This is the hackathon MVP implementing the exact architecture and demo flow defined in [Ideation and Architecture.md](../Ideation and Architecture.md). **RUN FULL SCAN** orchestrates the full pipeline server-side; every integration has mock fallbacks when keys are missing.
+
+## What Works Now (MVP)
+
+- **Live sweep orchestrator** (`runLiveSweep` server action + `POST /api/sweep`): Bright Data fetch → AI/ML scoring → Featherless pain classification → Speechmatics audio → convergence → Slack/webhooks → Intel Brief.
+- Dense Undertow dashboard wired to the live sweep (scan animation + real profile updates + optional auto-brief).
+- Typed Account Intelligence Profiles stored in browser localStorage as the zero-cost Cognee MVP.
+- Three engine surfaces: Void Scanner, Compliance Radar, and Pain Listener with provenance on every signal.
+- Convergence scoring (33/33/33) plus threshold delivery at ≥85 (Slack incoming webhook, optional TriggerWare/HubSpot webhooks).
+- `GET /api/health` reports integration status from `.env.local`.
+- All sponsor calls are server-side only; mock mode works with zero keys.
+- Supabase SQL is future-facing reference schema for Undertow account profiles, engine signals, convergence runs, Intel Briefs, and integration connections. Runtime MVP does not require Supabase.
+- TypeScript, lint, typecheck, unit tests, Playwright e2e, CI, and Vercel-ready build path.
 
 ## Local Setup
 
@@ -31,48 +38,46 @@ npm run test
 npm run build
 ```
 
-`npm run test:e2e` starts the app through Playwright and verifies the main dashboard renders on desktop and mobile projects.
+`npm run test:e2e` runs the core Undertow demo path on desktop and mobile.
 
 ## Environment
 
-Copy `.env.example` to `.env.local` and fill production credentials when available. Defaults are mock-safe for demos.
+Copy `.env.example` to `.env.local`, set `*_MODE=real`, and paste API keys. Restart `npm run dev`.
 
-Important policies:
+| Variable | Purpose |
+|----------|---------|
+| `AI_ML_API_KEY` | Signal scoring + Intel Brief |
+| `FEATHERLESS_API_KEY` (or `GROQ_API_KEY`) | Pain classification |
+| `BRIGHT_DATA_API_KEY` | Live competitor page + SERP fetch |
+| `SLACK_WEBHOOK_URL` | Real AE alert when convergence ≥ 85 |
+| `TRIGGERWARE_WEBHOOK_URL` / `HUBSPOT_WEBHOOK_URL` | Optional workflow webhooks |
 
-- Never expose `SUPABASE_SERVICE_ROLE_KEY` to browser code.
-- Use `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` only for browser/server clients.
-- Keep provider modes explicit. Production should show degraded/not-configured states instead of silently fabricating live data.
-- Every score and recommendation must remain tied to stored source evidence.
+See `.env.example` for all options. Missing keys → automatic mock fallback (demo still works).
 
-## Supabase
+Important policies (per architecture doc):
+- Never call real sponsor APIs more than needed for the demo narrative.
+- Every signal carries explicit provenance and sponsor tool attribution.
+- Full mock path = $0 cost, works offline after `npm install`.
 
-Schema lives in `supabase/migrations/202605300001_initial_gtm_haven.sql`.
+## Demo Script (The 10-Minute Story)
 
-The migration enables RLS on every exposed table. Workspace authorization is membership-based. Privileged helper logic is kept in the private schema, not in `public`.
+Follow the exact flow in [Ideation and Architecture.md](../Ideation and Architecture.md) "Demo Flow (Hackathon Presentation)":
+1. Hook: Slack-style alert for Acme FinTech 87/100 convergence.
+2. Void Scanner live diff (pricing tier removal via Cognee semantic diff, Bright Data Scraping Browser tag).
+3. Compliance Radar (PCI-DSS bulletin via SERP + AI/ML extraction).
+4. Pain Listener (r/fintech post + Speechmatics transcript + classification).
+5. Convergence moment + TriggerWare fire.
+6. Intel Brief generated (real AI/ML) + suggested outreach + actions.
 
-Recommended implementation flow:
+Record your video against this flow on the deployed URL.
 
-```bash
-supabase start
-supabase db reset
-supabase db diff
-supabase db advisors
-```
+## Next (Post-Hackathon)
 
-Use `supabase --help` and command-specific `--help` before running CLI commands, because Supabase CLI flags change over time.
+- Real Bright Data MCP + scheduled jobs (using free tier + paid as needed).
+- Full Cognee service for persistent multi-account memory.
+- Native Salesforce/HubSpot connectors + TriggerWare real workflows.
+- Multi-user workspaces, auth, production deployment.
+- Expand to more accounts and signal sources per the full phased roadmap in the architecture doc.
 
-## Integration Modes
+This MVP costs $0 to build and run while delivering the complete sponsor-powered narrative judges expect for Track 1.
 
-- `BRIGHT_DATA_MODE`: `mock` for fixtures, `real` for live SERP/Web Scraper/Scraping Browser/Web Unlocker, `disabled` to skip ingestion.
-- `AI_ML_MODE`: `mock` for deterministic briefs, `real` for structured extraction/classification/brief generation.
-- `COGNEE_MODE`: `mock` for demo memory, `real` for historical competitor context.
-- `SLACK_MODE`: `mock` for payload preview, `real` for channel delivery.
-- `HUBSPOT_MODE`: `mock` for CRM task payload preview, `real` for company/task/note sync.
-- `TRIGGERWARE_MODE`: default `disabled` until Slack and HubSpot are production-connected.
-
-## Next Production Steps
-
-- Connect Supabase Auth in the UI and replace demo data reads with workspace-scoped database queries.
-- Implement scheduled ingestion jobs and persist normalized provider signals.
-- Add Slack OAuth and HubSpot token/OAuth setup screens.
-- Add error tracking, rate limiting, webhook signature verification, and production deployment config.

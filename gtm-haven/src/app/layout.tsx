@@ -13,9 +13,9 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "GTM Haven | Revenue Intelligence Command Center",
+  title: "Undertow | Convergent GTM Intelligence",
   description:
-    "Predictive competitive intelligence for revenue leaders, powered by explainable signals and workflow integrations.",
+    "Three invisible forces. One unfair pipeline advantage. Undertow triangulates competitor retreats (Void Scanner), regulatory shockwaves (Compliance Radar), and community pain signals (Pain Listener) into high-confidence buying events with AI-generated Intel Briefs — before any intent vendor knows.",
 };
 
 export default function RootLayout({

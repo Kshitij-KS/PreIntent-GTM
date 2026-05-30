@@ -3,33 +3,29 @@ import { expect, test } from "@playwright/test";
 test("renders and drives the stage-ready demo console", async ({ page }) => {
   await page.goto("/");
 
-  await expect(page.locator("h1")).toHaveText("Competitor Risk Board");
-  await expect(page.getByText("Presenter brief")).toBeVisible();
-  await expect(page.locator("body")).toContainText("Signal detected");
+  await expect(page.getByText("UNDERTOW")).toBeVisible();
+  await expect(page.getByText("accounts tracked")).toBeVisible();
+  await expect(page.getByText("powered by")).toBeVisible();
 
-  await page.getByRole("button", { name: "Dark" }).click();
-  await expect(page.locator("main")).toHaveAttribute("data-theme", "dark");
+  await page.getByRole("button", { name: /RUN FULL SCAN/ }).click();
+  await expect(page.getByText(/TriggerWare alert fired/)).toBeVisible({
+    timeout: 15_000,
+  });
+  await expect(page.getByText("⚡ TriggerWare fired")).toBeVisible();
 
-  await page.getByLabel("Accent color").selectOption("emerald");
-  await expect(page.locator("main")).toHaveAttribute("data-accent", "emerald");
+  await page.getByRole("button", { name: "signals" }).click();
+  await expect(page.getByText("VOID SCANNER").first()).toBeVisible();
+  await expect(page.getByText("PAIN LISTENER").first()).toBeVisible();
 
-  await page.getByRole("button", { name: "Next", exact: true }).click();
-  await expect(page.locator("body")).toContainText("Risk score explained");
+  await page.getByRole("button", { name: "intel" }).click();
+  await expect(page.getByText("COGNEE — ACCOUNT MEMORY")).toBeVisible();
+  await expect(page.getByText("TRIGGERWARE — WORKFLOW FIRED")).toBeVisible();
+  await expect(page.getByText("VOID DIFF — PRICING TIER REMOVED")).toBeVisible();
 
-  await page.getByRole("button", { name: "Next", exact: true }).click();
-  await expect(page.locator("body")).toContainText("Recommended play");
-
-  await page.getByRole("button", { name: "Send Slack alert" }).click();
-  await expect(page.locator("body")).toContainText("Slack sent");
-
-  await page.getByRole("button", { name: "Create HubSpot task" }).click();
-  await expect(page.locator("body")).toContainText("HubSpot task created");
-
-  await page.getByRole("button", { name: "Mark actioned" }).click();
-  await expect(page.locator("body")).toContainText(
-    "Executive summary complete",
-  );
-  await expect(page.locator("body")).toContainText("actioned");
+  await page.getByRole("button", { name: "brief", exact: true }).click();
+  await page.getByRole("button", { name: /GENERATE INTEL BRIEF/ }).click();
+  await expect(page.getByText("WHY NOW")).toBeVisible({ timeout: 10_000 });
+  await expect(page.getByText(/SUGGESTED OPENING LINE/)).toBeVisible();
 
   const hasHorizontalOverflow = await page.evaluate(
     () =>

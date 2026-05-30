@@ -1,7 +1,8 @@
 {
-  "name": "gtm-haven",
+  "name": "undertow",
   "version": "0.1.0",
   "private": true,
+  "description": "Undertow — The Convergent GTM Intelligence Platform. Three invisible forces (Void Scanner, Compliance Radar, Pain Listener) triangulated into certified buying events with AI-generated Intel Briefs.",
   "scripts": {
     "dev": "next dev",
     "build": "next build",
