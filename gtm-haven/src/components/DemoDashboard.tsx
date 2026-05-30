@@ -223,6 +223,16 @@ export default function UndertowDashboard() {
   const [sweepNotes, setSweepNotes] = useState<string[]>([]);
   const [sweepError, setSweepError] = useState("");
   const [slackDelivered, setSlackDelivered] = useState(false);
+  const [companyName] = useState(() => {
+    if (typeof window === "undefined") return "";
+    try {
+      const raw = localStorage.getItem("undertow_company_kdoc");
+      const doc = raw ? JSON.parse(raw) : null;
+      return (doc?.companyName as string) ?? "";
+    } catch {
+      return "";
+    }
+  });
 
   const scanTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const triggerWorkflow = previewTriggerWareWorkflow(profile);
@@ -233,6 +243,7 @@ export default function UndertowDashboard() {
       .then((data) => setIntegrationStatuses(data.integrations || []))
       .catch(() => setIntegrationStatuses([]));
   }, []);
+
 
   const saveCogneeProfile = (nextProfile: AccountIntelligenceProfile) => {
     setProfile(nextProfile);
@@ -397,23 +408,54 @@ export default function UndertowDashboard() {
     }
   };
 
+  const handleSignOut = () => {
+    // Clear mock session cookie
+    document.cookie = "undertow_mock_session=; path=/; max-age=0; SameSite=Lax";
+    document.cookie = "undertow_onboarding_done=; path=/; max-age=0; SameSite=Lax";
+    localStorage.removeItem("undertow_company_kdoc");
+    localStorage.removeItem("undertow:cognee:profiles:v1");
+    window.location.href = "/";
+  };
+
   const Nav = () => (
-    <div style={{ display: "flex", alignItems: "center", padding: "0 20px", height: "48px", background: C.surface, borderBottom: `1px solid ${C.border}`, gap: "0", flexShrink: 0, overflowX: "auto", overflowY: "hidden" }}>
-      <div style={{ fontWeight: 700, fontSize: "15px", color: C.white, letterSpacing: "0.15em", marginRight: "32px", display: "flex", alignItems: "center", gap: "8px", flexShrink: 0 }}>
+    <div style={{ display: "flex", alignItems: "center", padding: "0 20px", height: "52px", background: C.surface, borderBottom: `1px solid ${C.border}`, gap: "0", flexShrink: 0, overflowX: "auto", overflowY: "hidden" }}>
+      <a href="/dashboard" style={{ fontWeight: 700, fontSize: "15px", color: C.white, letterSpacing: "0.15em", marginRight: "32px", display: "flex", alignItems: "center", gap: "8px", flexShrink: 0, textDecoration: "none" }}>
         <span style={{ color: C.conv }}>▼</span>UNDERTOW
-      </div>
+      </a>
       {(["dashboard", "signals", "intel", "brief", "settings"] as const).map(v => (
         <button key={v} onClick={() => setView(v)} style={{
-          background: "transparent", border: "none", padding: "0 14px", height: "48px", flexShrink: 0,
+          background: "transparent", border: "none", padding: "0 14px", height: "52px", flexShrink: 0,
           fontSize: "10px", fontFamily: "inherit", letterSpacing: "0.1em", cursor: "pointer",
           color: view === v ? C.white : C.muted,
           borderBottom: view === v ? `2px solid ${C.conv}` : "2px solid transparent",
           textTransform: "uppercase", transition: "all 0.15s",
         }}>{v}</button>
       ))}
-      <div style={{ marginLeft: "auto", display: "flex", alignItems: "center", gap: "10px", fontSize: "9px" }}>
+      <div style={{ marginLeft: "auto", display: "flex", alignItems: "center", gap: "12px", fontSize: "9px" }}>
         {memoryStatus && <span style={{ color: C.conv }}>◈ {memoryStatus}</span>}
         {triggerFired && <span style={{ color: C.compliance, animation: "pulse 1.5s infinite" }}>⚡ TriggerWare fired</span>}
+        {companyName && (
+          <span style={{ fontSize: "10px", color: C.muted, padding: "3px 10px", background: C.surface2, border: `1px solid ${C.border}`, borderRadius: "4px" }}>
+            {companyName}
+          </span>
+        )}
+        <button
+          onClick={handleSignOut}
+          style={{
+            background: "transparent",
+            border: `1px solid ${C.border}`,
+            borderRadius: "4px",
+            padding: "4px 10px",
+            fontSize: "10px",
+            color: C.muted,
+            cursor: "pointer",
+            fontFamily: "inherit",
+            letterSpacing: "0.06em",
+            flexShrink: 0,
+          }}
+        >
+          Sign Out
+        </button>
       </div>
     </div>
   );
@@ -561,7 +603,16 @@ export default function UndertowDashboard() {
             <span style={{ fontSize: 9, color: C.muted }}>Semantic deletions via Scraping Browser + Web Unlocker</span>
           </div>
           {VOID_SIGNALS.map((signal) => (
-            <div key={signal.id} style={{ background: C.surface, border: `1px solid ${C.border}`, borderLeft: `3px solid ${C.void}`, borderRadius: 6, padding: "12px 14px", marginBottom: 8 }}>
+            <div key={signal.id} style={{
+              background: C.surface,
+              borderTop: `1px solid ${C.border}`,
+              borderRight: `1px solid ${C.border}`,
+              borderBottom: `1px solid ${C.border}`,
+              borderLeft: `3px solid ${C.void}`,
+              borderRadius: 6,
+              padding: "12px 14px",
+              marginBottom: 8,
+            }}>
               <div style={{ display: "flex", justifyContent: "space-between", gap: 12 }}>
                 <div>
                   <div style={{ display: "flex", gap: 8, alignItems: "center", marginBottom: 5 }}>
@@ -590,7 +641,16 @@ export default function UndertowDashboard() {
             <span style={{ fontSize: 9, color: C.muted }}>Regulatory feed discovery via SERP API</span>
           </div>
           {COMPLIANCE_SIGNALS.map((signal) => (
-            <div key={signal.id} style={{ background: C.surface, border: `1px solid ${C.border}`, borderLeft: `3px solid ${C.compliance}`, borderRadius: 6, padding: "12px 14px", marginBottom: 8 }}>
+            <div key={signal.id} style={{
+              background: C.surface,
+              borderTop: `1px solid ${C.border}`,
+              borderRight: `1px solid ${C.border}`,
+              borderBottom: `1px solid ${C.border}`,
+              borderLeft: `3px solid ${C.compliance}`,
+              borderRadius: 6,
+              padding: "12px 14px",
+              marginBottom: 8,
+            }}>
               <div style={{ display: "flex", justifyContent: "space-between", gap: 12 }}>
                 <div>
                   <div style={{ display: "flex", gap: 8, alignItems: "center", marginBottom: 5 }}>
@@ -621,7 +681,16 @@ export default function UndertowDashboard() {
             <span style={{ fontSize: 9, color: C.muted }}>Community and audio signals classified by open models</span>
           </div>
           {PAIN_SIGNALS.map((signal) => (
-            <div key={signal.id} style={{ background: C.surface, border: `1px solid ${C.border}`, borderLeft: `3px solid ${signal.isAudio ? C.compliance : C.pain}`, borderRadius: 6, padding: "12px 14px", marginBottom: 8 }}>
+            <div key={signal.id} style={{
+              background: C.surface,
+              borderTop: `1px solid ${C.border}`,
+              borderRight: `1px solid ${C.border}`,
+              borderBottom: `1px solid ${C.border}`,
+              borderLeft: `3px solid ${signal.isAudio ? C.compliance : C.pain}`,
+              borderRadius: 6,
+              padding: "12px 14px",
+              marginBottom: 8,
+            }}>
               <div style={{ display: "flex", justifyContent: "space-between", gap: 12 }}>
                 <div>
                   <div style={{ display: "flex", gap: 8, alignItems: "center", marginBottom: 5 }}>
@@ -670,7 +739,15 @@ export default function UndertowDashboard() {
             { label: "COMPLIANCE RADAR", score: a.complianceScore, color: C.compliance, event: a.complianceEvent, sponsor: "BrightData" },
             { label: "PAIN LISTENER", score: a.painScore, color: C.pain, event: a.painEvent, sponsor: "Featherless AI" },
           ].map(({ label, score, color, event, sponsor }) => (
-            <div key={label} style={{ background: C.surface, border: `1px solid ${C.border}`, borderTop: `2px solid ${color}`, borderRadius: 6, padding: 14 }}>
+            <div key={label} style={{
+              background: C.surface,
+              borderTop: `2px solid ${color}`,
+              borderRight: `1px solid ${C.border}`,
+              borderBottom: `1px solid ${C.border}`,
+              borderLeft: `1px solid ${C.border}`,
+              borderRadius: 6,
+              padding: 14,
+            }}>
               <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 10 }}>
                 <span style={{ fontSize: 9, color, letterSpacing: "0.08em", fontWeight: 600 }}>{label}</span>
                 <span style={{ fontSize: 20, fontWeight: 700, color }}>{score}</span>
@@ -683,7 +760,16 @@ export default function UndertowDashboard() {
         </div>
 
         {a.id === 1 && (
-          <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderLeft: `3px solid ${C.void}`, borderRadius: 6, padding: 14, marginBottom: 12 }}>
+          <div style={{
+            background: C.surface,
+            borderTop: `1px solid ${C.border}`,
+            borderRight: `1px solid ${C.border}`,
+            borderBottom: `1px solid ${C.border}`,
+            borderLeft: `3px solid ${C.void}`,
+            borderRadius: 6,
+            padding: 14,
+            marginBottom: 12,
+          }}>
             <div style={{ display: "flex", gap: 8, alignItems: "center", marginBottom: 10 }}>
               <span style={{ fontSize: 10, color: C.void, fontWeight: 600 }}>VOID DIFF — PRICING TIER REMOVED</span>
               <SponsorTag name="BrightData" />
@@ -704,7 +790,16 @@ export default function UndertowDashboard() {
         )}
 
         {a.audioSignal && (
-          <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderLeft: `3px solid ${C.compliance}`, borderRadius: 6, padding: 12, marginBottom: 12 }}>
+          <div style={{
+            background: C.surface,
+            borderTop: `1px solid ${C.border}`,
+            borderRight: `1px solid ${C.border}`,
+            borderBottom: `1px solid ${C.border}`,
+            borderLeft: `3px solid ${C.compliance}`,
+            borderRadius: 6,
+            padding: 12,
+            marginBottom: 12,
+          }}>
             <div style={{ fontSize: 10, color: C.compliance, fontWeight: 600, marginBottom: 6 }}>♪ AUDIO SIGNAL — SPEECHMATICS <SponsorTag name="Speechmatics" /></div>
             <div style={{ fontSize: 11, color: C.text }}>{a.audioSignal}</div>
           </div>

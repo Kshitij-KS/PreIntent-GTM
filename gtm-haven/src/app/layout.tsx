@@ -13,9 +13,25 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Undertow | Convergent GTM Intelligence",
+  title: {
+    default: "Undertow | Convergent GTM Intelligence",
+    template: "%s | Undertow",
+  },
   description:
     "Three invisible forces. One unfair pipeline advantage. Undertow triangulates competitor retreats (Void Scanner), regulatory shockwaves (Compliance Radar), and community pain signals (Pain Listener) into high-confidence buying events with AI-generated Intel Briefs — before any intent vendor knows.",
+  keywords: [
+    "GTM intelligence",
+    "competitor monitoring",
+    "sales intelligence",
+    "buyer intent",
+    "B2B sales",
+    "convergent signals",
+  ],
+  openGraph: {
+    title: "Undertow | Convergent GTM Intelligence",
+    description: "Three invisible forces. One unfair pipeline advantage.",
+    type: "website",
+  },
 };
 
 export default function RootLayout({
