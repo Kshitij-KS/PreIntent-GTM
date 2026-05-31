@@ -17,19 +17,13 @@ import type { CompanyKnowledgeDoc } from "@/lib/company-knowledge";
 // Loading screen — matches app design language
 function DashboardLoading() {
   return (
-    <div
-      style={{
-        minHeight: "100vh",
-        background: "#07090f",
-        display: "flex",
-        flexDirection: "column",
-        alignItems: "center",
-        justifyContent: "center",
-        fontFamily: "'IBM Plex Mono', 'Courier New', monospace",
-        color: "#c2d0de",
-        gap: "20px",
-      }}
-    >
+    <div style={{
+      minHeight: "100vh", background: "#07090f",
+      display: "flex", flexDirection: "column",
+      alignItems: "center", justifyContent: "center",
+      fontFamily: "'IBM Plex Mono', 'Courier New', monospace",
+      color: "#c2d0de", gap: "20px",
+    }}>
       <style>{`
         @keyframes pulse-ring {
           0% { transform: scale(0.8); opacity: 1; }
@@ -51,74 +45,37 @@ function DashboardLoading() {
 
       <div style={{ position: "relative", width: "56px", height: "56px" }}>
         {/* Pulse ring */}
-        <div
-          style={{
-            position: "absolute",
-            inset: 0,
-            borderRadius: "50%",
-            border: "1.5px solid rgba(144,96,255,0.4)",
-            animation: "pulse-ring 1.8s ease-out infinite",
-          }}
-        />
+        <div style={{
+          position: "absolute", inset: 0, borderRadius: "50%",
+          border: "1.5px solid rgba(144,96,255,0.4)",
+          animation: "pulse-ring 1.8s ease-out infinite",
+        }} />
 
-        <svg
-          width="56"
-          height="56"
-          viewBox="0 0 56 56"
-          fill="none"
-          style={{ animation: "rotate-logo 4s linear infinite" }}
-        >
-          <path
-            d="M28 5L51 18.5V37.5L28 51L5 37.5V18.5L28 5Z"
-            stroke="#9060ff"
-            strokeWidth="1.5"
-            fill="none"
-          />
-          <path
-            d="M28 14L44 23.5V33.5L28 43L12 33.5V23.5L28 14Z"
-            fill="rgba(144,96,255,0.12)"
-            stroke="rgba(144,96,255,0.4)"
-            strokeWidth="1"
-          />
+        <svg width="56" height="56" viewBox="0 0 56 56" fill="none"
+          style={{ animation: "rotate-logo 4s linear infinite" }}>
+          <path d="M28 5L51 18.5V37.5L28 51L5 37.5V18.5L28 5Z"
+            stroke="#9060ff" strokeWidth="1.5" fill="none" />
+          <path d="M28 14L44 23.5V33.5L28 43L12 33.5V23.5L28 14Z"
+            fill="rgba(144,96,255,0.12)" stroke="rgba(144,96,255,0.4)" strokeWidth="1" />
           <circle cx="28" cy="28" r="5" fill="#9060ff" opacity="0.9" />
-          <circle
-            cx="28"
-            cy="28"
-            r="9"
-            fill="none"
-            stroke="rgba(144,96,255,0.35)"
-            strokeWidth="1"
-          />
+          <circle cx="28" cy="28" r="9" fill="none" stroke="rgba(144,96,255,0.35)" strokeWidth="1" />
         </svg>
       </div>
 
-      <div
-        style={{
-          display: "flex",
-          flexDirection: "column",
-          alignItems: "center",
-          gap: "6px",
-          animation: "fade-in 0.6s ease-out forwards",
-        }}
-      >
-        <div
-          style={{
-            fontSize: "11px",
-            letterSpacing: "0.22em",
-            color: "#9060ff",
-            fontWeight: 700,
-          }}
-        >
+      <div style={{
+        display: "flex", flexDirection: "column", alignItems: "center", gap: "6px",
+        animation: "fade-in 0.6s ease-out forwards",
+      }}>
+        <div style={{
+          fontSize: "11px", letterSpacing: "0.22em", color: "#9060ff",
+          fontWeight: 700,
+        }}>
           PREINTENT
         </div>
-        <div
-          style={{
-            fontSize: "9px",
-            color: "#4a6070",
-            letterSpacing: "0.1em",
-            animation: "text-blink 1.8s ease-in-out infinite",
-          }}
-        >
+        <div style={{
+          fontSize: "9px", color: "#4a6070", letterSpacing: "0.1em",
+          animation: "text-blink 1.8s ease-in-out infinite",
+        }}>
           Loading intelligence workspace...
         </div>
       </div>
@@ -130,9 +87,7 @@ export default function DashboardPage() {
   const router = useRouter();
   const [loading, setLoading] = useState(true);
   const [userEmail, setUserEmail] = useState<string | undefined>(undefined);
-  const [knowledgeDoc, setKnowledgeDoc] = useState<CompanyKnowledgeDoc | null>(
-    null,
-  );
+  const [knowledgeDoc, setKnowledgeDoc] = useState<CompanyKnowledgeDoc | null>(null);
   const [RealDashboard, setRealDashboard] = useState<React.FC<{
     userEmail?: string;
     knowledgeDoc?: CompanyKnowledgeDoc | null;
@@ -146,12 +101,9 @@ export default function DashboardPage() {
 
         if (supabaseUrl && supabaseKey) {
           // ── SUPABASE MODE ────────────────────────────────────────────────
-          const { createSupabaseBrowserClient } =
-            await import("@/lib/supabase-client");
+          const { createSupabaseBrowserClient } = await import("@/lib/supabase-client");
           const supabase = createSupabaseBrowserClient();
-          const {
-            data: { session },
-          } = await supabase.auth.getSession();
+          const { data: { session } } = await supabase.auth.getSession();
 
           if (!session?.user) {
             router.replace("/sign-in?next=/dashboard");
@@ -179,13 +131,8 @@ export default function DashboardPage() {
                 const doc = org.company_knowledge as CompanyKnowledgeDoc;
                 // Cache to localStorage for client-side access
                 try {
-                  localStorage.setItem(
-                    "preintent_company_kdoc",
-                    JSON.stringify(doc),
-                  );
-                } catch {
-                  /* non-fatal */
-                }
+                  localStorage.setItem("preintent_company_kdoc", JSON.stringify(doc));
+                } catch { /* non-fatal */ }
                 setKnowledgeDoc(doc);
               } else {
                 // Check localStorage cache as fallback
@@ -193,17 +140,11 @@ export default function DashboardPage() {
                   const cached = localStorage.getItem("preintent_company_kdoc");
                   if (cached) {
                     const parsed = JSON.parse(cached);
-                    if (
-                      typeof parsed === "object" &&
-                      parsed !== null &&
-                      "companyName" in parsed
-                    ) {
+                    if (typeof parsed === 'object' && parsed !== null && 'companyName' in parsed) {
                       setKnowledgeDoc(parsed);
                     }
                   }
-                } catch {
-                  /* non-fatal */
-                }
+                } catch { /* non-fatal */ }
               }
             } else {
               // No org yet — try localStorage cache
@@ -211,17 +152,11 @@ export default function DashboardPage() {
                 const cached = localStorage.getItem("preintent_company_kdoc");
                 if (cached) {
                   const parsed = JSON.parse(cached);
-                  if (
-                    typeof parsed === "object" &&
-                    parsed !== null &&
-                    "companyName" in parsed
-                  ) {
+                  if (typeof parsed === 'object' && parsed !== null && 'companyName' in parsed) {
                     setKnowledgeDoc(parsed);
                   }
                 }
-              } catch {
-                /* non-fatal */
-              }
+              } catch { /* non-fatal */ }
             }
           } catch {
             // Non-fatal: knowledge doc load failed, dashboard still works
@@ -229,17 +164,11 @@ export default function DashboardPage() {
               const cached = localStorage.getItem("preintent_company_kdoc");
               if (cached) {
                 const parsed = JSON.parse(cached);
-                if (
-                  typeof parsed === "object" &&
-                  parsed !== null &&
-                  "companyName" in parsed
-                ) {
+                if (typeof parsed === 'object' && parsed !== null && 'companyName' in parsed) {
                   setKnowledgeDoc(parsed);
                 }
               }
-            } catch {
-              /* non-fatal */
-            }
+            } catch { /* non-fatal */ }
           }
         } else {
           // ── MOCK MODE (no Supabase keys) ─────────────────────────────────
@@ -254,17 +183,11 @@ export default function DashboardPage() {
             const cached = localStorage.getItem("preintent_company_kdoc");
             if (cached) {
               const parsed = JSON.parse(cached);
-              if (
-                typeof parsed === "object" &&
-                parsed !== null &&
-                "companyName" in parsed
-              ) {
+              if (typeof parsed === 'object' && parsed !== null && 'companyName' in parsed) {
                 setKnowledgeDoc(parsed);
               }
             }
-          } catch {
-            /* non-fatal */
-          }
+          } catch { /* non-fatal */ }
         }
 
         // Lazy-load the heavy RealDashboard component after auth check
