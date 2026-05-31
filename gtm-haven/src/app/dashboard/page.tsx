@@ -42,7 +42,7 @@ function DashboardLoading() {
           50% { opacity: 0.4; }
         }
       `}</style>
-      
+
       <div style={{ position: "relative", width: "56px", height: "56px" }}>
         {/* Pulse ring */}
         <div style={{
@@ -50,7 +50,7 @@ function DashboardLoading() {
           border: "1.5px solid rgba(144,96,255,0.4)",
           animation: "pulse-ring 1.8s ease-out infinite",
         }} />
-        
+
         <svg width="56" height="56" viewBox="0 0 56 56" fill="none"
           style={{ animation: "rotate-logo 4s linear infinite" }}>
           <path d="M28 5L51 18.5V37.5L28 51L5 37.5V18.5L28 5Z"
@@ -138,21 +138,36 @@ export default function DashboardPage() {
                 // Check localStorage cache as fallback
                 try {
                   const cached = localStorage.getItem("preintent_company_kdoc");
-                  if (cached) setKnowledgeDoc(JSON.parse(cached));
+                  if (cached) {
+                    const parsed = JSON.parse(cached);
+                    if (typeof parsed === 'object' && parsed !== null && 'companyName' in parsed) {
+                      setKnowledgeDoc(parsed);
+                    }
+                  }
                 } catch { /* non-fatal */ }
               }
             } else {
               // No org yet — try localStorage cache
               try {
                 const cached = localStorage.getItem("preintent_company_kdoc");
-                if (cached) setKnowledgeDoc(JSON.parse(cached));
+                if (cached) {
+                  const parsed = JSON.parse(cached);
+                  if (typeof parsed === 'object' && parsed !== null && 'companyName' in parsed) {
+                    setKnowledgeDoc(parsed);
+                  }
+                }
               } catch { /* non-fatal */ }
             }
           } catch {
             // Non-fatal: knowledge doc load failed, dashboard still works
             try {
               const cached = localStorage.getItem("preintent_company_kdoc");
-              if (cached) setKnowledgeDoc(JSON.parse(cached));
+              if (cached) {
+                const parsed = JSON.parse(cached);
+                if (typeof parsed === 'object' && parsed !== null && 'companyName' in parsed) {
+                  setKnowledgeDoc(parsed);
+                }
+              }
             } catch { /* non-fatal */ }
           }
         } else {
@@ -166,7 +181,12 @@ export default function DashboardPage() {
           // Load knowledge doc from localStorage
           try {
             const cached = localStorage.getItem("preintent_company_kdoc");
-            if (cached) setKnowledgeDoc(JSON.parse(cached));
+            if (cached) {
+              const parsed = JSON.parse(cached);
+              if (typeof parsed === 'object' && parsed !== null && 'companyName' in parsed) {
+                setKnowledgeDoc(parsed);
+              }
+            }
           } catch { /* non-fatal */ }
         }
 

@@ -276,6 +276,7 @@ interface PainClassification {
   companyAttribution: string;
   confidence: number;
   model: string;
+  [key: string]: unknown;
 }
 
 async function buildPainSignal(

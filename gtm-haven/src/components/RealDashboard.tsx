@@ -343,12 +343,18 @@ const ConvergenceGauge = ({ value, size = 160 }: { value: number; size?: number 
   useEffect(() => {
     let cur = 0;
     const step = Math.max(1, value / 60);
-    const id = setInterval(() => {
+    let animationFrameId: number;
+
+    const animate = () => {
       cur = Math.min(cur + step, value);
       setScore(Math.round(cur));
-      if (cur >= value) clearInterval(id);
-    }, 20);
-    return () => clearInterval(id);
+      if (cur < value) {
+        animationFrameId = requestAnimationFrame(animate);
+      }
+    };
+
+    animationFrameId = requestAnimationFrame(animate);
+    return () => cancelAnimationFrame(animationFrameId);
   }, [value]);
 
   const r = (size / 2) - 10;
@@ -1217,11 +1223,23 @@ export default function RealDashboard({
     try {
       const storedAccounts = localStorage.getItem("preintent_accounts");
       if (storedAccounts) {
-        const parsed = JSON.parse(storedAccounts) as PremiumAccount[];
-        if (Array.isArray(parsed) && parsed.length > 0) {
-          // Load stored accounts directly
-          // eslint-disable-next-line
-          setAccounts(parsed);
+        try {
+          const parsed = JSON.parse(storedAccounts);
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            // A simple structural check to ensure it loosely matches PremiumAccount shape
+            const isValid = parsed.every((item) =>
+              typeof item === 'object' && item !== null &&
+              'id' in item && 'name' in item && 'convergence' in item
+            );
+            if (isValid) {
+              // eslint-disable-next-line react-hooks/set-state-in-effect
+              setAccounts(parsed as PremiumAccount[]);
+            } else {
+              console.warn("Invalid preintent_accounts structure in localStorage");
+            }
+          }
+        } catch (err) {
+          console.error("Failed to parse preintent_accounts:", err);
         }
       }
 
@@ -1229,20 +1247,30 @@ export default function RealDashboard({
       if (!initialKnowledgeDoc) {
         const stored = localStorage.getItem("preintent_company_kdoc");
         if (stored) {
-          const doc = JSON.parse(stored) as CompanyKnowledgeDoc;
-          setKnowledgeDoc(doc);
+          try {
+            const doc = JSON.parse(stored) as CompanyKnowledgeDoc;
+            if (typeof doc === 'object' && doc !== null && 'companyName' in doc && 'icp' in doc) {
+              setKnowledgeDoc(doc);
 
-          // Check setup status from knowledge doc
-          if (doc.seedAccounts && doc.seedAccounts.length > 0) {
-            setSetupComplete(true);
-            // Convert seed accounts to PremiumAccount format and add them
-            const seedPremium = doc.seedAccounts.map((s, i) => seedAccountToPremium(s, i));
-            if (seedPremium.length > 0) {
-              setAccounts((prev) => {
-                const prevIds = new Set(prev.map((a) => a.id));
-                return [...prev, ...seedPremium.filter((a) => !prevIds.has(a.id))];
-              });
+              // Check setup status from knowledge doc
+              if (Array.isArray(doc.seedAccounts) && doc.seedAccounts.length > 0) {
+                setSetupComplete(true);
+                // Convert seed accounts to PremiumAccount format and add them
+                const seedPremium = doc.seedAccounts.map((s, i) => seedAccountToPremium(s, i));
+                if (seedPremium.length > 0) {
+                  setAccounts((prev) => {
+                    const prevIds = new Set(prev.map((a) => a.id));
+                    return [...prev, ...seedPremium.filter((a) => !prevIds.has(a.id))];
+                  });
+                }
+              }
+            } else {
+              console.warn("Invalid preintent_company_kdoc structure in localStorage");
+              setSetupComplete(false);
             }
+          } catch (err) {
+            console.error("Failed to parse preintent_company_kdoc:", err);
+            setSetupComplete(false);
           }
         } else {
           // No knowledge doc = onboarding incomplete
@@ -1350,7 +1378,7 @@ export default function RealDashboard({
     }, 900);
 
     // Run real sweep for each account (with concurrency limit = 2)
-    const sweepPromises = accounts.map(async (account) => {
+    const runAccountSweep = async (account: PremiumAccount) => {
       const doc = knowledgeDoc;
       const competitor = account.competitor || doc?.scanConfig.competitors[0] || "Competitor";
 
@@ -1392,9 +1420,15 @@ export default function RealDashboard({
       } catch {
         return null;
       }
-    });
+    };
 
-    const results = await Promise.all(sweepPromises);
+    const results = [];
+    const concurrencyLimit = 2;
+    for (let i = 0; i < accounts.length; i += concurrencyLimit) {
+      const batch = accounts.slice(i, i + concurrencyLimit);
+      const batchResults = await Promise.all(batch.map(runAccountSweep));
+      results.push(...batchResults);
+    }
 
     // Apply results to accounts
     const resultMap = new Map<number, SweepResult>();
@@ -1590,15 +1624,24 @@ ACCOUNT CONTEXT
 ${realBrief.whyNow?.map((w, i) => `[${["VOID", "COMPLIANCE", "PAIN"][i] || w.engine.toUpperCase()}] Sub-score ${w.subScore}/100\n${w.narrative}`).join("\n\n") ?? ""}`;
 
       let i = 0;
-      const id = setInterval(() => {
-        i += 6;
-        setBrief(formatted.slice(0, i));
-        if (i >= formatted.length) {
-          clearInterval(id);
+      let lastTime = performance.now();
+
+      const animateBrief = (time: number) => {
+        if (time - lastTime >= 8) {
+          i += 6;
+          setBrief(formatted.slice(0, i));
+          lastTime = time;
+        }
+
+        if (i < formatted.length) {
+          requestAnimationFrame(animateBrief);
+        } else {
           setBriefLoading(false);
           toast.briefGenerated(acc.name);
         }
-      }, 8);
+      };
+
+      requestAnimationFrame(animateBrief);
     } catch {
       setBriefLoading(false);
       toast.error("Brief generation failed", "Using fallback");
