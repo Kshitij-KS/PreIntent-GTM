@@ -1269,10 +1269,8 @@ export default function RealDashboard({
   // Persist custom accounts to localStorage whenever they change
   useEffect(() => {
     try {
-      const existingIds = new Set(PREMIUM_ACCOUNTS.map((a) => a.id));
-      const customAccounts = accounts.filter((a) => !existingIds.has(a.id));
-      if (customAccounts.length > 0) {
-        localStorage.setItem("preintent_accounts", JSON.stringify(customAccounts));
+      if (accounts.length > 0) {
+        localStorage.setItem("preintent_accounts", JSON.stringify(accounts));
       }
     } catch {
       // non-fatal
@@ -1526,67 +1524,68 @@ export default function RealDashboard({
 
   // ── GENERATE BRIEF — uses real AI/ML API ─────────────────────────────────
   const generateBrief = useCallback(async () => {
-    if (!selectedAccount) return;
+    const acc = selectedAccount;
+    if (!acc) return;
     setBriefLoading(true);
     setBrief("");
-    toast.info("Generating Intel Brief", `Analyzing ${selectedAccount.name}...`);
+    toast.info("Generating Intel Brief", `Analyzing ${acc.name}...`);
 
     try {
       const { generateRealIntelBrief } = await import("@/app/actions");
       const mockProfile = {
-        account: selectedAccount.name,
-        industry: selectedAccount.industry,
-        employees: selectedAccount.employees,
+        account: acc.name,
+        industry: acc.industry,
+        employees: acc.employees,
         crmStage: "Not in pipeline",
         lastUpdated: new Date().toISOString(),
         void: {
-          signals: [{ text: selectedAccount.voidEvent, source: "Void Scanner", score: selectedAccount.voidScore, id: "v1", engine: "void" as const, title: selectedAccount.voidEvent, description: selectedAccount.voidEvent, eventTime: selectedAccount.lastUpdated, subScore: selectedAccount.voidScore, confidence: selectedAccount.voidConfidence, provenance: { sponsor: "bright_data" as const, capturedAt: selectedAccount.lastUpdated } }],
-          subScore: selectedAccount.voidScore,
+          signals: [{ text: acc.voidEvent, source: "Void Scanner", score: acc.voidScore, id: "v1", engine: "void" as const, title: acc.voidEvent, description: acc.voidEvent, eventTime: acc.lastUpdated, subScore: acc.voidScore, confidence: acc.voidConfidence, provenance: { sponsor: "bright_data" as const, capturedAt: acc.lastUpdated } }],
+          subScore: acc.voidScore,
         },
         compliance: {
-          signals: [{ text: selectedAccount.complianceEvent, source: "Compliance Radar", score: selectedAccount.complianceScore, id: "c1", engine: "compliance" as const, title: selectedAccount.complianceEvent, description: selectedAccount.complianceEvent, eventTime: selectedAccount.lastUpdated, subScore: selectedAccount.complianceScore, confidence: selectedAccount.complianceConfidence, provenance: { sponsor: "bright_data" as const, capturedAt: selectedAccount.lastUpdated } }],
-          subScore: selectedAccount.complianceScore,
+          signals: [{ text: acc.complianceEvent, source: "Compliance Radar", score: acc.complianceScore, id: "c1", engine: "compliance" as const, title: acc.complianceEvent, description: acc.complianceEvent, eventTime: acc.lastUpdated, subScore: acc.complianceScore, confidence: acc.complianceConfidence, provenance: { sponsor: "bright_data" as const, capturedAt: acc.lastUpdated } }],
+          subScore: acc.complianceScore,
         },
         pain: {
-          signals: [{ text: selectedAccount.painEvent, source: "Pain Listener", score: selectedAccount.painScore, id: "p1", engine: "pain" as const, title: selectedAccount.painEvent, description: selectedAccount.painEvent, eventTime: selectedAccount.lastUpdated, subScore: selectedAccount.painScore, confidence: selectedAccount.painConfidence, provenance: { sponsor: "featherless" as const, capturedAt: selectedAccount.lastUpdated } }],
-          subScore: selectedAccount.painScore,
+          signals: [{ text: acc.painEvent, source: "Pain Listener", score: acc.painScore, id: "p1", engine: "pain" as const, title: acc.painEvent, description: acc.painEvent, eventTime: acc.lastUpdated, subScore: acc.painScore, confidence: acc.painConfidence, provenance: { sponsor: "featherless" as const, capturedAt: acc.lastUpdated } }],
+          subScore: acc.painScore,
         },
-        convergenceScore: selectedAccount.convergence,
-        urgency: computeUrgency(selectedAccount.convergence, Math.max(selectedAccount.voidScore, selectedAccount.complianceScore, selectedAccount.painScore)),
+        convergenceScore: acc.convergence,
+        urgency: computeUrgency(acc.convergence, Math.max(acc.voidScore, acc.complianceScore, acc.painScore)),
       };
 
       const realBrief = await generateRealIntelBrief(mockProfile as unknown as AccountIntelligenceProfile);
       const formatted = `WHY NOW — 3 CONVERGING SIGNALS
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-① COMPETITOR RETREAT  [${selectedAccount.voidScore}/100]  ${Math.round(selectedAccount.voidConfidence * 100)}% confidence
-${selectedAccount.voidEvent}
-Detected: ${formatRelativeTime(selectedAccount.voidEvidence?.capturedAt ?? selectedAccount.lastUpdated)}
+① COMPETITOR RETREAT  [${acc.voidScore}/100]  ${Math.round(acc.voidConfidence * 100)}% confidence
+${acc.voidEvent}
+Detected: ${formatRelativeTime(acc.voidEvidence?.capturedAt ?? acc.lastUpdated)}
 
-② REGULATORY PRESSURE  [${selectedAccount.complianceScore}/100]  ${Math.round(selectedAccount.complianceConfidence * 100)}% confidence
-${selectedAccount.complianceEvent}
-Detected: ${formatRelativeTime(selectedAccount.complianceEvidence?.capturedAt ?? selectedAccount.lastUpdated)}
+② REGULATORY PRESSURE  [${acc.complianceScore}/100]  ${Math.round(acc.complianceConfidence * 100)}% confidence
+${acc.complianceEvent}
+Detected: ${formatRelativeTime(acc.complianceEvidence?.capturedAt ?? acc.lastUpdated)}
 
-③ ACTIVE EVALUATION  [${selectedAccount.painScore}/100]  ${Math.round(selectedAccount.painConfidence * 100)}% confidence
-${selectedAccount.painEvent}
-Detected: ${formatRelativeTime(selectedAccount.painEvidence?.capturedAt ?? selectedAccount.lastUpdated)}
+③ ACTIVE EVALUATION  [${acc.painScore}/100]  ${Math.round(acc.painConfidence * 100)}% confidence
+${acc.painEvent}
+Detected: ${formatRelativeTime(acc.painEvidence?.capturedAt ?? acc.lastUpdated)}
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 SUGGESTED OPENING LINE
 
-"${realBrief.suggestedOpeningLine || `Hi [Name] — I noticed ${selectedAccount.competitor} made some changes recently. Given that and the regulatory tailwinds, the timing feels right for a quick conversation.`}"
+"${realBrief.suggestedOpeningLine || `Hi [Name] — I noticed ${acc.competitor} made some changes recently. Given that and the regulatory tailwinds, the timing feels right for a quick conversation.`}"
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 ACCOUNT CONTEXT
-  Company    : ${selectedAccount.name}
-  Industry   : ${selectedAccount.industry}
-  Employees  : ${selectedAccount.employees.toLocaleString()}
-  Competitor : ${selectedAccount.competitor}
-  Convergence: ${selectedAccount.convergence}/100
+  Company    : ${acc.name}
+  Industry   : ${acc.industry}
+  Employees  : ${acc.employees.toLocaleString()}
+  Competitor : ${acc.competitor}
+  Convergence: ${acc.convergence}/100
   Urgency    : ${mockProfile.urgency}
-  Status     : ${selectedAccount.status}
+  Status     : ${acc.status}
 
 ${realBrief.whyNow?.map((w, i) => `[${["VOID", "COMPLIANCE", "PAIN"][i] || w.engine.toUpperCase()}] Sub-score ${w.subScore}/100\n${w.narrative}`).join("\n\n") ?? ""}`;
 
@@ -1597,7 +1596,7 @@ ${realBrief.whyNow?.map((w, i) => `[${["VOID", "COMPLIANCE", "PAIN"][i] || w.eng
         if (i >= formatted.length) {
           clearInterval(id);
           setBriefLoading(false);
-          toast.briefGenerated(selectedAccount.name);
+          toast.briefGenerated(acc.name);
         }
       }, 8);
     } catch {
@@ -1769,7 +1768,7 @@ ${realBrief.whyNow?.map((w, i) => `[${["VOID", "COMPLIANCE", "PAIN"][i] || w.eng
           <motion.div
             key={a.id}
             initial={{ opacity: 0, x: -8 }}
-            animate={{ opacity: 1, x: 0, background: selectedAccount.id === a.id ? `${C.conv}06` : C.surface }}
+            animate={{ opacity: 1, x: 0, background: selectedAccount?.id === a.id ? `${C.conv}06` : C.surface }}
             transition={{ delay: idx * 0.04 }}
             onClick={() => selectAccountAndView(a)}
             style={{
@@ -1952,10 +1951,10 @@ ${realBrief.whyNow?.map((w, i) => `[${["VOID", "COMPLIANCE", "PAIN"][i] || w.eng
                 key={a.id}
                 onClick={() => setSelectedAccount(a)}
                 style={{
-                  background: selectedAccount.id === a.id ? `${C.conv}15` : "transparent",
-                  border: `1px solid ${selectedAccount.id === a.id ? C.conv : C.border}`,
+                  background: selectedAccount?.id === a.id ? `${C.conv}15` : "transparent",
+                  border: `1px solid ${selectedAccount?.id === a.id ? C.conv : C.border}`,
                   borderRadius: "4px", padding: "4px 10px", fontSize: "10px",
-                  color: selectedAccount.id === a.id ? C.conv : C.muted,
+                  color: selectedAccount?.id === a.id ? C.conv : C.muted,
                   cursor: "pointer", fontFamily: "inherit", flexShrink: 0, transition: "all 0.15s",
                 }}
               >
@@ -1977,7 +1976,7 @@ ${realBrief.whyNow?.map((w, i) => `[${["VOID", "COMPLIANCE", "PAIN"][i] || w.eng
               onFilterChange={setSignalFilter}
             />
           )}
-          {view === "intel" && (
+          {view === "intel" && selectedAccount && (
             <IntelView
               key="intel"
               account={selectedAccount}
@@ -1985,7 +1984,7 @@ ${realBrief.whyNow?.map((w, i) => `[${["VOID", "COMPLIANCE", "PAIN"][i] || w.eng
               onEvidence={(type) => openEvidence(selectedAccount, type)}
             />
           )}
-          {view === "brief" && (
+          {view === "brief" && selectedAccount && (
             <BriefView
               key="brief"
               brief={brief}
@@ -2023,7 +2022,7 @@ ${realBrief.whyNow?.map((w, i) => `[${["VOID", "COMPLIANCE", "PAIN"][i] || w.eng
         onClose={() => setShareOpen(false)}
         accountName={selectedAccount?.name || ""}
         briefContent={brief}
-        account={selectedAccount}
+        account={selectedAccount ?? undefined}
       />
 
       <CompetitiveComparison
