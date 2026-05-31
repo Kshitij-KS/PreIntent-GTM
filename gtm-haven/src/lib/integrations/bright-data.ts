@@ -108,40 +108,41 @@ export async function runBrightDataSweep(
   const signals: EngineSignal[] = [];
   const now = new Date().toISOString();
 
-  const pricingFetch = await fetchViaBrightData(
-    pricingUrl,
-    env,
-    env.BRIGHT_DATA_ZONE || "web_unlocker",
-  );
+   const pricingFetch = await fetchViaBrightData(
+     pricingUrl,
+     env,
+     env.BRIGHT_DATA_ZONE || "web_unlocker",
+   );
 
-  if (pricingFetch.body) {
-    const scored = await scoreVoidFromPageContent(env, {
-      account: input.account,
-      competitor: input.competitor,
-      url: pricingUrl,
-      htmlSnippet: pricingFetch.body,
-    });
+   if (pricingFetch.body) {
+     const scored = await scoreVoidFromPageContent(env, {
+       account: input.account,
+       competitor: input.competitor,
+       url: pricingUrl,
+       htmlSnippet: pricingFetch.body,
+     });
 
-    signals.push({
-      id: `void-${input.account.toLowerCase().replace(/\s+/g, "-")}-${Date.now()}`,
-      engine: "void",
-      title: scored.title,
-      description: scored.description,
-      eventTime: now,
-      subScore: scored.subScore,
-      confidence: scored.confidence ?? 0.88,
-      provenance: {
-        sponsor: "bright_data",
-        tool: "Scraping Browser",
-        url: pricingUrl,
-        capturedAt: now,
-        note: `Fetched via ${pricingFetch.source === "bright_data" ? "Bright Data" : "direct HTTP"}; scored by AI/ML API`,
-      },
-      rawEvidence: { fetchSource: pricingFetch.source, url: pricingUrl },
-    });
-    notes.push(`Void: ${pricingFetch.source} fetch OK (${pricingUrl})`);
-    throw new Error("Bright Data pricing fetch failed: Empty body or timeout.");
-  }
+     signals.push({
+       id: `void-${input.account.toLowerCase().replace(/\s+/g, "-")}-${Date.now()}`,
+       engine: "void",
+       title: scored.title,
+       description: scored.description,
+       eventTime: now,
+       subScore: scored.subScore,
+       confidence: scored.confidence ?? 0.88,
+       provenance: {
+         sponsor: "bright_data",
+         tool: "Scraping Browser",
+         url: pricingUrl,
+         capturedAt: now,
+         note: `Fetched via ${pricingFetch.source === "bright_data" ? "Bright Data" : "direct HTTP"}; scored by AI/ML API`,
+       },
+       rawEvidence: { fetchSource: pricingFetch.source, url: pricingUrl },
+     });
+     notes.push(`Void: ${pricingFetch.source} fetch OK (${pricingUrl})`);
+   } else {
+     throw new Error("Bright Data pricing fetch failed: Empty body or timeout.");
+   }
 
   const serpFetch = await fetchViaBrightData(
     serpUrl,
