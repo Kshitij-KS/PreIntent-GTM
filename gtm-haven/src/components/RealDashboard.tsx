@@ -1253,12 +1253,10 @@ export default function RealDashboard({
         // Add seed accounts from knowledge doc
         if (initialKnowledgeDoc.seedAccounts?.length > 0) {
           const seedPremium = initialKnowledgeDoc.seedAccounts.map((s, i) => seedAccountToPremium(s, i));
-          const existingIds = new Set(PREMIUM_ACCOUNTS.map((a) => a.id));
-          const newSeedAccounts = seedPremium.filter((a) => !existingIds.has(a.id));
-          if (newSeedAccounts.length > 0) {
+          if (seedPremium.length > 0) {
             setAccounts((prev) => {
               const prevIds = new Set(prev.map((a) => a.id));
-              return [...prev, ...newSeedAccounts.filter((a) => !prevIds.has(a.id))];
+              return [...prev, ...seedPremium.filter((a) => !prevIds.has(a.id))];
             });
           }
         }
