@@ -78,13 +78,6 @@ export async function scoreVoidFromPageContent(
     htmlSnippet: string;
   },
 ) {
-  const fallback = {
-    subScore: 84,
-    title: `${params.competitor} pricing page change detected`,
-    description: `PreIntent analyzed ${params.url}. Competitor pricing or packaging may have changed — review for tier removals or SMB plan gaps affecting ${params.account}.`,
-    confidence: 0.85,
-  };
-
   const parsed = await chatCompletionJson(
     env,
     `You are a GTM void scanner. Analyze this competitor page snippet for pricing/product removals relevant to ${params.account} (competitor: ${params.competitor}).
@@ -98,7 +91,11 @@ Return ONLY JSON:
     voidScoreSchema,
   );
 
-  return parsed || fallback;
+  if (!parsed) {
+    throw new Error(`AI/ML API fetch failed during void scoring for ${params.account}. Check AI_ML_API_KEY.`);
+  }
+
+  return parsed;
 }
 
 export async function scoreComplianceFromResearch(
@@ -110,13 +107,6 @@ export async function scoreComplianceFromResearch(
     researchSnippet: string;
   },
 ) {
-  const fallback = {
-    subScore: 71,
-    title: "Regulatory deadline approaching — limited public acknowledgment",
-    description: `Research for "${params.query}" suggests ${params.account} (${params.industry}) may be in scope. No strong evidence of proactive compliance communication in available sources.`,
-    confidence: 0.82,
-  };
-
   const parsed = await chatCompletionJson(
     env,
     `You are a compliance radar for B2B GTM. Score regulatory urgency for ${params.account} (${params.industry}).
@@ -130,7 +120,11 @@ Return ONLY JSON:
     complianceScoreSchema,
   );
 
-  return parsed || fallback;
+  if (!parsed) {
+    throw new Error(`AI/ML API fetch failed during compliance scoring for ${params.account}. Check AI_ML_API_KEY.`);
+  }
+
+  return parsed;
 }
 
 export async function scorePainFromText(
@@ -142,13 +136,6 @@ export async function scorePainFromText(
     classification?: Record<string, unknown>;
   },
 ) {
-  const fallback = {
-    subScore: 91,
-    title: `Active evaluation signal — ${params.account}`,
-    description: params.painText.slice(0, 400),
-    confidence: 0.9,
-  };
-
   const classHint = params.classification
     ? `\nClassifier output: ${JSON.stringify(params.classification)}`
     : "";
@@ -164,7 +151,11 @@ Return ONLY JSON:
     painScoreSchema,
   );
 
-  return parsed || fallback;
+  if (!parsed) {
+    throw new Error(`AI/ML API fetch failed during pain scoring for ${params.account}. Check AI_ML_API_KEY.`);
+  }
+
+  return parsed;
 }
 
 export function engineLabel(engine: EngineType): string {

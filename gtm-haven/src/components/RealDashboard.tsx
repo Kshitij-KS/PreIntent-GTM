@@ -19,12 +19,9 @@ import { motion, AnimatePresence } from "framer-motion";
 import type { AccountIntelligenceProfile } from "@/lib/domain";
 import { computeUrgency } from "@/lib/convergence";
 import { useToast, createToastHelpers } from "@/components/ui/toast";
-import { ROICalculator, ROIPreview } from "@/components/ui/roi-calculator";
 import { EvidenceModal } from "@/components/ui/evidence-panel";
 import { BriefSharing } from "@/components/ui/brief-sharing";
 import { CompetitiveComparison, ComparisonTrigger } from "@/components/ui/competitive-comparison";
-import { GuidedTour, TourTrigger, TourShortcut } from "@/components/demo/guided-tour";
-import { DemoAutopilot, AutoplayTrigger, type AutopilotActions } from "@/components/demo/autopilot";
 import {
   PREMIUM_ACCOUNTS,
   formatRelativeTime,
@@ -1151,17 +1148,6 @@ const SettingsView = ({
         ))}
       </div>
 
-      {/* Env hints */}
-      <div style={{
-        background: `${C.conv}08`, border: `1px solid ${C.conv}20`, borderRadius: "7px",
-        padding: "12px 14px", marginBottom: "12px",
-        fontSize: "9px", color: C.muted, lineHeight: 1.8,
-      }}>
-        <div style={{ color: C.conv, fontWeight: 600, letterSpacing: "0.08em", marginBottom: "4px" }}>ACTIVATE LIVE APIs</div>
-        Add keys to <span style={{ color: C.text }}>.env.local</span> and restart the dev server.
-        See <span style={{ color: C.text }}>.env.example</span> for the full list.
-      </div>
-
       <button
         onClick={onSignOut}
         style={{
@@ -1223,16 +1209,11 @@ export default function RealDashboard({
   const [liveIntegrations, setLiveIntegrations] = useState<
     { id?: string; name: string; status: string; mode?: string; detail?: string }[]
   >([]);
-  const [cleanMode, setCleanMode] = useState(false);
-  const [roiOpen, setRoiOpen] = useState(false);
   const [evidenceOpen, setEvidenceOpen] = useState(false);
   const [evidenceType, setEvidenceType] = useState<"void" | "compliance" | "pain" | "audio">("void");
   const [evidenceAccount, setEvidenceAccount] = useState<PremiumAccount>(PREMIUM_ACCOUNTS[0]);
   const [shareOpen, setShareOpen] = useState(false);
   const [comparisonOpen, setComparisonOpen] = useState(false);
-  const [tourActive, setTourActive] = useState(false);
-  const [autopilotActive, setAutopilotActive] = useState(false);
-  const [autopilotSession, setAutopilotSession] = useState(0);
   const [signalFilter, setSignalFilter] = useState<"all" | "void" | "compliance" | "pain">("all");
   const [tickerIdx, setTickerIdx] = useState(0);
   const [addModalOpen, setAddModalOpen] = useState(false);
@@ -1329,15 +1310,11 @@ export default function RealDashboard({
   useEffect(() => {
     const fn = (e: KeyboardEvent) => {
       if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
-      if (e.key === "t") setTourActive(true);
-      if (e.key === "a" && !autopilotActive) { setAutopilotSession((s) => s + 1); setAutopilotActive(true); }
-      if (e.key === "c") setCleanMode((v) => !v);
-      if (e.key === "r") setRoiOpen(true);
       if (e.key === "+") setAddModalOpen(true);
     };
     window.addEventListener("keydown", fn);
     return () => window.removeEventListener("keydown", fn);
-  }, [autopilotActive]);
+  }, []);
 
   const handleSignOut = async () => {
     try {
@@ -1630,25 +1607,11 @@ ${realBrief.whyNow?.map((w, i) => `[${["VOID", "COMPLIANCE", "PAIN"][i] || w.eng
     setEvidenceOpen(true);
   };
 
-  const startAutopilot = useCallback(() => {
-    setAutopilotSession((s) => s + 1);
-    setAutopilotActive(true);
-  }, []);
-
-  const handleAutopilotEnd = useCallback(() => {
-    setAutopilotActive(false);
-    setView("dashboard");
-    setSelectedAccount(accounts[0]);
-    setSignalFilter("all");
-    setEvidenceOpen(false);
-    setShareOpen(false);
-  }, [accounts]);
-
-  const autopilotActions = useMemo<AutopilotActions>(() => ({
+  const autopilotActions = useMemo(() => ({
     setView,
     runScan,
     generateBrief,
-    selectAccount: (a) => setSelectedAccount(a),
+    selectAccount: (a: PremiumAccount) => setSelectedAccount(a),
     openEvidence,
     closeEvidence: () => setEvidenceOpen(false),
     openShare: () => setShareOpen(true),
@@ -1776,11 +1739,6 @@ ${realBrief.whyNow?.map((w, i) => `[${["VOID", "COMPLIANCE", "PAIN"][i] || w.eng
         <ScanPanel isScanning={isScanning} step={scanStep} done={scanDone} onScan={runScan} result={scanResult} />
       </div>
 
-      {/* ROI preview */}
-      <div style={{ marginBottom: "14px" }}>
-        <ROIPreview onOpen={() => setRoiOpen(true)} />
-      </div>
-
       {/* Sponsor row */}
       <div style={{ display: "flex", gap: "6px", alignItems: "center", marginBottom: "14px", flexWrap: "wrap" }}>
         <span style={{ fontSize: "9px", color: C.muted, letterSpacing: "0.04em", marginRight: "2px" }}>powered by</span>
@@ -1883,13 +1841,12 @@ ${realBrief.whyNow?.map((w, i) => `[${["VOID", "COMPLIANCE", "PAIN"][i] || w.eng
       `}</style>
 
       {/* ── TOP NAV ── */}
-      {!cleanMode && (
-        <div style={{
-          display: "flex", alignItems: "center", height: "52px",
-          background: `rgba(12,16,24,0.95)`, borderBottom: `1px solid ${C.border}`,
-          backdropFilter: "blur(20px)", position: "sticky", top: 0, zIndex: 40,
-          padding: "0 18px", gap: "0", flexShrink: 0,
-        }}>
+      <div style={{
+        display: "flex", alignItems: "center", height: "52px",
+        background: `rgba(12,16,24,0.95)`, borderBottom: `1px solid ${C.border}`,
+        backdropFilter: "blur(20px)", position: "sticky", top: 0, zIndex: 40,
+        padding: "0 18px", gap: "0", flexShrink: 0,
+      }}>
           {/* Logo */}
           <a href="/dashboard" style={{
             display: "flex", alignItems: "center", gap: "8px",
@@ -1953,16 +1910,6 @@ ${realBrief.whyNow?.map((w, i) => `[${["VOID", "COMPLIANCE", "PAIN"][i] || w.eng
               LIVE
             </div>
 
-            <AutoplayTrigger onStart={startAutopilot} disabled={autopilotActive || tourActive} />
-            <TourTrigger onStart={() => setTourActive(true)} disabled={tourActive || autopilotActive} />
-
-            <button
-              onClick={() => setCleanMode(true)}
-              style={{ ...ghostBtnStyle, fontSize: "9px", padding: "4px 10px" }}
-            >
-              Clean Mode
-            </button>
-
             <button
               onClick={() => setAddModalOpen(true)}
               style={{
@@ -1980,26 +1927,11 @@ ${realBrief.whyNow?.map((w, i) => `[${["VOID", "COMPLIANCE", "PAIN"][i] || w.eng
             </button>
           </div>
         </div>
-      )}
-
-      {/* Clean mode exit */}
-      {cleanMode && (
-        <div style={{
-          position: "fixed", top: "14px", right: "14px", zIndex: 50,
-          background: `${C.conv}20`, border: `1px solid ${C.conv}40`,
-          borderRadius: "6px", padding: "6px 14px", fontSize: "10px", color: C.conv,
-          cursor: "pointer", backdropFilter: "blur(10px)",
-        }}
-          onClick={() => setCleanMode(false)}
-        >
-          Exit Clean Mode (C)
-        </div>
-      )}
 
       {/* ── CONTENT ── */}
       <div style={{ flex: 1, overflowY: "auto", maxWidth: "1400px", width: "100%", margin: "0 auto", paddingBottom: "40px" }}>
         {/* Account selector sub-bar */}
-        {(view === "intel" || view === "brief") && !cleanMode && (
+        {(view === "intel" || view === "brief") && (
           <div style={{
             display: "flex", alignItems: "center", gap: "6px",
             padding: "10px 18px", borderBottom: `1px solid ${C.border}`,
@@ -2071,13 +2003,6 @@ ${realBrief.whyNow?.map((w, i) => `[${["VOID", "COMPLIANCE", "PAIN"][i] || w.eng
       </div>
 
       {/* ── MODALS ── */}
-      <ROICalculator
-        isOpen={roiOpen}
-        onClose={() => setRoiOpen(false)}
-        accountName={selectedAccount?.name}
-        accountConvergence={selectedAccount?.convergence}
-      />
-
       <EvidenceModal
         isOpen={evidenceOpen}
         onClose={() => setEvidenceOpen(false)}
@@ -2099,23 +2024,6 @@ ${realBrief.whyNow?.map((w, i) => `[${["VOID", "COMPLIANCE", "PAIN"][i] || w.eng
         onClose={() => setComparisonOpen(false)}
         acv={50000}
       />
-
-      <GuidedTour
-        isActive={tourActive}
-        onClose={() => setTourActive(false)}
-        accounts={accounts}
-      />
-
-      {autopilotActive && (
-        <DemoAutopilot
-          key={autopilotSession}
-          isActive={autopilotActive}
-          onEnd={handleAutopilotEnd}
-          actions={autopilotActions}
-        />
-      )}
-
-      {!cleanMode && <TourShortcut />}
 
       {/* Add Account Modal */}
       <AnimatePresence>

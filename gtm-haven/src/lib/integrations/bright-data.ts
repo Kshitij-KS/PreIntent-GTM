@@ -1,9 +1,4 @@
 import type { EngineSignal, ProviderMode } from "../domain";
-import {
-  compliancePciDss,
-  painRFintechPost,
-  voidPricingRemoval,
-} from "../preintent-demo";
 import { scoreComplianceFromResearch, scoreVoidFromPageContent } from "./ai-ml";
 import { type EnvMap, isRealMode, normalizeMode } from "./env";
 
@@ -106,27 +101,7 @@ export async function runBrightDataSweep(
   const serpUrl = `https://www.google.com/search?q=${encodeURIComponent(regulatoryQuery)}`;
 
   if (!isRealMode(env, "BRIGHT_DATA_MODE", ["BRIGHT_DATA_API_KEY"])) {
-    return {
-      mode: "mock",
-      signals: [
-        makeSignal(voidPricingRemoval, {
-          title: `${input.competitor} pricing change (mock)`,
-          description: voidPricingRemoval.description.replace(/Competitor X/g, input.competitor),
-          provenance: {
-            ...voidPricingRemoval.provenance,
-            note: `Mock sweep for ${input.account}`,
-          },
-        }),
-        makeSignal(compliancePciDss, {
-          title: compliancePciDss.title,
-          description: compliancePciDss.description.replace(/Acme/g, input.account),
-        }),
-        makeSignal(painRFintechPost, {
-          description: painRFintechPost.description.replace(/Competitor X/g, input.competitor),
-        }),
-      ],
-      note: "Mock Bright Data sweep (set BRIGHT_DATA_MODE=real + BRIGHT_DATA_API_KEY for live fetch).",
-    };
+    throw new Error("BRIGHT_DATA_API_KEY is missing but real mode is enforced. Live scraping failed.");
   }
 
   const notes: string[] = [];
@@ -165,20 +140,7 @@ export async function runBrightDataSweep(
       rawEvidence: { fetchSource: pricingFetch.source, url: pricingUrl },
     });
     notes.push(`Void: ${pricingFetch.source} fetch OK (${pricingUrl})`);
-  } else {
-    signals.push(
-      makeSignal(voidPricingRemoval, {
-        title: `${input.competitor} pricing change (fallback)`,
-        subScore: 84,
-        provenance: {
-          ...voidPricingRemoval.provenance,
-          url: pricingUrl,
-          capturedAt: now,
-          note: "Bright Data fetch failed — using deterministic fallback",
-        },
-      }),
-    );
-    notes.push("Void: fetch failed, using fallback signal");
+    throw new Error("Bright Data pricing fetch failed: Empty body or timeout.");
   }
 
   const serpFetch = await fetchViaBrightData(
