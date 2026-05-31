@@ -1,5 +1,5 @@
 /**
- * Premium Demo Data for Preintent
+ * Premium Demo Data for PreIntent
  * Real companies, realistic timestamps, evidence panels, confidence intervals
  * Justifies $1,000/month pricing with compelling demo scenarios
  */
@@ -139,7 +139,7 @@ export const PREMIUM_ACCOUNTS: PremiumAccount[] = [
         "Deadline: August 31, 2025 at 23:59 UTC",
         "New requirements: MFA for all admin access, encrypted cardholder data at rest",
         "Brex status: Zero public compliance roadmap, no blog post, 1 compliance role open (posted 3 days ago)",
-        "Preintent confidence: 74/100 — detected via job posting + lack of public comms",
+        "PreIntent confidence: 74/100 — detected via job posting + lack of public comms",
       ],
     },
     painEvent: "Brex Head of Treasury posted on r/fintech: 'Evaluating alternatives to Stripe Atlas for our 12 subsidiaries. Atlas support has gone silent on expedited processing.' — 67 upvotes, 23 comments",

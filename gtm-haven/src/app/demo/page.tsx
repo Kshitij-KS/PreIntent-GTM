@@ -3,9 +3,9 @@ import Link from "next/link";
 import DemoDashboard from "@/components/DemoDashboard";
 
 export const metadata: Metadata = {
-  title: "Live Demo | Preintent — Convergent GTM Intelligence",
+  title: "Live Demo | PreIntent — Convergent GTM Intelligence",
   description:
-    "Try the full Preintent dashboard — no sign-up required. See how we detect competitor retreats, regulatory signals, and community pain signals before anyone else.",
+    "Try the full PreIntent dashboard — no sign-up required. See how we detect competitor retreats, regulatory signals, and community pain signals before anyone else.",
 };
 
 export default function DemoPage() {

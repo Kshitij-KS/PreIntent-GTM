@@ -57,7 +57,7 @@ async function fetchViaBrightData(
   try {
     const res = await fetch(url, {
       headers: {
-        "User-Agent": "Preintent/1.0 (+https://preintent.dev)",
+        "User-Agent": "PreIntent/1.0 (+https://preintent.dev)",
         Accept: "text/html,application/xhtml+xml",
       },
       signal: AbortSignal.timeout(20_000),

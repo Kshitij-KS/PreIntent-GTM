@@ -1,14 +1,14 @@
-# Preintent Functional MVP Submission Guide
+# PreIntent Functional MVP Submission Guide
 
 ## Goal
 
-To submit Preintent as a fully functional, non-demo-only hackathon MVP, the product should prove one real end-to-end pipeline:
+To submit PreIntent as a fully functional, non-demo-only hackathon MVP, the product should prove one real end-to-end pipeline:
 
 ```text
 Live web signal -> AI extraction/classification -> Account profile update -> convergence score -> Intel Brief -> real alert or delivery
 ```
 
-The MVP does not need to be a full production SaaS. It needs to demonstrate that Preintent can ingest real market evidence and convert it into actionable GTM intelligence.
+The MVP does not need to be a full production SaaS. It needs to demonstrate that PreIntent can ingest real market evidence and convert it into actionable GTM intelligence.
 
 ## Submission-Critical Work
 
@@ -127,7 +127,7 @@ If time is short, keep Speechmatics mocked and clearly labeled. The higher-prior
 
 Maya is an account executive selling compliance automation software to fintech companies. She has Acme FinTech on her target account list, but Acme is not currently in pipeline and has not shown up in any traditional intent vendor feed.
 
-Maya opens Preintent and enters:
+Maya opens PreIntent and enters:
 
 - Target account: `Acme FinTech`
 - Competitor: `Stripe Atlas`
@@ -158,7 +158,7 @@ Urgency = HIGH
 Because the score crosses `85`, TriggerWare or Slack fires a real alert:
 
 ```text
-Preintent: Acme FinTech hit 87/100 convergence.
+PreIntent: Acme FinTech hit 87/100 convergence.
 Three signals aligned: competitor retreat, regulatory pressure, active evaluation.
 Intel Brief ready.
 ```
@@ -212,6 +212,6 @@ The hackathon MVP is functionally complete when:
 
 The strongest hackathon story is not "we integrated every production system." The strongest story is:
 
-> Preintent can take one live web signal, enrich it with AI, persist it as account intelligence, detect convergence, and deliver a useful brief to a GTM workflow.
+> PreIntent can take one live web signal, enrich it with AI, persist it as account intelligence, detect convergence, and deliver a useful brief to a GTM workflow.
 
 If that path works once with real sponsor APIs, the remaining engines and sources can be presented as scalable extensions of the same architecture.

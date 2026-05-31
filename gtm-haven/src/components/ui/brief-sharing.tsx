@@ -87,14 +87,14 @@ export function BriefSharing({ isOpen, onClose, accountName, briefContent, accou
 
 Hi [AE Name],
 
-Preintent detected a high-priority convergence signal for ${accountName}.
+PreIntent detected a high-priority convergence signal for ${accountName}.
 
 ${briefContent.split("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")[0]}
 
 Full brief attached. Recommend outreach within 48 hours.
 
 —
-Preintent Intelligence Platform`;
+PreIntent Intelligence Platform`;
   };
 
   const formatForSlack = () => {
@@ -102,7 +102,7 @@ Preintent Intelligence Platform`;
 
 *Score:* ${score}/100 (${status} status)
 *Account:* ${accountName}
-*Detected:* This week via Preintent
+*Detected:* This week via PreIntent
 
 *Key Signals:*
 • Competitor retreat: ${voidEvent.slice(0, 80)}
@@ -113,7 +113,7 @@ Preintent Intelligence Platform`;
 > "Hi ${contactFirstName} — I noticed ${competitor} made some changes recently, and given the regulatory tailwinds, the timing feels right for a quick conversation..."
 
 *Next Steps:*
-1. Review full brief in Preintent
+1. Review full brief in PreIntent
 2. Schedule outreach to ${contactTitle}
 3. Update CRM with convergence context
 
@@ -121,7 +121,7 @@ cc: @sales-manager @sdr-team`;
   };
 
   const formatForCRM = () => {
-    return `Lead Source: Preintent Convergence Platform
+    return `Lead Source: PreIntent Convergence Platform
 Lead Score: ${score}/100 (${status})
 Account: ${accountName}
 Industry: ${industry}
@@ -134,7 +134,7 @@ Signal Summary:
 - Pain Listener: ${painEvent.slice(0, 100)}
 
 Recommended Action:
-Contact within ${status === "ALERT" ? "48 hours" : "7 days"}. Opening line and full context in attached Preintent brief.
+Contact within ${status === "ALERT" ? "48 hours" : "7 days"}. Opening line and full context in attached PreIntent brief.
 
 Contact: ${contactTitle} (${contactName})${linkedinHandle ? `\nLinkedIn: linkedin.com/in/${linkedinHandle}` : ""}`;
   };
@@ -207,7 +207,7 @@ Contact: ${contactTitle} (${contactName})${linkedinHandle ? `\nLinkedIn: linkedi
             display: "flex",
             flexDirection: "column",
           }}
-          onClick={(e) => e.stopPropagation()}
+          onClick={(e: React.MouseEvent) => e.stopPropagation()}
         >
           {/* Header */}
           <div
@@ -475,10 +475,10 @@ Contact: ${contactTitle} (${contactName})${linkedinHandle ? `\nLinkedIn: linkedi
                         // Open print dialog — browser will render as PDF
                         const win = window.open("", "_blank");
                         if (win) {
-                          win.document.write(`<html><head><title>Preintent Intel Brief — ${accountName}</title>
+                          win.document.write(`<html><head><title>PreIntent Intel Brief — ${accountName}</title>
                             <style>body{font-family:monospace;padding:40px;max-width:800px;margin:auto;color:#111;line-height:1.7;}
                             h1{font-size:16px;margin-bottom:4px;}p{font-size:13px;}pre{white-space:pre-wrap;font-size:12px;}</style></head>
-                            <body><h1>Preintent — Intel Brief</h1><p><strong>${accountName}</strong> · Convergence ${score}/100 · ${status}</p>
+                            <body><h1>PreIntent — Intel Brief</h1><p><strong>${accountName}</strong> · Convergence ${score}/100 · ${status}</p>
                             <hr/><pre>${briefContent}</pre></body></html>`);
                           win.document.close();
                           win.print();

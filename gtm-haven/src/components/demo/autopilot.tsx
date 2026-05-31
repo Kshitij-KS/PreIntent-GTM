@@ -80,7 +80,9 @@ function useVoiceNarrator(enabled: boolean) {
   const queueRef = useRef<string[]>([]);
   const speakingRef = useRef(false);
   const enabledRef = useRef(enabled);
-  enabledRef.current = enabled;
+  useEffect(() => {
+    enabledRef.current = enabled;
+  }, [enabled]);
 
   useEffect(() => {
     if (typeof window === "undefined" || !window.speechSynthesis) return;
@@ -94,7 +96,7 @@ function useVoiceNarrator(enabled: boolean) {
     return () => window.speechSynthesis.removeEventListener("voiceschanged", loadVoices);
   }, []);
 
-  const processQueue = useCallback(() => {
+  const processQueue = useCallback(function internalProcessQueue() {
     if (typeof window === "undefined" || !window.speechSynthesis) return;
     if (!enabledRef.current || speakingRef.current) return;
 
@@ -110,7 +112,7 @@ function useVoiceNarrator(enabled: boolean) {
 
     const advance = () => {
       speakingRef.current = false;
-      processQueue();
+      internalProcessQueue();
     };
 
     utterance.onend = advance;
@@ -143,7 +145,7 @@ function useVoiceNarrator(enabled: boolean) {
 const SCRIPT: AutopilotStep[] = [
   // ── OPEN ──────────────────────────────────────────────────────────────────
   { at: 0, type: "navigate", view: "dashboard" },
-  { at: 600, type: "narrate", narration: "Welcome to Preintent. Elite GTM intelligence for revenue teams who cannot afford to miss a buying window." },
+  { at: 600, type: "narrate", narration: "Welcome to PreIntent. Elite GTM intelligence for revenue teams who cannot afford to miss a buying window." },
   { at: 4500, type: "spotlight", target: "stat-cards", ringColor: C.conv,
     narration: "Six real companies. Three intelligence engines. Every account scored in real time." },
 
@@ -202,7 +204,7 @@ const SCRIPT: AutopilotStep[] = [
   // ── CLOSE ─────────────────────────────────────────────────────────────────
   { at: 79000, type: "navigate", view: "dashboard" },
   { at: 79500, type: "clear" },
-  { at: 80000, type: "narrate", narration: "That was one account. Preintent monitors your entire TAM, twenty-four seven. This is elite GTM intelligence." },
+  { at: 80000, type: "narrate", narration: "That was one account. PreIntent monitors your entire TAM, twenty-four seven. This is elite GTM intelligence." },
 ];
 
 const TOTAL_DURATION = 105000;
@@ -217,8 +219,10 @@ function SpotlightCursor({ target, ringColor }: { target: string | null; ringCol
 
   useEffect(() => {
     if (!target) {
-      setRingRect(null);
-      setSettled(false);
+      setTimeout(() => {
+        setRingRect(null);
+        setSettled(false);
+      }, 0);
       return;
     }
 
@@ -229,8 +233,10 @@ function SpotlightCursor({ target, ringColor }: { target: string | null; ringCol
     const centerX = rect.left + rect.width / 2;
     const centerY = rect.top + rect.height / 2;
 
-    setSettled(false);
-    setRingRect(null);
+    setTimeout(() => {
+      setSettled(false);
+      setRingRect(null);
+    }, 0);
 
     const ctrl = animate(cursorX, centerX, { duration: 0.6, ease: [0.32, 0, 0.67, 0] });
     const ctrl2 = animate(cursorY, centerY, { duration: 0.6, ease: [0.32, 0, 0.67, 0] });
@@ -412,10 +418,12 @@ export function DemoAutopilot({ isActive, onEnd, actions }: DemoAutopilotProps) 
   const speakRef = useRef(speak);
   const stopVoiceRef = useRef(stopVoice);
 
-  actionsRef.current = actions;
-  onEndRef.current = onEnd;
-  speakRef.current = speak;
-  stopVoiceRef.current = stopVoice;
+  useEffect(() => {
+    actionsRef.current = actions;
+    onEndRef.current = onEnd;
+    speakRef.current = speak;
+    stopVoiceRef.current = stopVoice;
+  }, [actions, onEnd, speak, stopVoice]);
 
   const narrate = (text: string) => {
     setNarration(text);

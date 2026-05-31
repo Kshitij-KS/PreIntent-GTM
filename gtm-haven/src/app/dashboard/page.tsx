@@ -2,11 +2,12 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import DemoDashboard from "@/components/DemoDashboard";
+import { LogOut } from "lucide-react";
 
 export default function DashboardPage() {
   const router = useRouter();
   const [loading, setLoading] = useState(true);
+  const [user, setUser] = useState<{ email: string } | null>(null);
 
   useEffect(() => {
     async function init() {
@@ -23,6 +24,8 @@ export default function DashboardPage() {
             router.replace("/sign-in?next=/dashboard");
             return;
           }
+          
+          setUser({ email: session.user.email || "" });
 
           // Fetch org knowledge and store in localStorage for the dashboard
           try {
@@ -52,6 +55,7 @@ export default function DashboardPage() {
             router.replace("/sign-in?next=/dashboard");
             return;
           }
+          setUser({ email: "mock@preintent.com" });
         }
       } catch (e) {
         console.error("Dashboard init error:", e);
@@ -62,6 +66,11 @@ export default function DashboardPage() {
 
     init();
   }, [router]);
+
+  async function handleSignOut() {
+    await fetch("/api/auth/signout", { method: "POST" });
+    router.replace("/sign-in");
+  }
 
   if (loading) {
     return (
@@ -80,24 +89,45 @@ export default function DashboardPage() {
           <div style={{ fontSize: "10px", letterSpacing: "0.14em", color: "#9060ff" }}>PREINTENT</div>
           <div style={{ fontSize: "9px", color: "#4a6070", letterSpacing: "0.06em" }}>Loading your intelligence workspace...</div>
         </div>
-        <div style={{ width: "120px", height: "2px", background: "#18232f", borderRadius: "99px", overflow: "hidden" }}>
-          <div style={{
-            height: "100%", borderRadius: "99px",
-            background: "linear-gradient(90deg, #9060ff, #24c038)",
-            animation: "loading 1.4s ease-in-out infinite",
-            width: "60%",
-          }} />
-        </div>
-        <style>{`
-          @keyframes loading {
-            0% { margin-left: 0%; width: 30%; }
-            50% { margin-left: 40%; width: 50%; }
-            100% { margin-left: 100%; width: 10%; }
-          }
-        `}</style>
       </div>
     );
   }
 
-  return <DemoDashboard />;
+  return (
+    <div style={{ minHeight: "100vh", background: "#07090f", color: "#c2d0de", fontFamily: "'IBM Plex Mono', monospace", padding: "40px" }}>
+      <header style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "40px" }}>
+        <div>
+          <h1 style={{ color: "#fff", fontSize: "24px", margin: "0 0 8px 0" }}>Dashboard</h1>
+          <p style={{ margin: 0, fontSize: "12px", color: "#4a6070" }}>Welcome, {user?.email}</p>
+        </div>
+        
+        <button 
+          onClick={handleSignOut}
+          style={{
+            background: "transparent", border: "1px solid #18232f", color: "#c2d0de",
+            padding: "8px 16px", borderRadius: "6px", cursor: "pointer",
+            display: "flex", alignItems: "center", gap: "8px", fontSize: "12px",
+          }}
+        >
+          <LogOut size={14} />
+          Sign Out
+        </button>
+      </header>
+
+      <main>
+        <div style={{ background: "#0c1018", border: "1px solid #18232f", borderRadius: "12px", padding: "40px", textAlign: "center" }}>
+          <div style={{ fontSize: "32px", marginBottom: "16px", color: "#9060ff" }}>✧</div>
+          <h2 style={{ color: "#fff", fontSize: "18px", margin: "0 0 12px 0" }}>Your Intelligence Hub</h2>
+          <p style={{ color: "#4a6070", maxWidth: "400px", margin: "0 auto", fontSize: "12px", lineHeight: 1.6 }}>
+            Company intelligence will be populated here based on your onboarding. 
+            To view the interactive GTM agent simulation, check out the Live Demo.
+          </p>
+          <br/>
+          <a href="/demo" style={{ color: "#9060ff", textDecoration: "none", fontSize: "12px", border: "1px solid #9060ff", padding: "8px 16px", borderRadius: "4px", display: "inline-block" }}>
+            View Live Demo →
+          </a>
+        </div>
+      </main>
+    </div>
+  );
 }

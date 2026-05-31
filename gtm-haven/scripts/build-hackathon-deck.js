@@ -1,5 +1,6 @@
+/* eslint-disable @typescript-eslint/no-require-imports */
 /**
- * Preintent Hackathon Deck Generator
+ * PreIntent Hackathon Deck Generator
  * Run: npm run build:deck
  * Output: outputs/PREINTENT_Hackathon_Deck.pptx
  */
@@ -38,7 +39,7 @@ async function iconPng(IconComp, color, size = 256) {
   return "image/png;base64," + buf.toString("base64");
 }
 
-// Matches Preintent app design tokens (premium-demo-data.ts)
+// Matches PreIntent app design tokens (premium-demo-data.ts)
 const C = {
   bg: "07090F",
   surface: "0C1018",
@@ -63,8 +64,8 @@ const TOTAL_SLIDES = 12;
 async function build() {
   const pres = new pptxgen();
   pres.layout = "LAYOUT_16x9";
-  pres.title = "Preintent — GTM Intelligence Platform";
-  pres.author = "Preintent Team";
+  pres.title = "PreIntent — GTM Intelligence Platform";
+  pres.author = "PreIntent Team";
 
   const icSearch = await iconPng(FaSearch, "#" + C.void, 256);
   const icGavel = await iconPng(FaGavel, "#" + C.comp, 256);
@@ -397,15 +398,15 @@ async function build() {
     const stats = [
       {
         val: "3+",
-        unit: "day lag vs Preintent",
-        body: "Intent vendors detect Brex's Stripe Atlas signal 3 days after Preintent — quantified in our competitive comparison widget",
+        unit: "day lag vs PreIntent",
+        body: "Intent vendors detect Brex's Stripe Atlas signal 3 days after PreIntent — quantified in our competitive comparison widget",
         color: C.void,
         icon: icShield,
       },
       {
         val: "$50K",
         unit: "ACV per deal",
-        body: "One Brex-scale convergence alert pays for 50 months of Preintent at $1,000/mo — ROI calculator built into the live demo",
+        body: "One Brex-scale convergence alert pays for 50 months of PreIntent at $1,000/mo — ROI calculator built into the live demo",
         color: C.comp,
         icon: icChart,
       },
@@ -585,7 +586,7 @@ async function build() {
       line: { color: C.pain, width: 0 },
     });
     s.addImage({ data: icCheck, x: 5.3, y: 1.34, w: 0.24, h: 0.24 });
-    s.addText("Preintent — What Nobody Else Sees", {
+    s.addText("PreIntent — What Nobody Else Sees", {
       x: 5.62,
       y: 1.3,
       w: 3.75,
@@ -1887,7 +1888,7 @@ async function build() {
     sNum(s, 11);
   }
 
-  // SLIDE 12 — WHY Preintent WINS
+  // SLIDE 12 — WHY PreIntent WINS
   {
     const s = pres.addSlide();
     s.background = { color: C.bg };
@@ -1902,7 +1903,7 @@ async function build() {
       rotate: -8,
     });
 
-    eyebrow(s, "WHY Preintent WINS");
+    eyebrow(s, "WHY PreIntent WINS");
     s.addText("Built, deployed, and demo-ready.", {
       x: 0.6,
       y: 0.6,
@@ -1967,7 +1968,7 @@ async function build() {
       });
     });
 
-    s.addText("▶  Preintent  ·  localhost:3000/demo", {
+    s.addText("▶  PreIntent  ·  localhost:3000/demo", {
       x: 0.6,
       y: 5.28,
       w: 5.5,

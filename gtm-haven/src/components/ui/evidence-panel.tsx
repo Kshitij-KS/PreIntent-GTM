@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, FileText, Image as ImageIcon, Headphones, Eye, ExternalLink } from "lucide-react";
+import { X, FileText, Image as ImageIcon, Eye, ExternalLink } from "lucide-react";
 import type { EvidencePanel as EvidencePanelType } from "@/lib/premium-demo-data";
 
 // ─── DESIGN TOKENS ───────────────────────────────────────────────────────────
@@ -104,7 +104,7 @@ export function EvidenceModal({ isOpen, onClose, evidence, accountName, signalTy
               display: "flex",
               flexDirection: "column",
             }}
-            onClick={(e) => e.stopPropagation()}
+            onClick={(e: React.MouseEvent) => e.stopPropagation()}
           >
             {/* Header */}
             <div
@@ -411,19 +411,19 @@ export function EvidenceModal({ isOpen, onClose, evidence, accountName, signalTy
                         lineHeight: 1.6,
                       }}
                     >
-                      <div style={{ color: C.muted, marginBottom: "8px" }}>// Detection Metadata</div>
+                      <div style={{ color: C.muted, marginBottom: "8px" }}>{`// Detection Metadata`}</div>
                       <div style={{ color: C.text }}>
-                        <span style={{ color: C.conv }}>detected_at</span>: "{evidence.capturedAt}"<br />
-                        <span style={{ color: C.conv }}>source</span>: "{evidence.source}"<br />
-                        <span style={{ color: C.conv }}>engine</span>: "{signalType}_scanner"<br />
+                        <span style={{ color: C.conv }}>detected_at</span>: &quot;{evidence.capturedAt}&quot;<br />
+                        <span style={{ color: C.conv }}>source</span>: &quot;{evidence.source}&quot;<br />
+                        <span style={{ color: C.conv }}>engine</span>: &quot;{signalType}_scanner&quot;<br />
                         <span style={{ color: C.conv }}>confidence</span>: 0.94<br />
                         <span style={{ color: C.conv }}>provenance</span>: {"{"}<br />
-                        &nbsp;&nbsp;<span style={{ color: C.pain }}>tool</span>: "Bright Data Scraping Browser",<br />
-                        &nbsp;&nbsp;<span style={{ color: C.pain }}>region</span>: "us-west-2",<br />
-                        &nbsp;&nbsp;<span style={{ color: C.pain }}>fingerprint</span>: "sha256:a3f2..."<br />
+                        &nbsp;&nbsp;<span style={{ color: C.pain }}>tool</span>: &quot;Bright Data Scraping Browser&quot;,<br />
+                        &nbsp;&nbsp;<span style={{ color: C.pain }}>region</span>: &quot;us-west-2&quot;,<br />
+                        &nbsp;&nbsp;<span style={{ color: C.pain }}>fingerprint</span>: &quot;sha256:a3f2...&quot;<br />
                         {"}"}<br />
                         <span style={{ color: C.conv }}>semantic_diff</span>: {"{"}<br />
-                        &nbsp;&nbsp;<span style={{ color: C.pain }}>removed</span>: ["{evidence.highlight?.replace(/Removed: /, '') || 'content'}"],<br />
+                        &nbsp;&nbsp;<span style={{ color: C.pain }}>removed</span>: [&quot;{evidence.highlight?.replace(/Removed: /, '') || 'content'}&quot;],<br />
                         &nbsp;&nbsp;<span style={{ color: C.pain }}>added</span>: [],<br />
                         &nbsp;&nbsp;<span style={{ color: C.pain }}>modified</span>: []<br />
                         {"}"}

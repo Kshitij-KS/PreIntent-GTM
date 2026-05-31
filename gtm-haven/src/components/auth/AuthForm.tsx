@@ -18,9 +18,11 @@ export default function AuthForm({ onSuccess, redirectTo = "/onboarding" }: Auth
   const [supabaseConfigured, setSupabaseConfigured] = useState(false);
 
   useEffect(() => {
-    setSupabaseConfigured(
-      Boolean(process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY)
-    );
+    setTimeout(() => {
+      setSupabaseConfigured(
+        Boolean(process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY)
+      );
+    }, 0);
   }, []);
 
   const handleGoogleSignIn = async () => {
@@ -30,7 +32,7 @@ export default function AuthForm({ onSuccess, redirectTo = "/onboarding" }: Auth
       const supabase = createSupabaseBrowserClient();
       const { error } = await supabase.auth.signInWithOAuth({
         provider: "google",
-        options: { redirectTo: `${window.location.origin}/auth/callback?next=${encodeURIComponent(redirectTo)}` },
+        options: { redirectTo: `${window.location.origin}/api/auth/callback?next=${encodeURIComponent(redirectTo)}` },
       });
       if (error) throw error;
     } catch (err) {
@@ -239,7 +241,7 @@ export default function AuthForm({ onSuccess, redirectTo = "/onboarding" }: Auth
           onMouseEnter={(e) => { if (!isPending) e.currentTarget.style.transform = "translateY(-2px)"; if (!isPending) e.currentTarget.style.boxShadow = "0 12px 32px rgba(144,96,255,0.48)"; }}
           onMouseLeave={(e) => { e.currentTarget.style.transform = ""; e.currentTarget.style.boxShadow = isPending ? "none" : "0 8px 24px rgba(144,96,255,0.35)"; }}
         >
-          {isPending ? "AUTHENTICATING..." : tab === "signin" ? "SIGN IN TO Preintent →" : "CREATE ACCOUNT →"}
+          {isPending ? "AUTHENTICATING..." : tab === "signin" ? "SIGN IN TO PreIntent →" : "CREATE ACCOUNT →"}
         </button>
       </form>
 

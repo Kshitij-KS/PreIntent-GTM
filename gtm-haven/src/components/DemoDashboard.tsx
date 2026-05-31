@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { usePathname } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import type { AccountIntelligenceProfile } from "@/lib/domain";
@@ -683,7 +683,7 @@ const BriefView = ({
         {!loading && !brief && (
           <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "60px 24px", color: C.muted, textAlign: "center" }}>
             <div style={{ fontSize: "32px", marginBottom: "12px", opacity: 0.3 }}>✦</div>
-            <div style={{ fontSize: "11px" }}>Click "Generate Brief" to produce an AI-powered</div>
+            <div style={{ fontSize: "11px" }}>Click &quot;Generate Brief&quot; to produce an AI-powered</div>
             <div style={{ fontSize: "11px" }}>convergence analysis for {account.name}</div>
           </div>
         )}
@@ -817,7 +817,7 @@ const SettingsView = ({
           onMouseEnter={(e) => { e.currentTarget.style.borderColor = C.void; e.currentTarget.style.color = C.void; }}
           onMouseLeave={(e) => { e.currentTarget.style.borderColor = C.border; e.currentTarget.style.color = C.muted; }}
         >
-          Sign out of Preintent
+          Sign out of PreIntent
         </button>
       )}
     </motion.div>
@@ -835,7 +835,7 @@ const NAV_ITEMS: { id: View; label: string; Icon: React.FC }[] = [
   { id: "settings", label: "SETTINGS", Icon: Icon.Settings },
 ];
 
-export default function PreintentDashboard({ demoMode = false }: { demoMode?: boolean }) {
+export default function PreIntentDashboard({ demoMode = false }: { demoMode?: boolean }) {
   const pathname = usePathname();
   const isDemoPage = demoMode || (pathname?.startsWith("/demo") ?? false);
   const homeHref = isDemoPage ? "/demo" : "/dashboard";
@@ -1038,20 +1038,8 @@ ACCOUNT CONTEXT
     setShareOpen(false);
   }, []);
 
-  const autopilotActionsRef = useRef<AutopilotActions>({
-    setView: () => {},
-    runScan: () => {},
-    generateBrief: () => {},
-    selectAccount: () => {},
-    openEvidence: () => {},
-    closeEvidence: () => {},
-    openShare: () => {},
-    closeShare: () => {},
-    filterSignals: () => {},
-    getAccounts: () => PREMIUM_ACCOUNTS,
-  });
-
-  autopilotActionsRef.current = {
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const autopilotActions = useMemo<AutopilotActions>(() => ({
     setView,
     runScan,
     generateBrief,
@@ -1062,7 +1050,7 @@ ACCOUNT CONTEXT
     closeShare: () => setShareOpen(false),
     filterSignals: setSignalFilter,
     getAccounts: () => accounts,
-  };
+  }), [accounts]);
 
   const selectAccountAndView = (a: PremiumAccount, v: View = "intel") => {
     setSelectedAccount(a); setView(v);
@@ -1072,7 +1060,7 @@ ACCOUNT CONTEXT
   const signalCount = accounts.length * 3;
 
   // ─── DASHBOARD VIEW ───────────────────────────────────────────────────────
-  const DashboardView = () => (
+  const renderDashboardView = () => (
     <motion.div key="dashboard" initial={{ opacity: 0 }} animate={{ opacity: 1 }} style={{ padding: "18px" }}>
       {/* Live ticker */}
       <AnimatePresence mode="wait">
@@ -1346,7 +1334,7 @@ ACCOUNT CONTEXT
         )}
 
         <AnimatePresence mode="wait">
-          {view === "dashboard" && <DashboardView key="dash" />}
+          {view === "dashboard" && renderDashboardView()}
           {view === "signals" && (
             <SignalsView
               key="sig"
@@ -1424,9 +1412,9 @@ ACCOUNT CONTEXT
       {autopilotActive && (
         <DemoAutopilot
           key={autopilotSession}
-          isActive
+          isActive={autopilotActive}
           onEnd={handleAutopilotEnd}
-          actions={autopilotActionsRef.current}
+          actions={autopilotActions}
         />
       )}
 

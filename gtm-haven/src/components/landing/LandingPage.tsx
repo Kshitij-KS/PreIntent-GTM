@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import Link from "next/link";
 
 // ─── Design tokens ─────────────────────────────────────────────────────────────
 const C = {
@@ -337,10 +338,10 @@ export default function LandingPage() {
         height: "64px",
         gap: "24px",
       }}>
-        <a href="/" style={{ display: "flex", alignItems: "center", gap: "10px", fontWeight: 800, fontSize: "18px", color: C.white, letterSpacing: "0.1em" }}>
+        <Link href="/" style={{ display: "flex", alignItems: "center", gap: "10px", fontWeight: 800, fontSize: "18px", color: C.white, letterSpacing: "0.1em", textDecoration: "none" }}>
           <span style={{ color: C.conv }}>▼</span>
           PREINTENT
-        </a>
+        </Link>
         <div style={{ flex: 1 }} />
         <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
           <a
@@ -463,7 +464,7 @@ export default function LandingPage() {
             margin: "0 auto 44px",
             lineHeight: 1.8,
           }}>
-            Preintent triangulates competitor retreats, regulatory shockwaves, and community pain signals into high-confidence buying events — with AI-generated Intel Briefs delivered before any intent vendor knows the signal exists.
+            PreIntent triangulates competitor retreats, regulatory shockwaves, and community pain signals into high-confidence buying events — with AI-generated Intel Briefs delivered before any intent vendor knows the signal exists.
           </p>
 
           <div style={{ display: "flex", gap: "12px", justifyContent: "center", flexWrap: "wrap" }}>
@@ -547,7 +548,7 @@ export default function LandingPage() {
                 The moment a buying event emerges, you know.
               </h2>
               <p style={{ fontSize: "15px", color: C.muted, lineHeight: 1.8, margin: "0 0 32px" }}>
-                Real-time signal triangulation across competitor pages, regulatory feeds, and community forums. When three signals converge on the same account, Preintent fires before any rep has even opened LinkedIn.
+                Real-time signal triangulation across competitor pages, regulatory feeds, and community forums. When three signals converge on the same account, PreIntent fires before any rep has even opened LinkedIn.
               </p>
               <div style={{ display: "flex", gap: "32px" }}>
                 {[
@@ -604,7 +605,7 @@ export default function LandingPage() {
               No single signal is enough.
             </h2>
             <p style={{ fontSize: "16px", color: C.muted, maxWidth: "520px", margin: "0 auto" }}>
-              Preintent triangulates three distinct data streams into one definitive buying signal — and fires before any intent vendor even picks it up.
+              PreIntent triangulates three distinct data streams into one definitive buying signal — and fires before any intent vendor even picks it up.
             </p>
           </div>
 
@@ -664,7 +665,7 @@ export default function LandingPage() {
                 <HowStep
                   num={1}
                   title="Onboard your company"
-                  desc="Tell Preintent your industry, competitors, and ICP. Our AI builds your intelligence workspace instantly."
+                  desc="Tell PreIntent your industry, competitors, and ICP. Our AI builds your intelligence workspace instantly."
                   color={C.conv}
                 />
                 <HowStep
@@ -753,7 +754,7 @@ enforcement coming in August..."`}
           </div>
           <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "20px" }}>
             <Testimonial
-              quote="We caught a Stripe pricing change 3 days before our competitor did. That's 3 days of outreach advantage in an active deal. Preintent paid for itself in week one."
+              quote="We caught a Stripe pricing change 3 days before our competitor did. That's 3 days of outreach advantage in an active deal. PreIntent paid for itself in week one."
               name="Sarah K."
               role="VP of Sales"
               company="FinTech startup"
@@ -765,7 +766,7 @@ enforcement coming in August..."`}
               company="Payments SaaS"
             />
             <Testimonial
-              quote="I've used 6 intent data tools. Preintent is the first one that tells me *why* an account is hot, not just that it is. The Intel Brief goes straight into the email."
+              quote="I've used 6 intent data tools. PreIntent is the first one that tells me *why* an account is hot, not just that it is. The Intel Brief goes straight into the email."
               name="Priya N."
               role="Enterprise AE"
               company="B2B SaaS"
@@ -842,7 +843,7 @@ enforcement coming in August..."`}
           PREINTENT
         </div>
         <div style={{ fontSize: "12px", color: C.muted }}>
-          © 2026 Preintent GTM Intelligence · Built with{" "}
+          © 2026 PreIntent GTM Intelligence · Built with{" "}
           <span style={{ color: C.conv }}>Bright Data · AI/ML API · Featherless · Speechmatics</span>
         </div>
         <div style={{ display: "flex", gap: "20px" }}>

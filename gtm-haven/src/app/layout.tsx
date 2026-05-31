@@ -11,11 +11,11 @@ const ibmPlexMono = IBM_Plex_Mono({
 
 export const metadata: Metadata = {
   title: {
-    default: "Preintent | Convergent GTM Intelligence",
-    template: "%s | Preintent",
+    default: "PreIntent | Convergent GTM Intelligence",
+    template: "%s | PreIntent",
   },
   description:
-    "Three invisible forces. One unfair pipeline advantage. Preintent triangulates competitor retreats (Void Atlas), regulatory shockwaves (Compliance Radar), and community pain signals (Pain Listener) into high-confidence buying events with AI-generated Intel Briefs — before any intent vendor knows.",
+    "Three invisible forces. One unfair pipeline advantage. PreIntent triangulates competitor retreats (Void Atlas), regulatory shockwaves (Compliance Radar), and community pain signals (Pain Listener) into high-confidence buying events with AI-generated Intel Briefs — before any intent vendor knows.",
   keywords: [
     "GTM intelligence",
     "competitor monitoring",
@@ -25,7 +25,7 @@ export const metadata: Metadata = {
     "convergent signals",
   ],
   openGraph: {
-    title: "Preintent | Convergent GTM Intelligence",
+    title: "PreIntent | Convergent GTM Intelligence",
     description: "Three invisible forces. One unfair pipeline advantage.",
     type: "website",
   },

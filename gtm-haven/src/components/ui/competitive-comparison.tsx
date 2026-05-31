@@ -76,7 +76,7 @@ export function CompetitiveComparison({ isOpen, onClose, acv = 50000 }: Competit
           overflow: "auto",
           boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.5)",
         }}
-        onClick={(e) => e.stopPropagation()}
+        onClick={(e: React.MouseEvent) => e.stopPropagation()}
       >
         {/* Header */}
         <div
@@ -107,7 +107,7 @@ export function CompetitiveComparison({ isOpen, onClose, acv = 50000 }: Competit
               Competitive Advantage
             </div>
             <div style={{ fontSize: "11px", color: C.muted }}>
-              Preintent vs traditional intent vendors
+              PreIntent vs traditional intent vendors
             </div>
           </div>
           <div
@@ -187,7 +187,7 @@ export function CompetitiveComparison({ isOpen, onClose, acv = 50000 }: Competit
                     marginBottom: "16px",
                   }}
                 >
-                  {/* Preintent */}
+                  {/* PreIntent */}
                   <div
                     style={{
                       background: `${C.conv}10`,
@@ -359,7 +359,7 @@ export function CompetitiveComparison({ isOpen, onClose, acv = 50000 }: Competit
             <span style={{ color: C.pain, fontWeight: 600 }}>
               ${(acv / 90).toLocaleString(undefined, { maximumFractionDigits: 0 })}
             </span>{" "}
-            in pipeline velocity. Preintent's 2-3 day advantage compounds to{" "}
+            in pipeline velocity. PreIntent&apos;s 2-3 day advantage compounds to{" "}
             <span style={{ color: C.conv, fontWeight: 600 }}>significant ROI</span>.
           </div>
         </div>
@@ -427,7 +427,7 @@ export function ComparisonTrigger({ onOpen }: { onOpen: () => void }) {
       </div>
       <div style={{ flex: 1 }}>
         <div style={{ fontSize: "11px", color: C.text, fontWeight: 500 }}>
-          Preintent detected {days}d {hours}h earlier
+          PreIntent detected {days}d {hours}h earlier
         </div>
         <div style={{ fontSize: "10px", color: C.muted, marginTop: "2px" }}>
           vs traditional intent vendors

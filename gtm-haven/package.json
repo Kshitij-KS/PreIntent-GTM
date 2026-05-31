@@ -2,7 +2,7 @@
   "name": "preintent",
   "version": "0.1.0",
   "private": true,
-  "description": "Preintent — The Convergent GTM Intelligence Platform. Three invisible forces (Void Scanner, Compliance Radar, Pain Listener) triangulated into certified buying events with AI-generated Intel Briefs.",
+  "description": "PreIntent — The Convergent GTM Intelligence Platform. Three invisible forces (Void Scanner, Compliance Radar, Pain Listener) triangulated into certified buying events with AI-generated Intel Briefs.",
   "scripts": {
     "dev": "next dev",
     "build": "next build",

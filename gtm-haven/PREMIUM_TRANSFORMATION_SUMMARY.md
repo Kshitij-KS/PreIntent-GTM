@@ -1,11 +1,11 @@
-# Preintent Premium Transformation Summary
+# PreIntent Premium Transformation Summary
 ## $1,000/month SaaS Demo Package - COMPLETE
 
 ---
 
 ## Executive Summary
 
-Your Preintent GTM Intelligence Platform has been transformed into a **premium, demo-ready product** that justifies a $1,000/month price point. The platform now features real companies, realistic data, professional animations, and a compelling narrative flow perfect for hackathon presentations.
+Your PreIntent GTM Intelligence Platform has been transformed into a **premium, demo-ready product** that justifies a $1,000/month price point. The platform now features real companies, realistic data, professional animations, and a compelling narrative flow perfect for hackathon presentations.
 
 ---
 
@@ -180,7 +180,7 @@ src/
 | 0:50 | Pain signal | "Head of Treasury posted on Reddit: evaluating alternatives" |
 | 1:05 | Convergence | "Three signals, 85/100 score — this is a perfect storm" |
 | 1:15 | Brief | "AI generates opening line and full context" |
-| 1:25 | ROI | "One deal pays for Preintent for 50 months" |
+| 1:25 | ROI | "One deal pays for PreIntent for 50 months" |
 
 ### 3. Recording Mode
 ```
@@ -267,7 +267,7 @@ Press 'C' to enter clean mode
 **For a $1,000/month price point:**
 - 1 deal (at $50K ACV, 25% win rate) pays for 50 months
 - Traditional intent vendors cost $2,000-5,000/month
-- Preintent detects signals 2-3 days earlier = 10-15% more deals
+- PreIntent detects signals 2-3 days earlier = 10-15% more deals
 
 ---
 

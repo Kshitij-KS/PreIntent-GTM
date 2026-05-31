@@ -1,5 +1,5 @@
 /**
- * Preintent Auth Helpers
+ * PreIntent Auth Helpers
  *
  * Supports two modes:
  *  1. MOCK mode  — works with zero config; stores session in a cookie

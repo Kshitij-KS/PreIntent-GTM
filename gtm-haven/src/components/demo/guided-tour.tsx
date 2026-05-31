@@ -28,8 +28,8 @@ const TOUR_STEPS: TourStep[] = [
   {
     id: "intro",
     chapter: "INTRO",
-    title: "Welcome to Preintent",
-    script: "What I'm about to show you is a deal that every traditional intent vendor would miss entirely. Not because the signal was hidden — but because they only watch one feed. Preintent watches three simultaneously and triangulates them.",
+    title: "Welcome to PreIntent",
+    script: "What I'm about to show you is a deal that every traditional intent vendor would miss entirely. Not because the signal was hidden — but because they only watch one feed. PreIntent watches three simultaneously and triangulates them.",
     show: "Point at the OVERVIEW tab and the live signal ticker at the top",
     accent: C.conv,
     duration: 6000,
@@ -59,7 +59,7 @@ const TOUR_STEPS: TourStep[] = [
     id: "compliance",
     chapter: "SIGNAL 2",
     title: "Compliance Radar — 74/100 Pressure Score",
-    script: "PCI-DSS 4.0 enforcement begins in 89 days. Brex processes $2.1 billion monthly. Preintent scanned their compliance disclosures and found zero activity — no vendor assessments, no audit logs, no infrastructure changes. A 74 out of 100 compliance pressure score. They're behind schedule and they know it.",
+    script: "PCI-DSS 4.0 enforcement begins in 89 days. Brex processes $2.1 billion monthly. PreIntent scanned their compliance disclosures and found zero activity — no vendor assessments, no audit logs, no infrastructure changes. A 74 out of 100 compliance pressure score. They're behind schedule and they know it.",
     show: "Click 'COMPL.' filter — show the Brex compliance signal at 74/100",
     accent: C.compliance,
     duration: 7000,
@@ -109,7 +109,7 @@ const TOUR_STEPS: TourStep[] = [
     id: "roi",
     chapter: "THE MATH",
     title: "$1,000/Month → 5,000% ROI",
-    script: "One deal like Brex — average ACV fifty thousand dollars — pays for Preintent for over four years. But this isn't about one deal. Our customers average eleven convergence alerts per month. At a 30% win rate, that's three deals per month from signals that didn't exist in any other tool.",
+    script: "One deal like Brex — average ACV fifty thousand dollars — pays for PreIntent for over four years. But this isn't about one deal. Our customers average eleven convergence alerts per month. At a 30% win rate, that's three deals per month from signals that didn't exist in any other tool.",
     show: "Click the EST. ROI stat card to open the calculator",
     accent: C.pain,
     duration: 7000,
@@ -119,7 +119,7 @@ const TOUR_STEPS: TourStep[] = [
     id: "close",
     chapter: "CLOSE",
     title: "Your Competitors Are Already Behind",
-    script: "While you were watching this demo, Preintent ran three more scans. It found two new signals across your watchlist. The deals you're missing right now are your competitors' best customers. Preintent gives you the intelligence to get there first. Every time.",
+    script: "While you were watching this demo, PreIntent ran three more scans. It found two new signals across your watchlist. The deals you're missing right now are your competitors' best customers. PreIntent gives you the intelligence to get there first. Every time.",
     show: "Return to OVERVIEW — let the live ticker run. End the presentation.",
     accent: C.conv,
     duration: 6000,
@@ -130,10 +130,10 @@ const TOUR_STEPS: TourStep[] = [
 // ─── COUNTDOWN RING ──────────────────────────────────────────────────────────
 function CountdownRing({ duration, accent, playing }: { duration: number; accent: string; playing: boolean }) {
   const [elapsed, setElapsed] = useState(0);
-  const startRef = useRef(Date.now());
+  const startRef = useRef(0);
 
   useEffect(() => {
-    setElapsed(0);
+    setTimeout(() => setElapsed(0), 0);
     startRef.current = Date.now();
     if (!playing) return;
     const id = setInterval(() => {
@@ -236,7 +236,12 @@ export function GuidedTour({ isActive, onClose, onStepChange, accounts }: Guided
 
   // Reset on open
   useEffect(() => {
-    if (isActive) { setCurrentStep(0); setIsPlaying(true); }
+    if (isActive) { 
+      setTimeout(() => {
+        setCurrentStep(0); 
+        setIsPlaying(true); 
+      }, 0);
+    }
   }, [isActive]);
 
   if (!isActive || !step) return null;

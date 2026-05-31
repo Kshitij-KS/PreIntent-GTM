@@ -1,5 +1,5 @@
 /**
- * Preintent Demo Fixtures & Engine Simulators
+ * PreIntent Demo Fixtures & Engine Simulators
  * Exact events and narrative from Ideation and Architecture.md "Demo Flow" and the Account Intelligence Profile example.
  * All signals carry explicit sponsor tool tags as required.
  */

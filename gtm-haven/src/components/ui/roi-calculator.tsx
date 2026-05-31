@@ -47,10 +47,6 @@ export function ROICalculator({ isOpen, onClose, accountName, accountConvergence
   } | null>(null);
 
   useEffect(() => {
-    calculateResults();
-  }, [acv, winRate, salesCycle, timeAdvantage]);
-
-  function calculateResults() {
     const preintentCost = 1000;
     const pipelineValue = acv;
     const expectedValue = acv * (winRate / 100);
@@ -59,15 +55,17 @@ export function ROICalculator({ isOpen, onClose, accountName, accountConvergence
     const roi = (advantageValue / preintentCost) * 100;
     const paybackDeals = Math.ceil(preintentCost / expectedValue);
 
-    setResults({
-      pipelineValue,
-      expectedValue,
-      dailyValue,
-      advantageValue,
-      roi,
-      paybackDeals,
-    });
-  }
+    setTimeout(() => {
+      setResults({
+        pipelineValue,
+        expectedValue,
+        dailyValue,
+        advantageValue,
+        roi,
+        paybackDeals,
+      });
+    }, 0);
+  }, [acv, winRate, salesCycle, timeAdvantage]);
 
   function formatCurrency(value: number): string {
     if (value >= 1000000) return `$${(value / 1000000).toFixed(1)}M`;
@@ -113,7 +111,7 @@ export function ROICalculator({ isOpen, onClose, accountName, accountConvergence
               overflow: "auto",
               boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.5)",
             }}
-            onClick={(e) => e.stopPropagation()}
+            onClick={(e: React.MouseEvent) => e.stopPropagation()}
           >
             {/* Header */}
             <div
@@ -144,7 +142,7 @@ export function ROICalculator({ isOpen, onClose, accountName, accountConvergence
                   ROI Calculator
                 </div>
                 <div style={{ fontSize: "11px", color: C.muted }}>
-                  Preintent pays for itself when...
+                  PreIntent pays for itself when...
                 </div>
               </div>
               {accountName && (
@@ -277,7 +275,7 @@ export function ROICalculator({ isOpen, onClose, accountName, accountConvergence
                   <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "8px" }}>
                     <TrendingUp size={12} color={C.conv} />
                     <label style={{ fontSize: "11px", color: C.conv, textTransform: "uppercase", letterSpacing: "0.05em" }}>
-                      Preintent Time Advantage (days)
+                      PreIntent Time Advantage (days)
                     </label>
                   </div>
                   <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
@@ -302,7 +300,7 @@ export function ROICalculator({ isOpen, onClose, accountName, accountConvergence
                     </div>
                   </div>
                   <div style={{ fontSize: "10px", color: C.muted, marginTop: "6px" }}>
-                    Average head start Preintent provides vs traditional intent vendors
+                    Average head start PreIntent provides vs traditional intent vendors
                   </div>
                 </div>
               </div>
@@ -373,7 +371,7 @@ export function ROICalculator({ isOpen, onClose, accountName, accountConvergence
                   }}
                 >
                   <div style={{ fontSize: "10px", color: C.muted, textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: "8px" }}>
-                    Monthly ROI on $1,000 Preintent Investment
+                    Monthly ROI on $1,000 PreIntent Investment
                   </div>
                   <motion.div
                     initial={{ scale: 0.8, opacity: 0 }}
@@ -384,7 +382,7 @@ export function ROICalculator({ isOpen, onClose, accountName, accountConvergence
                     {results.roi.toFixed(0)}%
                   </motion.div>
                   <div style={{ fontSize: "11px", color: C.muted, marginTop: "12px" }}>
-                    Preintent pays for itself after closing{" "}
+                    PreIntent pays for itself after closing{" "}
                     <span style={{ color: C.conv, fontWeight: 600 }}>{results.paybackDeals}</span> deal
                     {results.paybackDeals !== 1 ? "s" : ""}
                   </div>
@@ -479,7 +477,7 @@ export function ROIPreview({ onOpen }: { onOpen: () => void }) {
           ROI Calculator
         </div>
         <div style={{ fontSize: "10px", color: C.muted, marginTop: "2px" }}>
-          See how Preintent pays for itself
+          See how PreIntent pays for itself
         </div>
       </div>
       <div style={{ fontSize: "18px", color: C.conv, fontWeight: 700 }}>

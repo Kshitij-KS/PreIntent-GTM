@@ -1,12 +1,12 @@
-# Preintent Architecture And Endpoints
+# PreIntent Architecture And Endpoints
 
 ## What Was Implemented
 
-This pass hardened Preintent from a polished demo shell into a mock-first backend-ready MVP aligned with `Project-GTM/Ideation and Architecture.md`.
+This pass hardened PreIntent from a polished demo shell into a mock-first backend-ready MVP aligned with `Project-GTM/Ideation and Architecture.md`.
 
 Implemented changes:
 
-- Unified Preintent domain concepts around `AccountIntelligenceProfile`, `EngineSignal`, `ConvergenceResult`, `IntelBrief`, `IntegrationStatus`, and threshold actions in `src/lib/domain.ts`.
+- Unified PreIntent domain concepts around `AccountIntelligenceProfile`, `EngineSignal`, `ConvergenceResult`, `IntelBrief`, `IntegrationStatus`, and threshold actions in `src/lib/domain.ts`.
 - Added real convergence logic in `src/lib/convergence.ts`, including default 33/33/33 scoring, urgency mapping, and threshold action evaluation for 50/65/75/85/95 and single-engine 100 triggers.
 - Standardized Cognee MVP persistence in `src/lib/cognee.ts` using browser `localStorage` and account-name keyed Account Intelligence Profiles.
 - Added deterministic demo engine fixtures in `src/lib/preintent-demo.ts` for Void Scanner, Compliance Radar, Pain Listener, Speechmatics audio, and Intel Brief generation.
@@ -18,16 +18,16 @@ Implemented changes:
 - Added `GET /api/health` for integration mode/status reporting.
 - Hardened `src/app/actions.ts` so real AI/ML and Featherless-compatible calls are server-side only and safely fall back to mocks.
 - Reworked `src/components/DemoDashboard.tsx` to consume the hardened architecture while keeping the dense dashboard aesthetic.
-- Replaced stale GTM Haven tests with Preintent-specific tests for convergence and integration contracts.
-- Rewrote Playwright e2e coverage around the actual Preintent demo flow.
-- Realigned Supabase reference schema to Preintent entities for future production persistence.
+- Replaced stale GTM Haven tests with PreIntent-specific tests for convergence and integration contracts.
+- Rewrote Playwright e2e coverage around the actual PreIntent demo flow.
+- Realigned Supabase reference schema to PreIntent entities for future production persistence.
 - Updated README and production-readiness notes to distinguish live, mock, and deferred capabilities.
 
 ## Current Architecture
 
 ```mermaid
 flowchart TD
-  Dashboard["DemoDashboard"] --> DemoFixtures["Preintent Demo Fixtures"]
+  Dashboard["DemoDashboard"] --> DemoFixtures["PreIntent Demo Fixtures"]
   Dashboard --> CogneeStore["Cognee MVP localStorage"]
   Dashboard --> Convergence["Convergence Engine"]
   Dashboard --> ServerActions["Server Actions"]

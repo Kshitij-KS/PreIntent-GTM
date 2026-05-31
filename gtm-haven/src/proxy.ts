@@ -1,8 +1,5 @@
-import { NextResponse } from "next/server";
-import type { NextRequest } from "next/server";
-
-const MOCK_SESSION_COOKIE = "preintent_mock_session";
-const ONBOARDING_DONE_COOKIE = "preintent_onboarding_done";
+import { createServerClient } from "@supabase/ssr";
+import { NextResponse, type NextRequest } from "next/server";
 
 // Routes that require authentication
 const PROTECTED_PREFIXES = ["/dashboard", "/onboarding"];
@@ -10,30 +7,51 @@ const PROTECTED_PREFIXES = ["/dashboard", "/onboarding"];
 // Routes only for unauthenticated users
 const AUTH_ONLY_ROUTES = ["/sign-in"];
 
-export function proxy(request: NextRequest) {
+export async function proxy(request: NextRequest) {
+  let supabaseResponse = NextResponse.next({
+    request,
+  });
+
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
+
+  if (!supabaseUrl || !supabaseKey) {
+    // Fallback if env vars are missing
+    return handleMissingEnvFallback(request);
+  }
+
+  const supabase = createServerClient(
+    supabaseUrl,
+    supabaseKey,
+    {
+      cookies: {
+        getAll() {
+          return request.cookies.getAll();
+        },
+        setAll(cookiesToSet) {
+          cookiesToSet.forEach(({ name, value, options }) => request.cookies.set(name, value));
+          supabaseResponse = NextResponse.next({
+            request,
+          });
+          cookiesToSet.forEach(({ name, value, options }) =>
+            supabaseResponse.cookies.set(name, value, options)
+          );
+        },
+      },
+    }
+  );
+
+  // IMPORTANT: Do NOT use getSession in middleware. Always use getUser.
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
   const { pathname } = request.nextUrl;
-
-  // Check if authenticated (mock mode: cookie present)
-  const mockSession = request.cookies.get(MOCK_SESSION_COOKIE)?.value;
-  // Also support Supabase (check for supabase auth cookie prefix)
-  // @supabase/ssr v0.5+ chunks large tokens as sb-[ref]-auth-token.0, .1, etc.
-  // Use includes() so both chunked and non-chunked cookies are detected.
-  const supabaseSession = request.cookies
-    .getAll()
-    .some(
-      (c) =>
-        c.name.startsWith("sb-") &&
-        c.name.includes("-auth-token") &&
-        c.value,
-    );
-
-  const isAuthenticated = Boolean(mockSession || supabaseSession);
-  const onboardingDone =
-    request.cookies.get(ONBOARDING_DONE_COOKIE)?.value === "1";
+  const isAuthenticated = !!user;
 
   // Protect dashboard and onboarding routes
   const isProtected = PROTECTED_PREFIXES.some((prefix) =>
-    pathname.startsWith(prefix),
+    pathname.startsWith(prefix)
   );
 
   if (isProtected && !isAuthenticated) {
@@ -42,13 +60,10 @@ export function proxy(request: NextRequest) {
     return NextResponse.redirect(signInUrl);
   }
 
+  const onboardingDone = request.cookies.get("preintent_onboarding_done")?.value === "1";
+
   // If authenticated and onboarding not done, redirect to onboarding
-  // (except if already on onboarding or auth routes)
-  if (
-    isAuthenticated &&
-    !onboardingDone &&
-    pathname.startsWith("/dashboard")
-  ) {
+  if (isAuthenticated && !onboardingDone && pathname.startsWith("/dashboard")) {
     return NextResponse.redirect(new URL("/onboarding", request.url));
   }
 
@@ -61,10 +76,42 @@ export function proxy(request: NextRequest) {
     }
   }
 
-  return NextResponse.next();
+  return supabaseResponse;
 }
 
-export default proxy;
+// Fallback logic for when Supabase is not configured (mock mode)
+function handleMissingEnvFallback(request: NextRequest) {
+  const { pathname } = request.nextUrl;
+  const mockSession = request.cookies.get("preintent_mock_session")?.value;
+  const isAuthenticated = Boolean(mockSession);
+  
+  const isProtected = PROTECTED_PREFIXES.some((prefix) =>
+    pathname.startsWith(prefix)
+  );
+
+  const onboardingDone = request.cookies.get("preintent_onboarding_done")?.value === "1";
+
+  if (isProtected && !isAuthenticated) {
+    const signInUrl = new URL("/sign-in", request.url);
+    signInUrl.searchParams.set("next", pathname);
+    return NextResponse.redirect(signInUrl);
+  }
+
+  // If authenticated and onboarding not done, redirect to onboarding
+  if (isAuthenticated && !onboardingDone && pathname.startsWith("/dashboard")) {
+    return NextResponse.redirect(new URL("/onboarding", request.url));
+  }
+
+  if (isAuthenticated && AUTH_ONLY_ROUTES.includes(pathname)) {
+    if (onboardingDone) {
+      return NextResponse.redirect(new URL("/dashboard", request.url));
+    } else {
+      return NextResponse.redirect(new URL("/onboarding", request.url));
+    }
+  }
+
+  return NextResponse.next();
+}
 
 export const config = {
   matcher: [

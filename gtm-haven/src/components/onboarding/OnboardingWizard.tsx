@@ -423,7 +423,7 @@ function KnowledgeDocView({ doc, onProceed }: { doc: CompanyKnowledgeDoc; onProc
             Activating workspace...
           </>
         ) : (
-          "Launch Preintent Dashboard →"
+          "Launch PreIntent Dashboard →"
         )}
         <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
       </button>
@@ -720,7 +720,7 @@ export default function OnboardingWizard() {
         </div>
 
         <div style={{ fontSize: "11px", color: C.dim, lineHeight: 1.6, marginTop: "auto" }}>
-          Your data is used only to configure your Preintent intelligence workspace.
+          Your data is used only to configure your PreIntent intelligence workspace.
         </div>
       </div>
 

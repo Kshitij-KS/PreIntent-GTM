@@ -1,7 +1,7 @@
 "use server";
 
 /**
- * Preintent Server Actions — live sweep orchestration + sponsor calls.
+ * PreIntent Server Actions — live sweep orchestration + sponsor calls.
  * Set *_MODE=real and API keys in .env.local; mocks apply automatically when keys are missing.
  */
 
@@ -74,7 +74,7 @@ export async function generateRealIntelBrief(
     return generateMockIntelBrief(profile);
   }
 
-  const prompt = `You are an elite GTM intelligence analyst for Preintent.
+  const prompt = `You are an elite GTM intelligence analyst for PreIntent.
 
 Generate a concise, high-impact Intel Brief for the following account using the exact structure below. Use only the provided signals. Be specific, cite dates and sources, and write a natural, sales-ready suggested opening line.
 
