@@ -1,4 +1,4 @@
-# Preintent - The market moves before it speaks.
+# PreIntent - The market moves before it speaks.
 
 **The Convergent GTM Intelligence Platform**
 
