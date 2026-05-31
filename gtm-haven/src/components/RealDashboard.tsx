@@ -1175,14 +1175,7 @@ const NAV_ITEMS: { id: View; label: string; Icon: React.FC }[] = [
   { id: "settings", label: "SETTINGS", Icon: Icon.Settings },
 ];
 
-// ─── LIVE TICKER DATA ─────────────────────────────────────────────────────────
-const LIVE_SIGNALS = [
-  { engine: "VOID", company: "Brex", event: "Stripe Atlas SMB fast-track tier silently removed", time: "3d", color: "#ff5a52" },
-  { engine: "PAIN", company: "Notion", event: "r/saas: 'HubSpot pricing opaque — evaluating alternatives'", time: "1d", color: "#24c038" },
-  { engine: "COMPL.", company: "Rippling", event: "SOC 2 Type II renewal window opens — 6 accounts affected", time: "6h", color: "#f0a000" },
-  { engine: "VOID", company: "Vercel", event: "Datadog removed enterprise observability bundle", time: "2d", color: "#ff5a52" },
-  { engine: "PAIN", company: "Mercury", event: "CFO posted LinkedIn: 'fintech consolidation — open to demos'", time: "23m", color: "#24c038" },
-];
+// Dynamic ticker signals will be computed inside the component
 
 // ─── MAIN COMPONENT ───────────────────────────────────────────────────────────
 export default function RealDashboard({
@@ -1301,10 +1294,27 @@ export default function RealDashboard({
   }, []);
 
   // ── Ticker ────────────────────────────────────────────────────────────────
+  const dynamicTickerSignals = useMemo(() => {
+    return accounts
+      .filter((a) => a.convergence > 0 && a.lastUpdated)
+      .sort((a, b) => new Date(b.lastUpdated).getTime() - new Date(a.lastUpdated).getTime())
+      .flatMap((a) => {
+        const sigs = [];
+        if (a.voidEvent) sigs.push({ engine: "VOID", company: a.name, event: a.voidEvent, time: formatRelativeTime(a.lastUpdated), color: C.void });
+        if (a.complianceEvent) sigs.push({ engine: "COMPL.", company: a.name, event: a.complianceEvent, time: formatRelativeTime(a.lastUpdated), color: C.compliance });
+        if (a.painEvent) sigs.push({ engine: "PAIN", company: a.name, event: a.painEvent, time: formatRelativeTime(a.lastUpdated), color: C.pain });
+        return sigs;
+      })
+      .slice(0, 5);
+  }, [accounts]);
+
   useEffect(() => {
-    const id = setInterval(() => setTickerIdx((i) => (i + 1) % LIVE_SIGNALS.length), 3800);
-    return () => clearInterval(id);
-  }, []);
+    if (dynamicTickerSignals.length === 0) return;
+    const int = setInterval(() => {
+      setTickerIdx((prev) => (prev + 1) % dynamicTickerSignals.length);
+    }, 4000);
+    return () => clearInterval(int);
+  }, [dynamicTickerSignals.length]);
 
   // ── Keyboard shortcuts ────────────────────────────────────────────────────
   useEffect(() => {
@@ -1666,32 +1676,34 @@ ${realBrief.whyNow?.map((w, i) => `[${["VOID", "COMPLIANCE", "PAIN"][i] || w.eng
       )}
 
       {/* Live ticker */}
-      <AnimatePresence mode="wait">
-        <motion.div
-          key={tickerIdx}
-          initial={{ opacity: 0, y: -6 }}
-          animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, y: 6 }}
-          style={{
-            marginBottom: "14px", padding: "8px 14px",
-            background: C.surface, border: `1px solid ${C.border}`, borderRadius: "6px",
-            display: "flex", alignItems: "center", gap: "10px",
-          }}
-        >
-          <LiveDot color={LIVE_SIGNALS[tickerIdx].color} pulse />
-          <span style={{ fontSize: "9px", fontWeight: 600, color: LIVE_SIGNALS[tickerIdx].color, letterSpacing: "0.08em" }}>
-            {LIVE_SIGNALS[tickerIdx].engine}
-          </span>
-          <span style={{ fontSize: "10px", color: C.text }}>
-            <span style={{ color: C.white }}>{LIVE_SIGNALS[tickerIdx].company}</span>
-            {" — "}
-            {LIVE_SIGNALS[tickerIdx].event}
-          </span>
-          <span style={{ marginLeft: "auto", fontSize: "9px", color: C.muted, flexShrink: 0 }}>
-            {LIVE_SIGNALS[tickerIdx].time} ago
-          </span>
-        </motion.div>
-      </AnimatePresence>
+      {dynamicTickerSignals.length > 0 && (
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={tickerIdx}
+            initial={{ opacity: 0, y: -6 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 6 }}
+            style={{
+              marginBottom: "14px", padding: "8px 14px",
+              background: C.surface, border: `1px solid ${C.border}`, borderRadius: "6px",
+              display: "flex", alignItems: "center", gap: "10px",
+            }}
+          >
+            <LiveDot color={dynamicTickerSignals[tickerIdx]?.color} pulse />
+            <span style={{ fontSize: "9px", fontWeight: 600, color: dynamicTickerSignals[tickerIdx]?.color, letterSpacing: "0.08em" }}>
+              {dynamicTickerSignals[tickerIdx]?.engine}
+            </span>
+            <span style={{ fontSize: "10px", color: C.text }}>
+              <span style={{ color: C.white }}>{dynamicTickerSignals[tickerIdx]?.company}</span>
+              {" — "}
+              {dynamicTickerSignals[tickerIdx]?.event}
+            </span>
+            <span style={{ marginLeft: "auto", fontSize: "9px", color: C.muted, flexShrink: 0 }}>
+              {dynamicTickerSignals[tickerIdx]?.time}
+            </span>
+          </motion.div>
+        </AnimatePresence>
+      )}
 
       {/* Stat cards */}
       <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: "8px", marginBottom: "14px" }}>
