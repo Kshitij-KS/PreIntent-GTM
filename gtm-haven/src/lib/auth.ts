@@ -49,8 +49,8 @@ export async function getSession(): Promise<SessionResult> {
       } = await supabase.auth.getUser();
       if (!user) return { user: null, onboardingComplete: false };
 
-      const onboardingDone =
-        cookieStore.get(ONBOARDING_DONE_COOKIE)?.value === "1";
+      const { getUserSetupProfile } = await import("@/lib/user-profile");
+      const profile = await getUserSetupProfile(supabase, user.id);
       return {
         user: {
           id: user.id,
@@ -59,7 +59,7 @@ export async function getSession(): Promise<SessionResult> {
           company: user.user_metadata?.company,
           createdAt: user.created_at,
         },
-        onboardingComplete: onboardingDone,
+        onboardingComplete: profile.setup_status === "complete",
       };
     } catch {
       return { user: null, onboardingComplete: false };
@@ -134,6 +134,28 @@ export async function signOut(): Promise<void> {
 /** Server-side: mark onboarding as complete */
 export async function markOnboardingComplete(): Promise<void> {
   const cookieStore = await cookies();
+
+  if (isSupabaseConfigured()) {
+    const { createSupabaseServerClient } = await import("@/lib/supabase");
+    const supabase = await createSupabaseServerClient();
+    const {
+      data: { user },
+      error: userError,
+    } = await supabase.auth.getUser();
+
+    if (userError || !user) {
+      throw userError ?? new Error("Authentication required");
+    }
+
+    const { error } = await supabase
+      .from("user_profiles")
+      .update({ setup_status: "complete" })
+      .eq("user_id", user.id);
+
+    if (error) throw error;
+    return;
+  }
+
   cookieStore.set(ONBOARDING_DONE_COOKIE, "1", {
     httpOnly: true,
     path: "/",

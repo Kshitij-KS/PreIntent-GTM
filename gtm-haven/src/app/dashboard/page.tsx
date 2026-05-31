@@ -8,6 +8,7 @@ export default function DashboardPage() {
   const router = useRouter();
   const [loading, setLoading] = useState(true);
   const [user, setUser] = useState<{ email: string } | null>(null);
+  const [setupComplete, setSetupComplete] = useState(true);
 
   useEffect(() => {
     async function init() {
@@ -29,6 +30,14 @@ export default function DashboardPage() {
 
           // Fetch org knowledge and store in localStorage for the dashboard
           try {
+            const { data: profile } = await supabase
+              .from("user_profiles")
+              .select("setup_status")
+              .eq("user_id", session.user.id)
+              .maybeSingle();
+
+            setSetupComplete(profile?.setup_status === "complete");
+
             const { data: orgMember } = await supabase
               .from("organization_members")
               .select("organization_id")
@@ -56,6 +65,7 @@ export default function DashboardPage() {
             return;
           }
           setUser({ email: "mock@preintent.com" });
+          setSetupComplete(document.cookie.includes("preintent_onboarding_done=1"));
         }
       } catch (e) {
         console.error("Dashboard init error:", e);
@@ -115,6 +125,37 @@ export default function DashboardPage() {
       </header>
 
       <main>
+        {!setupComplete && (
+          <div style={{
+            background: "rgba(144,96,255,0.08)",
+            border: "1px solid rgba(144,96,255,0.35)",
+            borderRadius: "12px",
+            padding: "20px",
+            marginBottom: "20px",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            gap: "20px",
+            flexWrap: "wrap",
+          }}>
+            <div>
+              <h2 style={{ color: "#fff", fontSize: "15px", margin: "0 0 8px" }}>
+                Complete your company intelligence setup
+              </h2>
+              <p style={{ color: "#7f91a3", fontSize: "12px", margin: 0, lineHeight: 1.6 }}>
+                Finish onboarding to generate and save your intelligence workspace.
+              </p>
+            </div>
+            <a href="/onboarding" style={{
+              color: "#fff", textDecoration: "none", fontSize: "12px",
+              background: "linear-gradient(135deg, #7c3aed, #9060ff)",
+              padding: "10px 16px", borderRadius: "6px", fontWeight: 700,
+            }}>
+              Complete setup →
+            </a>
+          </div>
+        )}
+
         <div style={{ background: "#0c1018", border: "1px solid #18232f", borderRadius: "12px", padding: "40px", textAlign: "center" }}>
           <div style={{ fontSize: "32px", marginBottom: "16px", color: "#9060ff" }}>✧</div>
           <h2 style={{ color: "#fff", fontSize: "18px", margin: "0 0 12px 0" }}>Your Intelligence Hub</h2>

@@ -46,7 +46,7 @@ export default function DemoPage() {
             Sign in
           </Link>
           <Link
-            href="/sign-in"
+            href="/sign-up"
             style={{
               display: "inline-flex", alignItems: "center", gap: "6px",
               background: "linear-gradient(135deg, #7c3aed, #9060ff)",

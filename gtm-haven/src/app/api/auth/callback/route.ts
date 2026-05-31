@@ -1,63 +1,42 @@
-import { NextResponse } from 'next/server';
-import { createServerClient } from '@supabase/ssr';
-import { cookies } from 'next/headers';
+import { NextResponse } from "next/server";
+import {
+  getPostAuthDestination,
+  type AuthIntent,
+} from "@/lib/auth-routing";
+import { createSupabaseServerClient } from "@/lib/supabase";
+import {
+  ensureUserSetupProfile,
+  markFirstOnboardingRoute,
+} from "@/lib/user-profile";
+
+function getAuthIntent(value: string | null): AuthIntent {
+  return value === "signin" || value === "signup" ? value : "auto";
+}
 
 export async function GET(request: Request) {
   const requestUrl = new URL(request.url);
-  const code = requestUrl.searchParams.get('code');
-  const next = requestUrl.searchParams.get('next') ?? '/dashboard';
+  const code = requestUrl.searchParams.get("code");
+  const intent = getAuthIntent(requestUrl.searchParams.get("next"));
 
-  if (code) {
-    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-    const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
-
-    if (supabaseUrl && supabaseKey) {
-      const cookieStore = await cookies();
-      const supabase = createServerClient(
-        supabaseUrl,
-        supabaseKey,
-        {
-          cookies: {
-            get(name: string) {
-              return cookieStore.get(name)?.value;
-            },
-            set(name: string, value: string, options: any) {
-              cookieStore.set({ name, value, ...options });
-            },
-            remove(name: string, options: any) {
-              cookieStore.set({ name, value: '', ...options });
-            },
-          },
-        }
-      );
-
-      const { data, error } = await supabase.auth.exchangeCodeForSession(code);
-      if (!error) {
-        let redirectPath = next;
-        
-        // If auto routing is requested (from OAuth), determine if it's a new user
-        if (next === 'auto' && data.user) {
-          const createdAt = new Date(data.user.created_at).getTime();
-          const now = Date.now();
-          // If created within the last 2 minutes, treat as a new signup
-          const isNewUser = (now - createdAt) < 120000;
-          
-          if (isNewUser) {
-            redirectPath = '/onboarding';
-          } else {
-            redirectPath = '/dashboard';
-          }
-        } else if (next === 'auto') {
-          redirectPath = '/dashboard';
-        }
-
-        return NextResponse.redirect(new URL(redirectPath, requestUrl.origin));
-      } else {
-        console.error('Supabase auth callback error:', error.message);
-      }
-    }
+  if (!code) {
+    return NextResponse.redirect(new URL("/sign-in?error=auth", request.url));
   }
 
-  // Return the user to an error page with instructions
-  return NextResponse.redirect(new URL('/sign-in?error=auth', request.url));
+  try {
+    const supabase = await createSupabaseServerClient();
+    const { data, error } = await supabase.auth.exchangeCodeForSession(code);
+    if (error || !data.user) throw error ?? new Error("Authentication failed");
+
+    const profile = await ensureUserSetupProfile(supabase, data.user.id);
+    const destination = getPostAuthDestination({ intent, profile });
+
+    if (destination === "/onboarding") {
+      await markFirstOnboardingRoute(supabase, data.user.id);
+    }
+
+    return NextResponse.redirect(new URL(destination, requestUrl.origin));
+  } catch (error) {
+    console.error("Supabase auth callback error:", error);
+    return NextResponse.redirect(new URL("/sign-in?error=auth", request.url));
+  }
 }

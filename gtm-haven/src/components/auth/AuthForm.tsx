@@ -1,15 +1,15 @@
 "use client";
 
 import { useState, useTransition, useEffect } from "react";
+import { useRouter } from "next/navigation";
 
 interface AuthFormProps {
   onSuccess?: () => void;
-  /** Where to send the user after a successful auth. Defaults to /onboarding */
-  redirectTo?: string;
   initialTab?: "signin" | "signup";
 }
 
-export default function AuthForm({ onSuccess, redirectTo = "/onboarding", initialTab = "signin" }: AuthFormProps) {
+export default function AuthForm({ onSuccess, initialTab = "signin" }: AuthFormProps) {
+  const router = useRouter();
   const [tab, setTab] = useState<"signin" | "signup">(initialTab);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -51,7 +51,12 @@ export default function AuthForm({ onSuccess, redirectTo = "/onboarding", initia
           const supabase = createSupabaseBrowserClient();
           if (tab === "signup") {
             const { data, error } = await supabase.auth.signUp({
-              email, password, options: { data: { name } },
+              email,
+              password,
+              options: {
+                data: { name },
+                emailRedirectTo: `${window.location.origin}/api/auth/callback?next=signup`,
+              },
             });
             if (error) throw error;
             if (data.session) { onSuccess?.(); window.location.href = "/onboarding"; }
@@ -133,7 +138,11 @@ export default function AuthForm({ onSuccess, redirectTo = "/onboarding", initia
         {(["signin", "signup"] as const).map((t) => (
           <button
             key={t}
-            onClick={() => { setTab(t); setError(""); }}
+            onClick={() => {
+              setTab(t);
+              setError("");
+              router.push(t === "signin" ? "/sign-in" : "/sign-up");
+            }}
             style={{
               flex: 1, background: tab === t ? "linear-gradient(135deg, #7c3aed, #9060ff)" : "transparent",
               border: "none", borderRadius: "7px", padding: "9px",

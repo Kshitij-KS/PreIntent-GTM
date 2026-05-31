@@ -1,11 +1,13 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
+import { getActiveSessionAuthDestination } from "@/lib/auth-routing";
+import { getUserSetupProfile } from "@/lib/user-profile";
 
 // Routes that require authentication
 const PROTECTED_PREFIXES = ["/dashboard", "/onboarding"];
 
 // Routes only for unauthenticated users
-const AUTH_ONLY_ROUTES = ["/sign-in"];
+const AUTH_ONLY_ROUTES = ["/sign-in", "/sign-up"];
 
 export async function proxy(request: NextRequest) {
   let supabaseResponse = NextResponse.next({
@@ -29,7 +31,7 @@ export async function proxy(request: NextRequest) {
           return request.cookies.getAll();
         },
         setAll(cookiesToSet) {
-          cookiesToSet.forEach(({ name, value, options }) => request.cookies.set(name, value));
+          cookiesToSet.forEach(({ name, value }) => request.cookies.set(name, value));
           supabaseResponse = NextResponse.next({
             request,
           });
@@ -60,20 +62,17 @@ export async function proxy(request: NextRequest) {
     return NextResponse.redirect(signInUrl);
   }
 
-  const onboardingDone = request.cookies.get("preintent_onboarding_done")?.value === "1";
-
-  // If authenticated and onboarding not done, redirect to onboarding
-  if (isAuthenticated && !onboardingDone && pathname.startsWith("/dashboard")) {
-    return NextResponse.redirect(new URL("/onboarding", request.url));
-  }
+  const profile = user ? await getUserSetupProfile(supabase, user.id) : null;
 
   // Redirect signed-in users away from sign-in page
   if (isAuthenticated && AUTH_ONLY_ROUTES.includes(pathname)) {
-    if (onboardingDone) {
-      return NextResponse.redirect(new URL("/dashboard", request.url));
-    } else {
-      return NextResponse.redirect(new URL("/onboarding", request.url));
-    }
+    return NextResponse.redirect(
+      new URL(getActiveSessionAuthDestination(profile!), request.url),
+    );
+  }
+
+  if (isAuthenticated && profile?.setup_status === "complete" && pathname.startsWith("/onboarding")) {
+    return NextResponse.redirect(new URL("/dashboard", request.url));
   }
 
   return supabaseResponse;
@@ -97,17 +96,16 @@ function handleMissingEnvFallback(request: NextRequest) {
     return NextResponse.redirect(signInUrl);
   }
 
-  // If authenticated and onboarding not done, redirect to onboarding
-  if (isAuthenticated && !onboardingDone && pathname.startsWith("/dashboard")) {
-    return NextResponse.redirect(new URL("/onboarding", request.url));
-  }
-
   if (isAuthenticated && AUTH_ONLY_ROUTES.includes(pathname)) {
     if (onboardingDone) {
       return NextResponse.redirect(new URL("/dashboard", request.url));
     } else {
       return NextResponse.redirect(new URL("/onboarding", request.url));
     }
+  }
+
+  if (isAuthenticated && onboardingDone && pathname.startsWith("/onboarding")) {
+    return NextResponse.redirect(new URL("/dashboard", request.url));
   }
 
   return NextResponse.next();

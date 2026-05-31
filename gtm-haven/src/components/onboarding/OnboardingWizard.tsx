@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { markOnboardingComplete } from "@/lib/auth";
 import type { CompanyKnowledgeDoc, CompanyOnboardingData } from "@/lib/company-knowledge";
 
 const C = {
@@ -280,9 +279,7 @@ function KnowledgeDocView({ doc, onProceed }: { doc: CompanyKnowledgeDoc; onProc
     try {
       await onProceed();
     } catch {
-      // fallback: set client-accessible cookie so middleware sees onboarding done
-      document.cookie = "preintent_onboarding_done=1; path=/; max-age=31536000; SameSite=Lax";
-      window.location.href = "/dashboard";
+      setLaunching(false);
     }
   };
 
@@ -481,8 +478,6 @@ function AIProcessingScreen({ companyName, onComplete }: { companyName: string; 
           if (result.success) {
             // Save to localStorage for dashboard to consume
             localStorage.setItem("preintent_company_kdoc", JSON.stringify(result.doc));
-            // Mark onboarding done in cookie via a GET redirect trick
-            document.cookie = "preintent_onboarding_done=1; path=/; max-age=31536000; SameSite=Lax";
             setTimeout(() => onComplete(result.doc), 600);
           } else {
             setError(result.error ?? "Failed to generate knowledge doc");
@@ -648,7 +643,6 @@ export default function OnboardingWizard() {
   };
 
   const handleProceed = async () => {
-    await markOnboardingComplete();
     window.location.href = "/dashboard";
   };
 
