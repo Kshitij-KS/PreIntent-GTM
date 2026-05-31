@@ -60,7 +60,7 @@ export interface CompanyKnowledgeDoc {
     suggestedAction: string;
   }>;
 
-  /** First target accounts Undertow should monitor */
+  /** First target accounts Preintent should monitor */
   seedAccounts: Array<{
     name: string;
     industry: string;
@@ -69,7 +69,7 @@ export interface CompanyKnowledgeDoc {
     competitor: string;
   }>;
 
-  /** Recommended Undertow scan configuration */
+  /** Recommended Preintent scan configuration */
   scanConfig: {
     competitors: string[];
     regulatoryKeywords: string[];
@@ -89,7 +89,7 @@ function buildMockKnowledgeDoc(
     generatedAt: new Date().toISOString(),
     generatedBy: "mock",
 
-    segmentSummary: `${data.companyName} operates in the ${data.industry} space, targeting ${data.icpDescription}. With a team of ${data.teamSize} based in ${data.hq}, the company is positioned to capture market share from ${primaryCompetitor} as buyer expectations shift toward more agile, transparent vendors. Current GTM goals center on ${data.gtmGoals}, with Undertow monitoring competitor movements, regulatory shifts, and community buying signals across ${data.targetVerticals.join(", ")}.`,
+    segmentSummary: `${data.companyName} operates in the ${data.industry} space, targeting ${data.icpDescription}. With a team of ${data.teamSize} based in ${data.hq}, the company is positioned to capture market share from ${primaryCompetitor} as buyer expectations shift toward more agile, transparent vendors. Current GTM goals center on ${data.gtmGoals}, with Preintent monitoring competitor movements, regulatory shifts, and community buying signals across ${data.targetVerticals.join(", ")}.`,
 
     icp: {
       companySize: "100–1000 employees",
@@ -194,7 +194,7 @@ async function callAIForKnowledgeDoc(
 
   if (env.AI_ML_MODE !== "real" || !apiKey) return null;
 
-  const prompt = `You are an elite GTM strategist building a company intelligence document for Undertow, a convergent GTM intelligence platform.
+  const prompt = `You are an elite GTM strategist building a company intelligence document for Preintent, a convergent GTM intelligence platform.
 
 Analyze this company and generate a detailed Company Knowledge Document.
 

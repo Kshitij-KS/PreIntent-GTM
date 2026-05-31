@@ -1,7 +1,7 @@
 import { z } from "zod";
 
 /**
- * Undertow Domain Types
+ * Preintent Domain Types
  * Source of truth: Project-GTM/Ideation and Architecture.md
  * This file defines ONLY the types needed for the MVP (three engines + convergence + Intel Brief).
  * Old GTM Haven competitor/Strategic Instability types have been removed.

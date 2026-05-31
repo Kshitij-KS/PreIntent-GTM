@@ -1,24 +1,21 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { IBM_Plex_Mono } from "next/font/google";
 import "./globals.css";
+import { ToastProvider } from "@/components/ui/toast";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
+const ibmPlexMono = IBM_Plex_Mono({
+  variable: "--font-mono",
   subsets: ["latin"],
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
+  weight: ["400", "500", "600", "700"],
 });
 
 export const metadata: Metadata = {
   title: {
-    default: "Undertow | Convergent GTM Intelligence",
-    template: "%s | Undertow",
+    default: "Preintent | Convergent GTM Intelligence",
+    template: "%s | Preintent",
   },
   description:
-    "Three invisible forces. One unfair pipeline advantage. Undertow triangulates competitor retreats (Void Scanner), regulatory shockwaves (Compliance Radar), and community pain signals (Pain Listener) into high-confidence buying events with AI-generated Intel Briefs — before any intent vendor knows.",
+    "Three invisible forces. One unfair pipeline advantage. Preintent triangulates competitor retreats (Void Atlas), regulatory shockwaves (Compliance Radar), and community pain signals (Pain Listener) into high-confidence buying events with AI-generated Intel Briefs — before any intent vendor knows.",
   keywords: [
     "GTM intelligence",
     "competitor monitoring",
@@ -28,7 +25,7 @@ export const metadata: Metadata = {
     "convergent signals",
   ],
   openGraph: {
-    title: "Undertow | Convergent GTM Intelligence",
+    title: "Preintent | Convergent GTM Intelligence",
     description: "Three invisible forces. One unfair pipeline advantage.",
     type: "website",
   },
@@ -42,9 +39,14 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
+      className={`${ibmPlexMono.variable} h-full antialiased`}
+      suppressHydrationWarning
     >
-      <body className="min-h-full flex flex-col">{children}</body>
+      <body className="min-h-full flex flex-col">
+        <ToastProvider>
+          {children}
+        </ToastProvider>
+      </body>
     </html>
   );
 }

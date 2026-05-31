@@ -75,7 +75,7 @@ export function previewTriggerWareWorkflow(
       },
       slack: {
         channel: "#sales-alerts",
-        text: `Undertow: ${profile.account} hit ${profile.convergenceScore}/100 convergence. ${profile.urgency} urgency.`,
+        text: `Preintent: ${profile.account} hit ${profile.convergenceScore}/100 convergence. ${profile.urgency} urgency.`,
       },
       brief: {
         account: profile.account,

@@ -1,5 +1,5 @@
 /**
- * Undertow Demo Fixtures & Engine Simulators
+ * Preintent Demo Fixtures & Engine Simulators
  * Exact events and narrative from Ideation and Architecture.md "Demo Flow" and the Account Intelligence Profile example.
  * All signals carry explicit sponsor tool tags as required.
  */
@@ -153,9 +153,9 @@ export function getAcmeSeedProfile(): AccountIntelligenceProfile {
 export function resetDemoProfile(account = "Acme Corp") {
   // Clear just this account for a fresh demo run
   if (typeof window !== "undefined") {
-    const all = JSON.parse(localStorage.getItem("undertow:cognee:profiles:v1") || "{}");
+    const all = JSON.parse(localStorage.getItem("preintent:cognee:profiles:v1") || "{}");
     delete all[account];
-    localStorage.setItem("undertow:cognee:profiles:v1", JSON.stringify(all));
+    localStorage.setItem("preintent:cognee:profiles:v1", JSON.stringify(all));
   }
   return getOrCreateProfile(account);
 }

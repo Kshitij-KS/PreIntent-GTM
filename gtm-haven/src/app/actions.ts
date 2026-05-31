@@ -1,7 +1,7 @@
 "use server";
 
 /**
- * Undertow Server Actions — live sweep orchestration + sponsor calls.
+ * Preintent Server Actions — live sweep orchestration + sponsor calls.
  * Set *_MODE=real and API keys in .env.local; mocks apply automatically when keys are missing.
  */
 
@@ -70,11 +70,11 @@ export async function generateRealIntelBrief(
   const config = getAiMlConfig();
 
   if (!config.enabled || !config.apiKey) {
-    const { generateMockIntelBrief } = await import("@/lib/undertow-demo");
+    const { generateMockIntelBrief } = await import("@/lib/preintent-demo");
     return generateMockIntelBrief(profile);
   }
 
-  const prompt = `You are an elite GTM intelligence analyst for Undertow.
+  const prompt = `You are an elite GTM intelligence analyst for Preintent.
 
 Generate a concise, high-impact Intel Brief for the following account using the exact structure below. Use only the provided signals. Be specific, cite dates and sources, and write a natural, sales-ready suggested opening line.
 
@@ -167,7 +167,7 @@ Return ONLY valid JSON in this exact shape (no markdown, no extra text):
     };
   } catch (err) {
     console.error("Real AI/ML brief failed, falling back to mock:", err);
-    const { generateMockIntelBrief } = await import("@/lib/undertow-demo");
+    const { generateMockIntelBrief } = await import("@/lib/preintent-demo");
     const mock = generateMockIntelBrief(profile);
     return { ...mock, generatedBy: "mock" };
   }
@@ -389,7 +389,7 @@ export async function runLiveSweep(input: LiveSweepInput): Promise<LiveSweepResu
     console.error("runLiveSweep failed:", err);
 
     const { voidPricingRemoval, compliancePciDss, painRFintechPost } = await import(
-      "@/lib/undertow-demo"
+      "@/lib/preintent-demo"
     );
     const fallbackSignals = [voidPricingRemoval, compliancePciDss, painRFintechPost];
     const profile = buildProfileFromSignals(

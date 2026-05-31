@@ -2,12 +2,12 @@
 
 ## Completed in This Pass
 
-- Aligned the runtime model to Undertow's three engines: Void Scanner, Compliance Radar, Pain Listener, and the Convergence Engine.
+- Aligned the runtime model to Preintent's three engines: Void Scanner, Compliance Radar, Pain Listener, and the Convergence Engine.
 - Added mock-first integration seams for Bright Data, Speechmatics, TriggerWare, and integration health.
 - Added server-side AI/ML API and Featherless-compatible actions with mock fallbacks.
 - Added `GET /api/health` for sponsor mode/status reporting.
-- Replaced the obsolete GTM Haven scoring test with Undertow convergence and integration contract tests.
-- Reworked the Supabase reference schema around Undertow account profiles, engine signals, convergence runs, Intel Briefs, and integration connections.
+- Replaced the obsolete GTM Haven scoring test with Preintent convergence and integration contract tests.
+- Reworked the Supabase reference schema around Preintent account profiles, engine signals, convergence runs, Intel Briefs, and integration connections.
 
 ## Remaining Work
 

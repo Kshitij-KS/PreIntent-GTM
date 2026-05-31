@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { markOnboardingComplete } from "@/lib/auth";
 import type { CompanyKnowledgeDoc, CompanyOnboardingData } from "@/lib/company-knowledge";
 
 const C = {
@@ -270,7 +271,21 @@ function MultiInput({
 
 // ─── Knowledge Doc Display ────────────────────────────────────────────────────
 
-function KnowledgeDocView({ doc, onProceed }: { doc: CompanyKnowledgeDoc; onProceed: () => void }) {
+function KnowledgeDocView({ doc, onProceed }: { doc: CompanyKnowledgeDoc; onProceed: () => void | Promise<void> }) {
+  const [launching, setLaunching] = useState(false);
+
+  const handleLaunch = async () => {
+    if (launching) return;
+    setLaunching(true);
+    try {
+      await onProceed();
+    } catch {
+      // fallback: set client-accessible cookie so middleware sees onboarding done
+      document.cookie = "preintent_onboarding_done=1; path=/; max-age=31536000; SameSite=Lax";
+      window.location.href = "/dashboard";
+    }
+  };
+
   return (
     <div style={{ animation: "fadeIn 0.6s ease" }}>
       <style>{`@keyframes fadeIn { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: translateY(0); } }`}</style>
@@ -375,22 +390,42 @@ function KnowledgeDocView({ doc, onProceed }: { doc: CompanyKnowledgeDoc; onProc
       )}
 
       <button
-        onClick={onProceed}
+        onClick={handleLaunch}
+        disabled={launching}
         style={{
           width: "100%",
-          background: "linear-gradient(135deg, #7c3aed, #9060ff)",
+          background: launching ? "#1e2d3e" : "linear-gradient(135deg, #7c3aed, #9060ff)",
           border: "none",
           borderRadius: "10px",
           padding: "14px",
           fontSize: "14px",
           fontWeight: 700,
           color: "#fff",
-          cursor: "pointer",
+          cursor: launching ? "not-allowed" : "pointer",
           letterSpacing: "0.05em",
-          boxShadow: "0 8px 24px rgba(144, 96, 255, 0.35)",
+          boxShadow: launching ? "none" : "0 8px 24px rgba(144, 96, 255, 0.35)",
+          transition: "all 0.2s",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          gap: "10px",
         }}
       >
-        Launch Undertow Dashboard →
+        {launching ? (
+          <>
+            <span style={{
+              width: "14px", height: "14px", borderRadius: "50%",
+              border: "2px solid rgba(255,255,255,0.2)",
+              borderTopColor: "#9060ff",
+              animation: "spin 0.8s linear infinite",
+              display: "inline-block",
+            }} />
+            Activating workspace...
+          </>
+        ) : (
+          "Launch Preintent Dashboard →"
+        )}
+        <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
       </button>
     </div>
   );
@@ -424,7 +459,7 @@ function AIProcessingScreen({ companyName, onComplete }: { companyName: string; 
     }, 800);
 
     // Get data from sessionStorage
-    const raw = typeof window !== "undefined" ? sessionStorage.getItem("undertow_onboarding") : null;
+    const raw = typeof window !== "undefined" ? sessionStorage.getItem("preintent_onboarding") : null;
     const data = raw ? JSON.parse(raw) : null;
 
     if (!data) {
@@ -445,9 +480,9 @@ function AIProcessingScreen({ companyName, onComplete }: { companyName: string; 
           setStep(processingSteps.length);
           if (result.success) {
             // Save to localStorage for dashboard to consume
-            localStorage.setItem("undertow_company_kdoc", JSON.stringify(result.doc));
+            localStorage.setItem("preintent_company_kdoc", JSON.stringify(result.doc));
             // Mark onboarding done in cookie via a GET redirect trick
-            document.cookie = "undertow_onboarding_done=1; path=/; max-age=31536000; SameSite=Lax";
+            document.cookie = "preintent_onboarding_done=1; path=/; max-age=31536000; SameSite=Lax";
             setTimeout(() => onComplete(result.doc), 600);
           } else {
             setError(result.error ?? "Failed to generate knowledge doc");
@@ -600,7 +635,7 @@ export default function OnboardingWizard() {
     if (!validateStep(currentStep)) return;
     if (currentStep === 3) {
       // Save to sessionStorage before triggering AI
-      sessionStorage.setItem("undertow_onboarding", JSON.stringify(form));
+      sessionStorage.setItem("preintent_onboarding", JSON.stringify(form));
     }
     setCurrentStep((s) => s + 1);
   };
@@ -612,7 +647,8 @@ export default function OnboardingWizard() {
     setShowDoc(true);
   };
 
-  const handleProceed = () => {
+  const handleProceed = async () => {
+    await markOnboardingComplete();
     window.location.href = "/dashboard";
   };
 
@@ -637,7 +673,7 @@ export default function OnboardingWizard() {
         {/* Logo */}
         <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "48px" }}>
           <span style={{ color: C.conv, fontSize: "22px", fontWeight: 700 }}>▼</span>
-          <span style={{ fontSize: "18px", fontWeight: 700, color: C.white, letterSpacing: "0.12em" }}>UNDERTOW</span>
+          <span style={{ fontSize: "18px", fontWeight: 700, color: C.white, letterSpacing: "0.12em" }}>PREINTENT</span>
         </div>
 
         {/* Steps */}
@@ -684,7 +720,7 @@ export default function OnboardingWizard() {
         </div>
 
         <div style={{ fontSize: "11px", color: C.dim, lineHeight: 1.6, marginTop: "auto" }}>
-          Your data is used only to configure your Undertow intelligence workspace.
+          Your data is used only to configure your Preintent intelligence workspace.
         </div>
       </div>
 

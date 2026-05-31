@@ -11,7 +11,7 @@ import type {
 } from "./domain";
 import { computeConvergenceScore, computeUrgency } from "./convergence";
 
-const STORAGE_KEY = "undertow:cognee:profiles:v1";
+const STORAGE_KEY = "preintent:cognee:profiles:v1";
 
 function safeParse<T>(raw: string | null): T | null {
   if (!raw) return null;

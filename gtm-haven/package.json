@@ -1,8 +1,8 @@
 {
-  "name": "undertow",
+  "name": "preintent",
   "version": "0.1.0",
   "private": true,
-  "description": "Undertow — The Convergent GTM Intelligence Platform. Three invisible forces (Void Scanner, Compliance Radar, Pain Listener) triangulated into certified buying events with AI-generated Intel Briefs.",
+  "description": "Preintent — The Convergent GTM Intelligence Platform. Three invisible forces (Void Scanner, Compliance Radar, Pain Listener) triangulated into certified buying events with AI-generated Intel Briefs.",
   "scripts": {
     "dev": "next dev",
     "build": "next build",
@@ -12,11 +12,13 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "test:e2e": "playwright test",
-    "format:check": "prettier --check ."
+    "format:check": "prettier --check .",
+    "build:deck": "node scripts/build-hackathon-deck.js"
   },
   "dependencies": {
     "@supabase/ssr": "^0.10.3",
     "@supabase/supabase-js": "^2.106.2",
+    "framer-motion": "^12.40.0",
     "lucide-react": "^1.17.0",
     "next": "16.2.6",
     "react": "19.2.4",
@@ -35,7 +37,10 @@
     "eslint-config-next": "16.2.6",
     "jsdom": "^29.1.1",
     "playwright": "^1.60.0",
+    "pptxgenjs": "^4.0.1",
     "prettier": "^3.8.3",
+    "react-icons": "^5.6.0",
+    "sharp": "^0.34.5",
     "tailwindcss": "^4",
     "typescript": "^5",
     "vitest": "^4.1.7"

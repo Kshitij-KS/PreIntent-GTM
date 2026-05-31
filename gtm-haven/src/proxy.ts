@@ -1,8 +1,8 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
-const MOCK_SESSION_COOKIE = "undertow_mock_session";
-const ONBOARDING_DONE_COOKIE = "undertow_onboarding_done";
+const MOCK_SESSION_COOKIE = "preintent_mock_session";
+const ONBOARDING_DONE_COOKIE = "preintent_onboarding_done";
 
 // Routes that require authentication
 const PROTECTED_PREFIXES = ["/dashboard", "/onboarding"];
@@ -16,12 +16,14 @@ export function proxy(request: NextRequest) {
   // Check if authenticated (mock mode: cookie present)
   const mockSession = request.cookies.get(MOCK_SESSION_COOKIE)?.value;
   // Also support Supabase (check for supabase auth cookie prefix)
+  // @supabase/ssr v0.5+ chunks large tokens as sb-[ref]-auth-token.0, .1, etc.
+  // Use includes() so both chunked and non-chunked cookies are detected.
   const supabaseSession = request.cookies
     .getAll()
     .some(
       (c) =>
         c.name.startsWith("sb-") &&
-        c.name.endsWith("-auth-token") &&
+        c.name.includes("-auth-token") &&
         c.value,
     );
 

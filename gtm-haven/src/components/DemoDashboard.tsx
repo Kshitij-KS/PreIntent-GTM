@@ -1,961 +1,1436 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
-import type { AccountIntelligenceProfile, EngineSignal, IntegrationStatus } from "@/lib/domain";
+import { useState, useEffect, useRef, useCallback } from "react";
+import { usePathname } from "next/navigation";
+import { motion, AnimatePresence } from "framer-motion";
+import type { AccountIntelligenceProfile } from "@/lib/domain";
+import { computeUrgency } from "@/lib/convergence";
+import { useToast, createToastHelpers } from "@/components/ui/toast";
+import { ROICalculator, ROIPreview } from "@/components/ui/roi-calculator";
+import { EvidenceModal } from "@/components/ui/evidence-panel";
+import { BriefSharing } from "@/components/ui/brief-sharing";
+import { CompetitiveComparison, ComparisonTrigger } from "@/components/ui/competitive-comparison";
+import { GuidedTour, TourTrigger, TourShortcut } from "@/components/demo/guided-tour";
+import { DemoAutopilot, AutoplayTrigger, type AutopilotActions } from "@/components/demo/autopilot";
 import {
-  arriveSignal,
-  compliancePciDss,
-  painPodcastTranscript,
-  painRFintechPost,
-  resetDemoProfile,
-  voidPricingRemoval,
-} from "@/lib/undertow-demo";
-import { computeConvergenceScore, computeUrgency } from "@/lib/convergence";
-import { previewTriggerWareWorkflow } from "@/lib/integrations/triggerware";
+  PREMIUM_ACCOUNTS,
+  formatRelativeTime,
+  getConfidenceLevel,
+  type PremiumAccount,
+} from "@/lib/premium-demo-data";
+import {
+  DEMO_INTEGRATION_STATUSES,
+  streamDemoBrief,
+} from "@/lib/demo-mode";
 
-// ─── EXACT DATA FROM THE REQUESTED DASHBOARD FEEL ────────────────────────────
-
-const ACCOUNTS = [
-  { id: 1, name: "Acme FinTech", industry: "FinTech / Payments", employees: 340, location: "Austin, TX",
-    competitor: "Stripe Atlas", voidScore: 84, complianceScore: 71, painScore: 91, convergence: 82,
-    status: "ALERT", contact: "Head of Payments Infra", stack: ["AWS", "Stripe", "Postgres"],
-    voidEvent: "Stripe Atlas removed SMB pricing tier from /pricing (Jun 2)",
-    complianceEvent: "PCI-DSS 4.0 enforcement begins in 87 days",
-    painEvent: "r/fintech: \"evaluating alternatives to Stripe Atlas — contract up in 60 days\"",
-    audioSignal: "FinTech Unplugged Ep.84 — speaker discusses active vendor migration planning" },
-  { id: 2, name: "Nexus Healthcare", industry: "HealthTech", employees: 180, location: "Boston, MA",
-    competitor: "Veeva Systems", voidScore: 62, complianceScore: 88, painScore: 45, convergence: 65,
-    status: "WATCH", contact: "VP of Compliance", stack: ["Azure", "Salesforce", "React"],
-    voidEvent: "Veeva removed clinical trial integration from partner docs",
-    complianceEvent: "HIPAA enforcement action bulletin — OCR targeting Veeva clients",
-    painEvent: "G2 review: \"looking for Veeva alternatives for 2025 renewal\"",
-    audioSignal: null },
-  { id: 3, name: "Orbital SaaS", industry: "B2B SaaS", employees: 95, location: "San Francisco, CA",
-    competitor: "HubSpot", voidScore: 45, complianceScore: 55, painScore: 72, convergence: 57,
-    status: "WATCH", contact: "Head of RevOps", stack: ["GCP", "HubSpot", "Node.js"],
-    voidEvent: "HubSpot Starter plan email limits quietly changed in docs",
-    complianceEvent: "EU AI Act SaaS compliance requirements published",
-    painEvent: "LinkedIn: \"HubSpot contract up in 60 days — actively fielding demos\"",
-    audioSignal: null },
-  { id: 4, name: "Vertex Capital", industry: "FinTech / Invest.", employees: 520, location: "New York, NY",
-    competitor: "Carta", voidScore: 71, complianceScore: 79, painScore: 38, convergence: 63,
-    status: "WATCH", contact: "CFO", stack: ["AWS", "Carta", "Python"],
-    voidEvent: "Carta removed fund admin self-service tier from pricing page",
-    complianceEvent: "SEC Rule 10c-1 securities lending compliance deadline",
-    painEvent: "Twitter/X: \"Carta pricing 3x on renewal — evaluating alternatives\"",
-    audioSignal: null },
-  { id: 5, name: "Cascade DevOps", industry: "Developer Tools", employees: 67, location: "Remote",
-    competitor: "Datadog", voidScore: 28, complianceScore: 35, painScore: 55, convergence: 39,
-    status: "MONITOR", contact: "CTO", stack: ["AWS", "Datadog", "Kubernetes"],
-    voidEvent: "No critical removals detected (log retention options changed)",
-    complianceEvent: "SOC 2 Type II renewal window approaching",
-    painEvent: "r/devops: \"Datadog renewal came back 3x — actively looking at alternatives\"",
-    audioSignal: null },
-  { id: 6, name: "Meridian Logistics", industry: "Supply Chain", employees: 240, location: "Chicago, IL",
-    competitor: "Oracle SCM", voidScore: 55, complianceScore: 42, painScore: 61, convergence: 53,
-    status: "MONITOR", contact: "VP of Operations", stack: ["Azure", "Oracle", "SAP"],
-    voidEvent: "Oracle SCM removed SMB logistics module from public pricing",
-    complianceEvent: "FDA DSCSA serialization enforcement — supply chain traceability",
-    painEvent: "Hacker News: \"Oracle support has become completely unresponsive\"",
-    audioSignal: null },
-];
-
-const VOID_SIGNALS = [
-  { id: 1, company: "Stripe Atlas", event: "SMB pricing tier silently removed from /pricing page", severity: "CRITICAL", ago: "2m", affected: ["Acme FinTech", "+2 accounts"], bdTool: "Scraping Browser" },
-  { id: 2, company: "Carta", event: "Fund admin self-service tier deleted from pricing", severity: "HIGH", ago: "44m", affected: ["Vertex Capital"], bdTool: "Web Unlocker" },
-  { id: 3, company: "Veeva Systems", event: "Clinical trial integration removed from partner docs", severity: "HIGH", ago: "1h", affected: ["Nexus Healthcare"], bdTool: "Scraping Browser" },
-  { id: 4, company: "HubSpot", event: "Starter plan email send limits quietly modified", severity: "MODERATE", ago: "6h", affected: ["Orbital SaaS", "+1"], bdTool: "Web Scraper API" },
-  { id: 5, company: "Datadog", event: "Log retention comparison row removed from features page", severity: "LOW", ago: "12h", affected: ["Cascade DevOps"], bdTool: "Web Unlocker" },
-];
-
-const COMPLIANCE_SIGNALS = [
-  { id: 1, regulation: "PCI-DSS 4.0", body: "PCI Council", deadline: "87 days", affected: 12, severity: "CRITICAL", ago: "6h", bdTool: "SERP API" },
-  { id: 2, regulation: "SEC Rule 10c-1", body: "SEC EDGAR", deadline: "120 days", affected: 7, severity: "HIGH", ago: "1d", bdTool: "SERP API" },
-  { id: 3, regulation: "HIPAA Enforcement Bulletin", body: "HHS OCR", deadline: "45 days", affected: 4, severity: "HIGH", ago: "2d", bdTool: "SERP API" },
-  { id: 4, regulation: "EU AI Act (SaaS tools)", body: "EUR-Lex", deadline: "180 days", affected: 9, severity: "MODERATE", ago: "3d", bdTool: "SERP API" },
-  { id: 5, regulation: "FDA DSCSA Serialization", body: "FDA.gov", deadline: "210 days", affected: 3, severity: "MODERATE", ago: "4d", bdTool: "SERP API" },
-];
-
-const PAIN_SIGNALS = [
-  { id: 1, source: "r/fintech", snippet: "\"evaluating alternatives to Stripe Atlas — anyone tried [product]? Contract is up in 60 days\"", company: "Acme FinTech", type: "ACTIVE EVAL", ago: "4m", bdTool: "Web Unlocker", engine: "Featherless AI", isAudio: false },
-  { id: 2, source: "FinTech Unplugged Ep.84", snippet: "\"...we are actively planning to migrate before the PCI deadline — our current vendor has not responded to support tickets in three weeks...\"", company: "Acme FinTech", type: "SWITCHING", ago: "2h", bdTool: "Speechmatics", engine: "Speechmatics", isAudio: true },
-  { id: 3, source: "G2 Reviews", snippet: "\"Looking for Veeva alternatives for our 2025 renewal — open to platform demos before Q3\"", company: "Nexus Healthcare", type: "ACTIVE EVAL", ago: "3h", bdTool: "Scraping Browser", engine: "Featherless AI", isAudio: false },
-  { id: 4, source: "LinkedIn", snippet: "\"HubSpot contract is up in 60 days and I am actively fielding demos — DM with deck\"", company: "Orbital SaaS", type: "ACTIVE EVAL", ago: "5h", bdTool: "Web Scraper API", engine: "Featherless AI", isAudio: false },
-  { id: 5, source: "r/devops", snippet: "\"Datadog renewal came back 3x what we paid last year. Actively evaluating Grafana Cloud and Honeycomb\"", company: "Cascade DevOps", type: "SWITCHING", ago: "8h", bdTool: "Web Unlocker", engine: "Featherless AI", isAudio: false },
-];
-
-const SCAN_STEPS = [
-  "Initializing BrightData MCP Server...",
-  "Void Scanner — Scraping Browser crawling competitor pages...",
-  "Compliance Radar — SERP API scanning regulatory feeds...",
-  "Pain Listener — Web Unlocker accessing community forums...",
-  "Speechmatics — Transcribing audio signals from podcast feeds...",
-  "Featherless AI — Classifying pain signals (Mistral-7B)...",
-  "Cognee — Updating Account Intelligence Profiles in memory...",
-  "Convergence Engine — Scoring 6 accounts...",
-  "TriggerWare — Routing alert for Acme FinTech (87/100)...",
-];
-
-const DEMO_BRIEF = `WHY NOW — 3 CONVERGING SIGNALS
-
-① COMPETITOR RETREAT  [84/100]
-Stripe Atlas silently removed their SMB pricing tier on June 2nd. Acme FinTech is a confirmed Stripe Atlas SMB customer (G2 review, March 2025). With no upgrade path and no communication from Stripe Atlas, their account is orphaned. Estimated decision window: 30 days before formal RFP begins.
-
-② REGULATORY PRESSURE  [71/100]
-PCI-DSS 4.0 mandatory enforcement begins in 87 days. Acme processes card payments (confirmed via recent job postings). Undertow found zero compliance acknowledgment — no blog posts, no compliance hiring, no partner notices. They are behind schedule.
-
-③ ACTIVE EVALUATION  [91/100]
-Head of Payments Infrastructure posted on r/fintech 4 hours ago: "evaluating alternatives to Stripe Atlas." Speechmatics transcript from FinTech Unplugged Ep.84 (2 weeks prior) confirms the same individual discussed migration planning in audio. This is an active buy, not passive frustration.
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-SUGGESTED OPENING LINE
-
-"Hi [Name] — I noticed Stripe Atlas recently restructured their plans, and with PCI-DSS 4.0 enforcement coming in August, I thought the timing might make a quick conversation worthwhile. We've helped three payments companies your size get compliant without replacing their existing stack."
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-ACCOUNT CONTEXT
-• Industry: FinTech / Payments  |  340 employees  |  Austin, TX
-• Stack: AWS · Stripe · Postgres
-• Key contact: Head of Payments Infrastructure
-• Competitor: Stripe Atlas (confirmed SMB tier customer, orphaned)
-• Compliance deadline: Aug 31, 2025 (87 days)
-• Audio signal: FinTech Unplugged Ep.84 — migration intent confirmed`;
-
-// ─── DESIGN TOKENS (exact match to requested feel) ───────────────────────────
-
-const C = {
-  bg: "#07090f", surface: "#0c1018", surface2: "#111820",
-  border: "#18232f", border2: "#1e2d3e",
-  text: "#c2d0de", muted: "#4a6070", dim: "#243040",
-  void: "#ff5a52", compliance: "#f0a000", pain: "#24c038",
-  conv: "#9060ff", blue: "#2070ff", white: "#ddeeff",
+// ─── ICONS (inline SVG to avoid extra deps) ──────────────────────────────────
+const Icon = {
+  Logo: () => (
+    <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+      <path d="M9 2L16 6V12L9 16L2 12V6L9 2Z" stroke="#9060ff" strokeWidth="1.5" fill="none" />
+      <path d="M9 5L13 7.5V12.5L9 15L5 12.5V7.5L9 5Z" fill="#9060ff" fillOpacity="0.3" />
+      <circle cx="9" cy="9" r="2" fill="#9060ff" />
+    </svg>
+  ),
+  Dashboard: () => (
+    <svg width="14" height="14" viewBox="0 0 14 14" fill="currentColor">
+      <rect x="0" y="0" width="6" height="6" rx="1.5" opacity="0.8" />
+      <rect x="8" y="0" width="6" height="6" rx="1.5" opacity="0.8" />
+      <rect x="0" y="8" width="6" height="6" rx="1.5" opacity="0.8" />
+      <rect x="8" y="8" width="6" height="6" rx="1.5" opacity="0.8" />
+    </svg>
+  ),
+  Signal: () => (
+    <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.5">
+      <path d="M7 13V8M4 13V10M10 13V5M1 13V12M13 13V3" />
+    </svg>
+  ),
+  Intel: () => (
+    <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.5">
+      <circle cx="7" cy="7" r="5.5" />
+      <path d="M7 5v5M7 3.5v.5" strokeLinecap="round" />
+    </svg>
+  ),
+  Brief: () => (
+    <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.5">
+      <rect x="2" y="1" width="10" height="12" rx="1.5" />
+      <path d="M4 5h6M4 7.5h6M4 10h4" strokeLinecap="round" />
+    </svg>
+  ),
+  Settings: () => (
+    <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.5">
+      <circle cx="7" cy="7" r="2" />
+      <path d="M7 1v1.5M7 11.5V13M13 7h-1.5M2.5 7H1M11.24 2.76l-1.06 1.06M3.82 10.18l-1.06 1.06M11.24 11.24l-1.06-1.06M3.82 3.82L2.76 2.76" strokeLinecap="round" />
+    </svg>
+  ),
+  Play: () => (
+    <svg width="12" height="12" viewBox="0 0 12 12" fill="currentColor">
+      <path d="M2.5 1.5L10.5 6L2.5 10.5V1.5Z" />
+    </svg>
+  ),
+  Check: () => (
+    <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="2">
+      <path d="M2 6l3 3 5-5" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  ),
+  Zap: () => (
+    <svg width="11" height="11" viewBox="0 0 11 11" fill="currentColor">
+      <path d="M6.5 1L2 6.5h3.5L4 10l5.5-6H6L6.5 1Z" />
+    </svg>
+  ),
+  Eye: () => (
+    <svg width="13" height="13" viewBox="0 0 13 13" fill="none" stroke="currentColor" strokeWidth="1.5">
+      <path d="M1 6.5C1 6.5 3 2 6.5 2S12 6.5 12 6.5 10 11 6.5 11 1 6.5 1 6.5Z" />
+      <circle cx="6.5" cy="6.5" r="1.5" fill="currentColor" />
+    </svg>
+  ),
+  External: () => (
+    <svg width="11" height="11" viewBox="0 0 11 11" fill="none" stroke="currentColor" strokeWidth="1.5">
+      <path d="M4.5 2H2a1 1 0 00-1 1v6a1 1 0 001 1h6a1 1 0 001-1V6.5M9 2H7m2 0v2m0-2L5.5 5.5" strokeLinecap="round" />
+    </svg>
+  ),
+  Copy: () => (
+    <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.5">
+      <rect x="4" y="4" width="7" height="7" rx="1" />
+      <path d="M1 8V2a1 1 0 011-1h6" strokeLinecap="round" />
+    </svg>
+  ),
+  Share: () => (
+    <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.5">
+      <circle cx="9.5" cy="2.5" r="1.5" />
+      <circle cx="2.5" cy="6" r="1.5" />
+      <circle cx="9.5" cy="9.5" r="1.5" />
+      <path d="M4 6.75l4 2.25M4 5.25l4-2.25" />
+    </svg>
+  ),
 };
+
+// ─── DESIGN TOKENS ───────────────────────────────────────────────────────────
+const C = {
+  bg: "#07090f",
+  surface: "#0c1018",
+  surface2: "#0f161f",
+  surface3: "#111820",
+  border: "#18232f",
+  border2: "#1e2d3e",
+  text: "#c2d0de",
+  muted: "#4a6070",
+  dim: "#1e2d3e",
+  conv: "#9060ff",
+  void: "#ff5a52",
+  compliance: "#f0a000",
+  pain: "#24c038",
+  blue: "#2070ff",
+  white: "#ddeeff",
+};
+
+// ─── SCAN STEPS ───────────────────────────────────────────────────────────────
+const SCAN_STEPS = [
+  { msg: "Initializing BrightData MCP Server...", tag: "BrightData", pct: 10 },
+  { msg: "Void Scanner — crawling competitor pricing pages...", tag: "BrightData", pct: 22 },
+  { msg: "Compliance Radar — scanning regulatory RSS feeds...", tag: "BrightData", pct: 35 },
+  { msg: "Pain Listener — accessing community forums...", tag: "BrightData", pct: 47 },
+  { msg: "Speechmatics — transcribing podcast audio signals...", tag: "Speechmatics", pct: 57 },
+  { msg: "Featherless AI — classifying pain signals (Mistral-7B)...", tag: "Featherless AI", pct: 68 },
+  { msg: "AI/ML API — computing convergence vectors...", tag: "AI/ML API", pct: 80 },
+  { msg: "Cognee — updating account intelligence profiles...", tag: "Cognee", pct: 90 },
+  { msg: "TriggerWare — routing alert for Brex (threshold crossed)...", tag: "TriggerWare", pct: 97 },
+];
 
 const sponsorColors: Record<string, string> = {
-  BrightData: "#00aaff", "AI/ML API": "#ff5a52",
-  Speechmatics: "#f0a000", "Featherless AI": "#24c038",
-  Cognee: "#9060ff", TriggerWare: "#ff8800",
+  BrightData: "#00aaff",
+  "AI/ML API": "#ff5a52",
+  Speechmatics: "#f0a000",
+  "Featherless AI": "#24c038",
+  Cognee: "#9060ff",
+  TriggerWare: "#ff8800",
 };
 
-const SponsorTag = ({ name }: { name: string }) => {
+// ─── MINI COMPONENTS ─────────────────────────────────────────────────────────
+
+const SponsorPill = ({ name }: { name: string }) => {
   const c = sponsorColors[name] || "#888";
-  return <span style={{ fontSize: "9px", padding: "1px 5px", borderRadius: "2px", background: `${c}18`, color: c, border: `1px solid ${c}38`, letterSpacing: "0.04em", whiteSpace: "nowrap" }}>{name}</span>;
+  return (
+    <span style={{
+      fontSize: "9px", padding: "2px 6px", borderRadius: "3px",
+      background: `${c}15`, color: c, border: `1px solid ${c}30`,
+      letterSpacing: "0.04em", whiteSpace: "nowrap",
+    }}>
+      {name}
+    </span>
+  );
 };
 
-const SevBadge = ({ s }: { s: string }) => {
-  const map: Record<string, string> = { CRITICAL: C.void, HIGH: C.compliance, MODERATE: "#6090cc", LOW: C.muted };
-  const c = map[s] || C.muted;
-  return <span style={{ fontSize: "9px", padding: "1px 6px", borderRadius: "2px", background: `${c}20`, color: c, border: `1px solid ${c}40`, letterSpacing: "0.06em" }}>{s}</span>;
-};
-
-const StatusBadge = ({ status }: { status: string }) => {
-  const m: Record<string, string> = { ALERT: C.void, WATCH: C.compliance, MONITOR: C.muted };
-  const c = m[status] || C.muted;
-  return <span style={{ fontSize: "9px", padding: "2px 7px", borderRadius: "2px", background: `${c}1a`, color: c, border: `1px solid ${c}45`, letterSpacing: "0.08em" }}>{status}</span>;
-};
-
-const Bar = ({ v, color }: { v: number; color: string }) => (
-  <div style={{ background: C.border, borderRadius: "2px", height: "3px", flex: 1 }}>
-    <div style={{ background: color, width: `${v}%`, height: "100%", borderRadius: "2px", transition: "width 1.2s ease" }} />
-  </div>
+const LiveDot = ({ color, pulse = true }: { color: string; pulse?: boolean }) => (
+  <span style={{
+    display: "inline-block", width: "6px", height: "6px", borderRadius: "50%",
+    background: color, flexShrink: 0,
+    boxShadow: `0 0 0 2px ${color}30`,
+    animation: pulse ? "dot-blink 2s ease-in-out infinite" : "none",
+  }} />
 );
 
-function sectionFromSignal(signal: EngineSignal) {
-  return { signals: [signal], subScore: signal.subScore };
-}
-
-function createAcmeProfile(account = ACCOUNTS[0]): AccountIntelligenceProfile {
-  const convergenceScore = computeConvergenceScore(
-    account.voidScore,
-    account.complianceScore,
-    account.painScore,
-  );
-  const maxSingleEngine = Math.max(account.voidScore, account.complianceScore, account.painScore);
-
-  return {
-    account: account.name,
-    industry: account.industry,
-    employees: account.employees,
-    crmStage: "Not in pipeline",
-    lastUpdated: new Date().toISOString(),
-    void: sectionFromSignal({ ...voidPricingRemoval, subScore: account.voidScore }),
-    compliance: sectionFromSignal({ ...compliancePciDss, subScore: account.complianceScore }),
-    pain: { signals: [painRFintechPost, painPodcastTranscript], subScore: account.painScore },
-    convergenceScore,
-    urgency: computeUrgency(convergenceScore, maxSingleEngine),
+const StatusBadge = ({ status }: { status: string }) => {
+  const map: Record<string, { bg: string; color: string; dot: string }> = {
+    ALERT: { bg: `${C.void}12`, color: C.void, dot: C.void },
+    WATCH: { bg: `${C.compliance}12`, color: C.compliance, dot: C.compliance },
+    MONITOR: { bg: `${C.muted}12`, color: C.muted, dot: C.muted },
   };
-}
+  const s = map[status] || map.MONITOR;
+  return (
+    <span style={{
+      display: "inline-flex", alignItems: "center", gap: "4px",
+      padding: "2px 7px", borderRadius: "3px", fontSize: "9px", fontWeight: 600,
+      letterSpacing: "0.08em", background: s.bg, color: s.color,
+      border: `1px solid ${s.color}35`,
+    }}>
+      <LiveDot color={s.dot} pulse={status === "ALERT"} />
+      {status}
+    </span>
+  );
+};
 
-function loadInitialProfile(): AccountIntelligenceProfile {
-  return createAcmeProfile();
-}
+const ScoreBar = ({ value, color, delay = 0 }: { value: number; color: string; delay?: number }) => {
+  const [w, setW] = useState(0);
+  useEffect(() => { const t = setTimeout(() => setW(value), 300 + delay * 100); return () => clearTimeout(t); }, [value, delay]);
+  return (
+    <div style={{ height: "3px", background: C.border, borderRadius: "99px", overflow: "hidden", minWidth: "40px" }}>
+      <div style={{
+        height: "100%", width: `${w}%`, background: color,
+        borderRadius: "99px", transition: "width 0.9s cubic-bezier(.25,.1,.25,1)",
+      }} />
+    </div>
+  );
+};
 
-// ─── MAIN DASHBOARD (matching the exact requested aesthetic) ─────────────────
+const ConfidenceBadge = ({ confidence }: { confidence: number }) => {
+  const level = getConfidenceLevel(confidence);
+  return (
+    <span style={{
+      fontSize: "9px", padding: "2px 5px", borderRadius: "3px",
+      background: `${level.color}15`, color: level.color,
+      border: `1px solid ${level.color}35`,
+    }}>
+      {level.label} {Math.round(confidence * 100)}%
+    </span>
+  );
+};
 
+// ─── ANIMATED GAUGE ──────────────────────────────────────────────────────────
+const ConvergenceGauge = ({ value, size = 160 }: { value: number; size?: number }) => {
+  const [score, setScore] = useState(0);
+  useEffect(() => {
+    let cur = 0;
+    const step = value / 60;
+    const id = setInterval(() => {
+      cur = Math.min(cur + step, value);
+      setScore(Math.round(cur));
+      if (cur >= value) clearInterval(id);
+    }, 20);
+    return () => clearInterval(id);
+  }, [value]);
+
+  const r = (size / 2) - 10;
+  const circ = 2 * Math.PI * r;
+  const dashArr = `${(score / 100) * circ} ${circ}`;
+  const color = score >= 75 ? C.void : score >= 55 ? C.compliance : C.conv;
+
+  return (
+    <div style={{ position: "relative", width: size, height: size, flexShrink: 0 }}>
+      <svg width={size} height={size} style={{ transform: "rotate(-90deg)" }}>
+        <defs>
+          <linearGradient id={`g${value}`} x1="0%" y1="0%" x2="100%" y2="0%">
+            <stop offset="0%" stopColor="#7c3aed" />
+            <stop offset="50%" stopColor={color} />
+            <stop offset="100%" stopColor={color === C.void ? C.compliance : color} />
+          </linearGradient>
+        </defs>
+        <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke={C.border} strokeWidth="6" />
+        <circle
+          cx={size / 2} cy={size / 2} r={r}
+          fill="none" stroke={`url(#g${value})`} strokeWidth="6"
+          strokeDasharray={dashArr} strokeLinecap="round"
+          style={{ transition: "stroke-dasharray 0.04s linear" }}
+        />
+      </svg>
+      <div style={{
+        position: "absolute", inset: 0, display: "flex",
+        flexDirection: "column", alignItems: "center", justifyContent: "center",
+      }}>
+        <div style={{ fontSize: size < 120 ? "24px" : "36px", fontWeight: 800, color: C.white, lineHeight: 1, letterSpacing: "-0.04em" }}>
+          {score}
+        </div>
+        <div style={{ fontSize: "9px", color: C.muted, marginTop: "2px", letterSpacing: "0.1em" }}>CONV.</div>
+      </div>
+    </div>
+  );
+};
+
+// ─── STAT CARD ───────────────────────────────────────────────────────────────
+const StatCard = ({
+  label, value, sub, color, delay = 0, onClick,
+}: {
+  label: string; value: string; sub: string; color: string; delay?: number; onClick?: () => void;
+}) => (
+  <motion.div
+    initial={{ opacity: 0, y: 12 }}
+    animate={{ opacity: 1, y: 0 }}
+    transition={{ delay: delay * 0.08, duration: 0.4, ease: [0.25, 0.1, 0.25, 1] }}
+    whileHover={{ y: -3, boxShadow: `0 10px 32px ${color}18` }}
+    onClick={onClick}
+    style={{
+      background: C.surface, border: `1px solid ${C.border}`, borderRadius: "8px",
+      padding: "14px 16px", cursor: onClick ? "pointer" : "default",
+      position: "relative", overflow: "hidden",
+    }}
+  >
+    <div style={{
+      position: "absolute", top: 0, right: 0, width: "80px", height: "80px",
+      background: `radial-gradient(circle at top right, ${color}10, transparent 70%)`,
+      pointerEvents: "none",
+    }} />
+    <div style={{ fontSize: "9px", color: C.muted, letterSpacing: "0.1em", marginBottom: "10px" }}>{label}</div>
+    <div style={{ fontSize: "26px", fontWeight: 700, color, lineHeight: 1, letterSpacing: "-0.02em" }}>{value}</div>
+    <div style={{ fontSize: "9px", color: C.muted, marginTop: "6px" }}>{sub}</div>
+  </motion.div>
+);
+
+// ─── SCAN PANEL ──────────────────────────────────────────────────────────────
+const ScanPanel = ({ isScanning, step, done, onScan, result }: {
+  isScanning: boolean; step: number; done: boolean; onScan: () => void; result: string;
+}) => {
+  const pct = step >= 0 ? SCAN_STEPS[Math.min(step, SCAN_STEPS.length - 1)]?.pct ?? 0 : 0;
+  return (
+    <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: "8px", overflow: "hidden" }}>
+      <div style={{ padding: "12px 16px", display: "flex", alignItems: "center", gap: "14px", borderBottom: isScanning ? `1px solid ${C.border}` : "none" }}>
+        <motion.button
+          whileHover={isScanning ? {} : { scale: 1.04, boxShadow: `0 8px 24px ${C.blue}40` }}
+          whileTap={isScanning ? {} : { scale: 0.96 }}
+          onClick={onScan}
+          disabled={isScanning}
+          style={{
+            display: "flex", alignItems: "center", gap: "7px",
+            background: isScanning ? C.dim : `linear-gradient(135deg, #1560cc, ${C.blue})`,
+            color: C.white, border: "none", borderRadius: "5px",
+            padding: "7px 18px", fontSize: "10px", fontFamily: "inherit",
+            letterSpacing: "0.1em", cursor: isScanning ? "not-allowed" : "pointer", flexShrink: 0,
+            boxShadow: isScanning ? "none" : `0 6px 18px ${C.blue}30`,
+          }}
+        >
+          {isScanning
+            ? <span style={{ display: "inline-block", animation: "spin 0.9s linear infinite" }}>◌</span>
+            : <Icon.Play />
+          }
+          {isScanning ? "SCANNING..." : "RUN FULL SCAN"}
+        </motion.button>
+
+        {!isScanning && !done && (
+          <span style={{ fontSize: "10px", color: C.muted }}>
+            BrightData → Speechmatics → Featherless AI → Cognee → TriggerWare
+          </span>
+        )}
+
+        {done && !isScanning && (
+          <motion.span
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            style={{ display: "flex", alignItems: "center", gap: "8px", fontSize: "10px", color: C.pain }}
+          >
+            <span style={{ background: `${C.pain}20`, border: `1px solid ${C.pain}40`, borderRadius: "3px", padding: "1px 6px" }}>✓ COMPLETE</span>
+            {result}
+          </motion.span>
+        )}
+      </div>
+
+      <AnimatePresence>
+        {isScanning && (
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: "auto", opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            style={{ overflow: "hidden" }}
+          >
+            <div style={{ padding: "14px 16px", borderBottom: `1px solid ${C.border}` }}>
+              <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "8px" }}>
+                <span style={{ fontSize: "9px", color: C.muted, letterSpacing: "0.06em" }}>
+                  {SCAN_STEPS[Math.min(step, SCAN_STEPS.length - 1)]?.msg}
+                </span>
+                <span style={{ fontSize: "9px", color: C.conv }}>{pct}%</span>
+              </div>
+              <div style={{ height: "3px", background: C.border, borderRadius: "99px", overflow: "hidden" }}>
+                <motion.div
+                  animate={{ width: `${pct}%` }}
+                  transition={{ duration: 0.7, ease: "easeOut" }}
+                  style={{
+                    height: "100%", borderRadius: "99px",
+                    background: `linear-gradient(90deg, ${C.conv}, ${C.pain})`,
+                    position: "relative",
+                  }}
+                />
+              </div>
+            </div>
+            <div style={{ padding: "10px 16px", display: "flex", gap: "12px", overflowX: "auto" }}>
+              {SCAN_STEPS.map((s, i) => (
+                <div key={i} style={{
+                  display: "flex", alignItems: "center", gap: "4px", flexShrink: 0,
+                  opacity: i <= step ? 1 : 0.25, transition: "opacity 0.3s",
+                }}>
+                  <span style={{ fontSize: "9px", color: i < step ? C.pain : i === step ? C.conv : C.muted }}>
+                    {i < step ? "✓" : i === step ? "▷" : "○"}
+                  </span>
+                  <span style={{ fontSize: "9px", color: C.muted }}>{s.tag}</span>
+                </div>
+              ))}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+};
+
+// ─── SIGNAL TICKER ───────────────────────────────────────────────────────────
+const LIVE_SIGNALS = [
+  { engine: "VOID",   company: "Brex",     event: "Stripe Atlas SMB fast-track tier silently removed", time: "3d", color: "#ff5a52" },
+  { engine: "PAIN",   company: "Notion",   event: "r/saas: 'HubSpot pricing opaque — evaluating alternatives'", time: "1d", color: "#24c038" },
+  { engine: "COMPL.", company: "Rippling", event: "SOC 2 Type II renewal window opens — 6 accounts affected", time: "6h", color: "#f0a000" },
+  { engine: "VOID",   company: "Vercel",   event: "Datadog removed enterprise observability bundle", time: "2d", color: "#ff5a52" },
+  { engine: "PAIN",   company: "Mercury",  event: "CFO posted LinkedIn: 'fintech consolidation — open to demos'", time: "23m", color: "#24c038" },
+];
+
+// ─── SIGNALS VIEW ─────────────────────────────────────────────────────────────
+const SignalsView = ({ accounts, onEvidence, filter, onFilterChange }: {
+  accounts: PremiumAccount[];
+  onEvidence: (acct: PremiumAccount, type: "void" | "compliance" | "pain") => void;
+  filter: "all" | "void" | "compliance" | "pain";
+  onFilterChange: (f: "all" | "void" | "compliance" | "pain") => void;
+}) => {
+
+  type SignalItem = {
+    account: PremiumAccount;
+    type: "void" | "compliance" | "pain";
+    score: number;
+    event: string;
+    time: string;
+    color: string;
+  };
+
+  const allSignals: SignalItem[] = accounts.flatMap((a) => [
+    { account: a, type: "void" as const, score: a.voidScore, event: a.voidEvent, time: formatRelativeTime(a.voidEvidence?.capturedAt ?? a.lastUpdated), color: C.void },
+    { account: a, type: "compliance" as const, score: a.complianceScore, event: a.complianceEvent, time: formatRelativeTime(a.complianceEvidence?.capturedAt ?? a.lastUpdated), color: C.compliance },
+    { account: a, type: "pain" as const, score: a.painScore, event: a.painEvent, time: formatRelativeTime(a.painEvidence?.capturedAt ?? a.lastUpdated), color: C.pain },
+  ]).filter((s) => filter === "all" || s.type === filter)
+    .sort((a, b) => b.score - a.score);
+
+  const typeLabel: Record<string, string> = { void: "VOID", compliance: "COMPL.", pain: "PAIN" };
+  const typeColor: Record<string, string> = { void: C.void, compliance: C.compliance, pain: C.pain };
+
+  return (
+    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} style={{ padding: "18px" }}>
+      {/* Filter row */}
+      <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "16px" }}>
+        <span style={{ fontSize: "9px", color: C.muted, letterSpacing: "0.06em" }}>FILTER</span>
+        {(["all", "void", "compliance", "pain"] as const).map((f) => (
+          <button
+            key={f}
+            data-demo={f === "void" ? "void-filter" : undefined}
+            onClick={() => onFilterChange(f)}
+            style={{
+              background: filter === f ? (f === "all" ? C.conv : typeColor[f] || C.conv) : "transparent",
+              color: filter === f ? C.white : C.muted,
+              border: `1px solid ${filter === f ? (f === "all" ? C.conv : typeColor[f] || C.conv) : C.border}`,
+              borderRadius: "4px", padding: "3px 10px", fontSize: "9px",
+              fontFamily: "inherit", letterSpacing: "0.08em", cursor: "pointer",
+              transition: "all 0.15s",
+            }}
+          >
+            {f.toUpperCase()}
+          </button>
+        ))}
+        <span style={{ marginLeft: "auto", fontSize: "9px", color: C.muted }}>{allSignals.length} signals</span>
+      </div>
+
+      {/* Signal list */}
+      <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
+        {allSignals.map((s, i) => (
+          <motion.div
+            key={`${s.account.id}-${s.type}`}
+            data-demo={s.account.name === "Brex" && s.type === "void" ? "brex-void-row" : undefined}
+            initial={{ opacity: 0, x: -10, background: C.surface }}
+            animate={{ opacity: 1, x: 0, background: C.surface }}
+            transition={{ delay: i * 0.03 }}
+            style={{
+              border: `1px solid ${C.border}`,
+              borderRadius: "7px", padding: "12px 14px",
+              borderLeft: `3px solid ${s.color}`,
+              cursor: "pointer",
+              display: "grid",
+              gridTemplateColumns: "auto 1fr auto auto",
+              gap: "12px", alignItems: "center",
+            }}
+            whileHover={{ x: 3, background: C.surface2 }}
+            onClick={() => onEvidence(s.account, s.type)}
+          >
+            <span style={{
+              fontSize: "9px", fontWeight: 700, letterSpacing: "0.08em",
+              color: s.color, background: `${s.color}12`,
+              border: `1px solid ${s.color}30`, borderRadius: "3px",
+              padding: "2px 6px", whiteSpace: "nowrap",
+            }}>
+              {typeLabel[s.type]}
+            </span>
+            <div>
+              <div style={{ fontSize: "11px", color: C.white, fontWeight: 500, marginBottom: "2px" }}>
+                {s.account.name}
+              </div>
+              <div style={{ fontSize: "10px", color: C.muted }}>{s.event}</div>
+            </div>
+            <div style={{ fontSize: "22px", fontWeight: 700, color: s.color, textAlign: "right" }}>
+              {s.score}
+            </div>
+            <div style={{ fontSize: "9px", color: C.muted, textAlign: "right" }}>{s.time}</div>
+          </motion.div>
+        ))}
+      </div>
+    </motion.div>
+  );
+};
+
+// ─── INTEL VIEW ───────────────────────────────────────────────────────────────
+const IntelView = ({
+  account,
+  onGenerateBrief,
+  onEvidence,
+}: {
+  account: PremiumAccount;
+  onGenerateBrief: () => void;
+  onEvidence: (type: "void" | "compliance" | "pain" | "audio") => void;
+}) => (
+  <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} style={{ padding: "18px" }}>
+    {/* Account header */}
+    <div style={{
+      background: C.surface, border: `1px solid ${C.border}`, borderRadius: "8px",
+      padding: "16px 18px", marginBottom: "12px",
+      display: "flex", alignItems: "center", justifyContent: "space-between", gap: "16px",
+    }}>
+      <div style={{ display: "flex", alignItems: "center", gap: "14px" }}>
+        <div style={{
+          width: "44px", height: "44px", borderRadius: "10px",
+          background: `linear-gradient(135deg, ${C.conv}30, ${C.blue}20)`,
+          border: `1px solid ${C.border}`, display: "flex", alignItems: "center",
+          justifyContent: "center", fontSize: "16px", flexShrink: 0,
+        }}>
+          {account.name[0]}
+        </div>
+        <div>
+          <div style={{ fontSize: "15px", fontWeight: 700, color: C.white }}>{account.name}</div>
+          <div style={{ fontSize: "10px", color: C.muted, marginTop: "2px" }}>
+            {account.industry} · {account.employees.toLocaleString()} employees · {account.location}
+          </div>
+          <div style={{ display: "flex", gap: "6px", marginTop: "5px", flexWrap: "wrap" }}>
+            {account.stack.slice(0, 4).map((s) => (
+              <span key={s} style={{ fontSize: "9px", padding: "1px 5px", borderRadius: "3px", background: C.surface3, border: `1px solid ${C.border}`, color: C.muted }}>
+                {s}
+              </span>
+            ))}
+          </div>
+        </div>
+      </div>
+      <div style={{ display: "flex", alignItems: "center", gap: "12px", flexShrink: 0 }}>
+        <div data-demo="convergence-gauge">
+          <ConvergenceGauge value={account.convergence} size={80} />
+        </div>
+        <div style={{ textAlign: "right" }}>
+          <StatusBadge status={account.status} />
+          <div style={{ fontSize: "9px", color: C.muted, marginTop: "5px" }}>
+            vs {account.competitor}
+          </div>
+        </div>
+      </div>
+    </div>
+
+    {/* Signal breakdown */}
+    <div style={{ display: "grid", gridTemplateColumns: account.audioEvidence ? "1fr 1fr 1fr 1fr" : "1fr 1fr 1fr", gap: "8px", marginBottom: "12px" }}>
+      {([
+        { type: "void" as const, label: "VOID SCANNER", score: account.voidScore, event: account.voidEvent, time: account.voidEvidence?.capturedAt ?? account.lastUpdated, color: C.void, conf: account.voidConfidence },
+        { type: "compliance" as const, label: "COMPLIANCE RADAR", score: account.complianceScore, event: account.complianceEvent, time: account.complianceEvidence?.capturedAt ?? account.lastUpdated, color: C.compliance, conf: account.complianceConfidence },
+        { type: "pain" as const, label: "PAIN LISTENER", score: account.painScore, event: account.painEvent, time: account.painEvidence?.capturedAt ?? account.lastUpdated, color: C.pain, conf: account.painConfidence },
+        ...(account.audioEvidence ? [{ type: "audio" as const, label: "AUDIO INTELLIGENCE", score: 88, event: account.audioSignal ?? "Podcast signal detected", time: account.audioEvidence.capturedAt ?? account.lastUpdated, color: "#c084fc", conf: 0.89 }] : []),
+      ]).map((sig) => (
+        <motion.div
+          key={sig.type}
+          data-demo={sig.type === "audio" ? "audio-card" : undefined}
+          whileHover={{ y: -2, boxShadow: `0 8px 24px ${sig.color}20` }}
+          onClick={() => onEvidence(sig.type)}
+          style={{
+            background: C.surface, border: `1px solid ${C.border}`,
+            borderRadius: "7px", padding: "12px 14px", cursor: "pointer",
+            borderTop: `2px solid ${sig.color}`,
+          }}
+        >
+          <div style={{ fontSize: "8px", color: sig.color, letterSpacing: "0.1em", marginBottom: "6px" }}>{sig.label}</div>
+          <div style={{ fontSize: "24px", fontWeight: 700, color: sig.color, lineHeight: 1 }}>{sig.score}</div>
+          <ScoreBar value={sig.score} color={sig.color} />
+          <div style={{ fontSize: "9px", color: C.muted, marginTop: "8px", lineHeight: 1.5 }}>
+            {sig.event.slice(0, 60)}{sig.event.length > 60 ? "..." : ""}
+          </div>
+          <div style={{ marginTop: "6px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+            <ConfidenceBadge confidence={sig.conf} />
+            <span style={{ fontSize: "9px", color: C.muted }}>{formatRelativeTime(sig.time)}</span>
+          </div>
+        </motion.div>
+      ))}
+    </div>
+
+    {/* Contact + action */}
+    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "8px" }}>
+      <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: "7px", padding: "12px 14px" }}>
+        <div style={{ fontSize: "8px", color: C.muted, letterSpacing: "0.1em", marginBottom: "8px" }}>KEY CONTACT</div>
+        <div style={{ fontSize: "12px", color: C.white, fontWeight: 500 }}>{account.contact.name}</div>
+        <div style={{ fontSize: "10px", color: C.muted, marginTop: "2px" }}>{account.contact.title}</div>
+          <div style={{ fontSize: "9px", color: C.muted, marginTop: "8px", lineHeight: 1.6 }}>
+            {account.contact.linkedin ? `linkedin.com/in/${account.contact.linkedin.split("/").pop()}` : "Key decision-maker for vendor evaluation"}
+          </div>
+        </div>
+        <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: "7px", padding: "12px 14px" }}>
+          <div style={{ fontSize: "8px", color: C.muted, letterSpacing: "0.1em", marginBottom: "8px" }}>NEXT ACTION</div>
+          <div style={{ fontSize: "10px", color: C.white, lineHeight: 1.6 }}>
+            Reach out to {account.contact.name} — {account.status === "ALERT" ? "urgency window is open now" : "monitor for 14 more days before outreach"}
+          </div>
+        <button
+          data-demo="generate-brief-btn"
+          onClick={onGenerateBrief}
+          style={{
+            marginTop: "10px", background: `linear-gradient(135deg, #7c3aed, ${C.conv})`,
+            border: "none", borderRadius: "4px", padding: "6px 14px",
+            fontSize: "9px", color: C.white, cursor: "pointer", fontFamily: "inherit",
+            letterSpacing: "0.08em", boxShadow: `0 4px 14px ${C.conv}35`,
+          }}
+        >
+          ✦ GENERATE INTEL BRIEF
+        </button>
+      </div>
+    </div>
+  </motion.div>
+);
+
+// ─── BRIEF VIEW ───────────────────────────────────────────────────────────────
+const BriefView = ({
+  brief, loading, account, onGenerate, onShare,
+}: {
+  brief: string; loading: boolean; account: PremiumAccount;
+  onGenerate: () => void; onShare: () => void;
+}) => {
+  const [copied, setCopied] = useState(false);
+  const handleCopy = () => {
+    navigator.clipboard.writeText(brief).then(() => { setCopied(true); setTimeout(() => setCopied(false), 2000); });
+  };
+
+  return (
+    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} style={{ padding: "18px" }}>
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "14px" }}>
+        <div>
+          <div style={{ fontSize: "11px", color: C.white, fontWeight: 600 }}>Intel Brief — {account.name}</div>
+          <div style={{ fontSize: "9px", color: C.muted, marginTop: "2px" }}>AI-generated convergence analysis</div>
+        </div>
+        <div style={{ display: "flex", gap: "8px" }}>
+          {brief && (
+            <>
+              <button onClick={handleCopy} style={ghostBtnStyle}>
+                <Icon.Copy /> {copied ? "Copied!" : "Copy"}
+              </button>
+              <button data-demo="brief-share-btn" onClick={onShare} style={ghostBtnStyle}>
+                <Icon.Share /> Share
+              </button>
+            </>
+          )}
+          <button
+            onClick={onGenerate}
+            disabled={loading}
+            style={{
+              display: "flex", alignItems: "center", gap: "6px",
+              background: `linear-gradient(135deg, #7c3aed, ${C.conv})`,
+              border: "none", borderRadius: "5px", padding: "7px 16px",
+              fontSize: "10px", color: C.white, cursor: loading ? "not-allowed" : "pointer",
+              fontFamily: "inherit", letterSpacing: "0.08em", opacity: loading ? 0.6 : 1,
+              boxShadow: `0 4px 14px ${C.conv}30`,
+            }}
+          >
+            {loading
+              ? <span style={{ animation: "spin 0.8s linear infinite" }}>◌</span>
+              : "✦"}
+            {loading ? "Generating..." : "Generate Brief"}
+          </button>
+        </div>
+      </div>
+
+      <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: "8px", overflow: "hidden", minHeight: "360px" }}>
+        {loading && (
+          <div style={{ padding: "28px 22px" }}>
+            <div style={{ marginBottom: "16px" }}>
+              <div style={{ fontSize: "9px", color: C.conv, letterSpacing: "0.1em", marginBottom: "10px" }}>✦ GENERATING INTEL BRIEF</div>
+              {[100, 70, 85, 50].map((w, i) => (
+                <div key={i} style={{
+                  height: "10px", width: `${w}%`, marginBottom: "8px", borderRadius: "4px",
+                  background: `linear-gradient(90deg, ${C.surface} 0px, ${C.border2} 200px, ${C.surface} 400px)`,
+                  backgroundSize: "600px", animation: "shimmer 1.6s linear infinite",
+                }} />
+              ))}
+            </div>
+          </div>
+        )}
+
+        {!loading && !brief && (
+          <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "60px 24px", color: C.muted, textAlign: "center" }}>
+            <div style={{ fontSize: "32px", marginBottom: "12px", opacity: 0.3 }}>✦</div>
+            <div style={{ fontSize: "11px" }}>Click "Generate Brief" to produce an AI-powered</div>
+            <div style={{ fontSize: "11px" }}>convergence analysis for {account.name}</div>
+          </div>
+        )}
+
+        {!loading && brief && (
+          <pre style={{
+            margin: 0, padding: "20px 22px", fontFamily: "inherit",
+            fontSize: "11px", lineHeight: 1.9, color: C.text,
+            whiteSpace: "pre-wrap", wordBreak: "break-word", overflowX: "auto",
+          }}>
+            {brief}
+          </pre>
+        )}
+      </div>
+    </motion.div>
+  );
+};
+
+const ghostBtnStyle: React.CSSProperties = {
+  display: "flex", alignItems: "center", gap: "5px",
+  background: "transparent", border: `1px solid ${C.border}`, borderRadius: "5px",
+  padding: "6px 12px", fontSize: "10px", color: C.muted, cursor: "pointer",
+  fontFamily: "inherit", letterSpacing: "0.04em", transition: "all 0.15s",
+};
+
+// ─── ENGINE META (id → display config) ───────────────────────────────────────
+const ENGINE_META: Record<string, { tag: string; color: string }> = {
+  bright_data:  { tag: "Void Scanner · Compliance Radar · Pain Listener", color: "#00aaff" },
+  ai_ml_api:    { tag: "Signal scoring + Intel Brief generation", color: "#ff5a52" },
+  featherless:  { tag: "Pain signal classification (Mistral-7B)", color: "#24c038" },
+  speechmatics: { tag: "Podcast & audio transcription", color: "#f0a000" },
+  cognee:       { tag: "Account memory graph (knowledge persistence)", color: "#9060ff" },
+  triggerware:  { tag: "Workflow routing to Slack + HubSpot", color: "#ff8800" },
+  slack:        { tag: "Real-time Slack alerts on convergence threshold", color: "#4A154B" },
+  hubspot:      { tag: "CRM lead creation on convergence breach", color: "#FF7A59" },
+};
+
+// ─── SETTINGS VIEW ────────────────────────────────────────────────────────────
+const SettingsView = ({
+  integrationStatuses,
+  onSignOut,
+  isDemoPage = false,
+}: {
+  integrationStatuses: { id?: string; name: string; status: string; mode?: string; detail?: string }[];
+  onSignOut: () => void;
+  isDemoPage?: boolean;
+}) => {
+  const engineStatus = integrationStatuses.length > 0
+    ? integrationStatuses.map((s) => {
+        const meta = ENGINE_META[s.id ?? ""] ?? { tag: s.detail ?? "Integration", color: C.muted };
+        return { name: s.name, tag: meta.tag, color: meta.color, live: s.status === "live", mode: s.mode ?? "real" };
+      })
+    : [
+        { name: "Bright Data",    tag: "Void Scanner · Compliance Radar · Pain Listener", color: "#00aaff", live: true,  mode: "real" },
+        { name: "AI/ML API",      tag: "Signal scoring + Intel Brief generation", color: "#ff5a52", live: true,  mode: "real" },
+        { name: "Featherless AI", tag: "Pain signal classification (Mistral-7B)", color: "#24c038", live: true,  mode: "real" },
+        { name: "Speechmatics",   tag: "Podcast & audio transcription", color: "#f0a000", live: true,  mode: "real" },
+        { name: "Cognee",         tag: "Account memory graph (knowledge persistence)", color: "#9060ff", live: true,  mode: "real" },
+        { name: "TriggerWare",    tag: "Workflow routing to Slack + HubSpot", color: "#ff8800", live: true,  mode: "real" },
+      ];
+  const liveCount = engineStatus.filter((e) => e.live).length;
+
+  return (
+    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} style={{ padding: "18px" }}>
+      {/* Integration list */}
+      <div style={{ marginBottom: "12px" }}>
+        <div style={{ fontSize: "9px", color: C.muted, letterSpacing: "0.1em", marginBottom: "10px" }}>INTEGRATION STATUS</div>
+        <div data-demo="integration-list" style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: "8px", overflow: "hidden" }}>
+          {engineStatus.map((e, i) => (
+            <div key={e.name} style={{
+              display: "flex", alignItems: "center", justifyContent: "space-between",
+              padding: "11px 16px", gap: "14px",
+              borderBottom: i < engineStatus.length - 1 ? `1px solid ${C.border}` : "none",
+            }}>
+              <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                <LiveDot color={e.live ? C.pain : C.muted} pulse={e.live} />
+                <div>
+                  <div style={{ fontSize: "11px", color: C.white, fontWeight: 500 }}>{e.name}</div>
+                  <div style={{ fontSize: "9px", color: C.muted, marginTop: "1px" }}>{e.tag}</div>
+                </div>
+              </div>
+              <span style={{
+                fontSize: "9px", padding: "2px 8px", borderRadius: "3px", letterSpacing: "0.06em",
+                background: e.live ? `${C.pain}12` : `${C.muted}10`,
+                color: e.live ? C.pain : C.muted,
+                border: `1px solid ${e.live ? C.pain : C.muted}28`,
+              }}>
+                {e.live ? "● LIVE" : "○ MOCK"}
+              </span>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Stats */}
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "8px", marginBottom: "12px" }}>
+        {[
+          { label: "LIVE APIS", value: `${liveCount}`, sub: `of ${engineStatus.length}`, color: C.pain },
+          { label: "PRICING", value: "$1,000", sub: "/month · Elite", color: C.conv },
+          { label: "ACCOUNTS", value: "6", sub: "monitored", color: C.blue },
+        ].map((s) => (
+          <div key={s.label} style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: "7px", padding: "13px 15px" }}>
+            <div style={{ fontSize: "9px", color: C.muted, letterSpacing: "0.1em", marginBottom: "7px" }}>{s.label}</div>
+            <div style={{ fontSize: "20px", fontWeight: 700, color: s.color }}>{s.value}</div>
+            <div style={{ fontSize: "9px", color: C.muted, marginTop: "2px" }}>{s.sub}</div>
+          </div>
+        ))}
+      </div>
+
+      {/* Env hint — hidden on public demo */}
+      {!isDemoPage && (
+        <div style={{
+          background: `${C.conv}08`, border: `1px solid ${C.conv}20`, borderRadius: "7px",
+          padding: "12px 14px", marginBottom: "12px",
+          fontSize: "9px", color: C.muted, lineHeight: 1.8,
+        }}>
+          <div style={{ color: C.conv, fontWeight: 600, letterSpacing: "0.08em", marginBottom: "4px" }}>ACTIVATE REMAINING APIS</div>
+          Add <span style={{ color: C.text }}>SPEECHMATICS_API_KEY</span>, <span style={{ color: C.text }}>COGNEE_API_KEY</span>, <span style={{ color: C.text }}>SLACK_BOT_TOKEN</span> to <span style={{ color: C.text }}>.env.local</span> and restart.
+        </div>
+      )}
+
+      {!isDemoPage && (
+        <button
+          onClick={onSignOut}
+          style={{
+            width: "100%", background: "transparent",
+            border: `1px solid ${C.border}`, borderRadius: "7px",
+            padding: "11px", fontSize: "10px", color: C.muted, cursor: "pointer",
+            fontFamily: "inherit", letterSpacing: "0.06em", transition: "all 0.2s",
+          }}
+          onMouseEnter={(e) => { e.currentTarget.style.borderColor = C.void; e.currentTarget.style.color = C.void; }}
+          onMouseLeave={(e) => { e.currentTarget.style.borderColor = C.border; e.currentTarget.style.color = C.muted; }}
+        >
+          Sign out of Preintent
+        </button>
+      )}
+    </motion.div>
+  );
+};
+
+// ─── MAIN DASHBOARD COMPONENT ────────────────────────────────────────────────
 type View = "dashboard" | "signals" | "intel" | "brief" | "settings";
 
-export default function UndertowDashboard() {
+const NAV_ITEMS: { id: View; label: string; Icon: React.FC }[] = [
+  { id: "dashboard", label: "OVERVIEW", Icon: Icon.Dashboard },
+  { id: "signals", label: "SIGNALS", Icon: Icon.Signal },
+  { id: "intel", label: "INTEL", Icon: Icon.Intel },
+  { id: "brief", label: "BRIEF", Icon: Icon.Brief },
+  { id: "settings", label: "SETTINGS", Icon: Icon.Settings },
+];
+
+export default function PreintentDashboard({ demoMode = false }: { demoMode?: boolean }) {
+  const pathname = usePathname();
+  const isDemoPage = demoMode || (pathname?.startsWith("/demo") ?? false);
+  const homeHref = isDemoPage ? "/demo" : "/dashboard";
+
+  const { addToast } = useToast();
+  const toast = createToastHelpers(addToast);
+
   const [view, setView] = useState<View>("dashboard");
-  const [selectedAccount, setSelectedAccount] = useState(ACCOUNTS[0]);
-  const [model] = useState("mistralai/Mistral-7B-Instruct-v0.2");
+  const [accounts, setAccounts] = useState<PremiumAccount[]>(PREMIUM_ACCOUNTS);
+  const [selectedAccount, setSelectedAccount] = useState<PremiumAccount>(PREMIUM_ACCOUNTS[0]);
   const [isScanning, setIsScanning] = useState(false);
   const [scanStep, setScanStep] = useState(-1);
   const [scanDone, setScanDone] = useState(false);
-  const [accounts, setAccounts] = useState(ACCOUNTS);
-  const [signalFilter, setSignalFilter] = useState<"all" | "void" | "compliance" | "pain">("all");
+  const [scanResult, setScanResult] = useState("");
   const [brief, setBrief] = useState("");
   const [briefLoading, setBriefLoading] = useState(false);
-  const [briefError, setBriefError] = useState("");
   const [triggerFired, setTriggerFired] = useState(false);
-  const [profile, setProfile] = useState<AccountIntelligenceProfile>(() => loadInitialProfile());
-  const [integrationStatuses, setIntegrationStatuses] = useState<IntegrationStatus[]>([]);
-  const [memoryStatus, setMemoryStatus] = useState("");
-  const [sweepNotes, setSweepNotes] = useState<string[]>([]);
-  const [sweepError, setSweepError] = useState("");
-  const [slackDelivered, setSlackDelivered] = useState(false);
-  const [companyName, setCompanyName] = useState("");
-
-  const scanTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
-  const triggerWorkflow = previewTriggerWareWorkflow(profile);
+  const [liveIntegrations, setLiveIntegrations] = useState<
+    { id?: string; name: string; status: string; mode?: string }[]
+  >([]);
+  const integrationStatuses = isDemoPage ? DEMO_INTEGRATION_STATUSES : liveIntegrations;
+  const [cleanMode, setCleanMode] = useState(false);
+  const [roiOpen, setRoiOpen] = useState(false);
+  const [evidenceOpen, setEvidenceOpen] = useState(false);
+  const [evidenceType, setEvidenceType] = useState<"void" | "compliance" | "pain" | "audio">("void");
+  const [evidenceAccount, setEvidenceAccount] = useState<PremiumAccount>(PREMIUM_ACCOUNTS[0]);
+  const [shareOpen, setShareOpen] = useState(false);
+  const [comparisonOpen, setComparisonOpen] = useState(false);
+  const [tourActive, setTourActive] = useState(false);
+  const [autopilotActive, setAutopilotActive] = useState(false);
+  const [autopilotSession, setAutopilotSession] = useState(0);
+  const [signalFilter, setSignalFilter] = useState<"all" | "void" | "compliance" | "pain">("all");
+  const [tickerIdx, setTickerIdx] = useState(0);
+  const scanRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   useEffect(() => {
+    if (isDemoPage) return;
     fetch("/api/health")
-      .then((res) => res.json())
-      .then((data) => setIntegrationStatuses(data.integrations || []))
-      .catch(() => setIntegrationStatuses([]));
+      .then((r) => r.json())
+      .then((d) => setLiveIntegrations(d.integrations || []))
+      .catch(() => {});
+  }, [isDemoPage]);
 
-    // Load browser-specific data on mount to avoid hydration mismatches
-    try {
-      const rawDoc = localStorage.getItem("undertow_company_kdoc");
-      const doc = rawDoc ? JSON.parse(rawDoc) : null;
-      if (doc?.companyName) {
-        const name = doc.companyName;
-        setTimeout(() => setCompanyName(name), 0);
-      }
-    } catch {}
-
-    try {
-      const rawProfiles = localStorage.getItem("undertow:cognee:profiles:v1");
-      const profiles = rawProfiles ? JSON.parse(rawProfiles) : {};
-      const savedProfile = profiles[ACCOUNTS[0].name];
-      if (savedProfile) {
-        setTimeout(() => setProfile(savedProfile), 0);
-      }
-    } catch {}
+  const startAutopilot = useCallback(() => {
+    setAutopilotSession((s) => s + 1);
+    setAutopilotActive(true);
   }, []);
 
+  // Ticker
+  useEffect(() => {
+    const id = setInterval(() => setTickerIdx((i) => (i + 1) % LIVE_SIGNALS.length), 3800);
+    return () => clearInterval(id);
+  }, []);
 
-  const saveCogneeProfile = (nextProfile: AccountIntelligenceProfile) => {
-    setProfile(nextProfile);
-    try {
-      const raw = localStorage.getItem("undertow:cognee:profiles:v1");
-      const profiles = raw ? JSON.parse(raw) : {};
-      localStorage.setItem(
-        "undertow:cognee:profiles:v1",
-        JSON.stringify({ ...profiles, [nextProfile.account]: nextProfile }),
-      );
-      setMemoryStatus("Cognee memory updated");
-      setTimeout(() => setMemoryStatus(""), 2800);
-    } catch {}
-  };
-
-  const runDemoScan = () => {
-    if (isScanning) return;
-    setIsScanning(true);
-    setScanDone(false);
-    setScanStep(0);
-    setTriggerFired(false);
-    setSweepNotes([]);
-    setSweepError("");
-    setSlackDelivered(false);
-
-    const target = ACCOUNTS[0];
-    const painText = target.painEvent.replace(/^[^:]+:\s*/, "").replace(/^"|"$/g, "");
-
-    const sweepPromise = import("@/app/actions").then(({ runLiveSweep }) =>
-      runLiveSweep({
-        account: target.name,
-        industry: target.industry,
-        employees: target.employees,
-        competitor: target.competitor,
-        competitorPricingUrl: "https://stripe.com/pricing",
-        regulatoryQuery: `PCI-DSS 4.0 enforcement ${target.industry}`,
-        painText,
-        audioTranscript: target.audioSignal || undefined,
-      }),
-    );
-
-    let step = 0;
-    scanTimerRef.current = setInterval(() => {
-      step++;
-      setScanStep(step);
-      if (step >= SCAN_STEPS.length - 1) {
-        if (scanTimerRef.current) clearInterval(scanTimerRef.current);
-
-        void sweepPromise
-          .then((result) => {
-            const p = result.profile;
-            const finalAccount = {
-              ...target,
-              voidScore: p.void.subScore,
-              complianceScore: p.compliance.subScore,
-              painScore: p.pain.subScore,
-              convergence: p.convergenceScore,
-              status: (p.convergenceScore >= 85 ? "ALERT" : p.convergenceScore >= 65 ? "WATCH" : "MONITOR") as
-                | "ALERT"
-                | "WATCH"
-                | "MONITOR",
-            };
-
-            resetDemoProfile(finalAccount.name);
-            saveCogneeProfile(p);
-            setSweepNotes(result.notes);
-            if (result.error) setSweepError(result.error);
-            setSlackDelivered(result.slackSent);
-            setTriggerFired(p.convergenceScore >= 85);
-
-            setAccounts((prev) =>
-              prev.map((a) => (a.id === 1 ? finalAccount : a)),
-            );
-            setSelectedAccount((current) => (current.id === 1 ? finalAccount : current));
-
-            if (result.brief) {
-              const b = result.brief;
-              const formatted = `WHY NOW — 3 CONVERGING SIGNALS\n\n① COMPETITOR RETREAT  [${finalAccount.voidScore}/100]\n${finalAccount.voidEvent}\n\n② REGULATORY PRESSURE  [${finalAccount.complianceScore}/100]\n${finalAccount.complianceEvent}\n\n③ ACTIVE EVALUATION  [${finalAccount.painScore}/100]\n${finalAccount.painEvent}\n\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\nSUGGESTED OPENING LINE\n\n"${b.suggestedOpeningLine}"\n\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\nACCOUNT CONTEXT\n• Industry: ${finalAccount.industry}  |  ${finalAccount.employees} employees  |  ${finalAccount.location}\n• Generated by: ${b.generatedBy}`;
-              setBrief(formatted);
-            }
-          })
-          .catch((err: unknown) => {
-            const message = err instanceof Error ? err.message : String(err);
-            setSweepError(message);
-            const fallback = {
-              ...target,
-              complianceScore: 86,
-              convergence: computeConvergenceScore(84, 86, 91),
-              status: "ALERT" as const,
-            };
-            resetDemoProfile(fallback.name);
-            let finalProfile = arriveSignal(
-              fallback.name,
-              { ...voidPricingRemoval, subScore: fallback.voidScore },
-              "void",
-            );
-            arriveSignal(
-              fallback.name,
-              { ...compliancePciDss, subScore: fallback.complianceScore },
-              "compliance",
-            );
-            finalProfile = arriveSignal(
-              fallback.name,
-              { ...painRFintechPost, subScore: fallback.painScore },
-              "pain",
-            );
-            finalProfile = {
-              ...finalProfile,
-              pain: {
-                signals: [painRFintechPost, painPodcastTranscript],
-                subScore: fallback.painScore,
-              },
-              convergenceScore: fallback.convergence,
-              urgency: computeUrgency(fallback.convergence, fallback.painScore),
-              thresholdCrossedAt: new Date().toISOString(),
-            };
-            saveCogneeProfile(finalProfile);
-            setAccounts((prev) => prev.map((a) => (a.id === 1 ? fallback : a)));
-            setTriggerFired(true);
-          })
-          .finally(() => {
-            setTimeout(() => {
-              setIsScanning(false);
-              setScanDone(true);
-            }, 700);
-          });
-      }
-    }, 920);
-  };
-
-  // Real AI/ML brief generation is server-side. Env mode decides real vs mock.
-  const generateBrief = async () => {
-    setBriefLoading(true);
-    setBriefError("");
-    setBrief("");
-
-    const account = selectedAccount;
-
-    const stream = (text: string) => {
-      setBriefLoading(false);
-      let i = 0;
-      const iv = setInterval(() => {
-        i += 7;
-        setBrief(text.slice(0, i));
-        if (i >= text.length) { clearInterval(iv); setBrief(text); }
-      }, 11);
+  // Keyboard shortcuts
+  useEffect(() => {
+    const fn = (e: KeyboardEvent) => {
+      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
+      if (e.key === "t") setTourActive(true);
+      if (e.key === "a" && !autopilotActive) startAutopilot();
+      if (e.key === "c") setCleanMode((v) => !v);
+      if (e.key === "r") setRoiOpen(true);
     };
-
-    try {
-      const { generateRealIntelBrief } = await import("@/app/actions");
-
-      const profileForBrief = account.id === 1 ? profile : createAcmeProfile(account);
-      const realBrief = await generateRealIntelBrief(profileForBrief);
-      const formatted = `WHY NOW — 3 CONVERGING SIGNALS\n\n① COMPETITOR RETREAT  [${account.voidScore}/100]\n${account.voidEvent}\n\n② REGULATORY PRESSURE  [${account.complianceScore}/100]\n${account.complianceEvent}\n\n③ ACTIVE EVALUATION  [${account.painScore}/100]\n${account.painEvent}${account.audioSignal ? `\n\nAudio signal (Speechmatics): ${account.audioSignal}` : ""}\n\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\nSUGGESTED OPENING LINE\n\n"${realBrief.suggestedOpeningLine || "Hi [Name] — the timing looks interesting given recent changes at your current vendor."}"\n\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\nACCOUNT CONTEXT\n• Industry: ${account.industry}  |  ${account.employees} employees  |  ${account.location}\n• Stack: ${account.stack.join(" · ")}\n• Key contact: ${account.contact}\n• Competitor: ${account.competitor}\n• Convergence: ${account.convergence}/100`;
-
-      stream(formatted);
-    } catch (e: unknown) {
-      setBriefLoading(false);
-      const message = e instanceof Error ? e.message : String(e);
-      setBriefError(`AI/ML API error: ${message}. Falling back to demo brief.`);
-      stream(DEMO_BRIEF);
-    }
-  };
+    window.addEventListener("keydown", fn);
+    return () => window.removeEventListener("keydown", fn);
+  }, [autopilotActive, startAutopilot]);
 
   const handleSignOut = async () => {
     try {
-      await fetch("/api/auth/signout", { method: "POST" });
-    } catch (e) {
-      console.error(e);
+      const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+      const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
+      if (supabaseUrl && supabaseKey) {
+        const { createSupabaseBrowserClient } = await import("@/lib/supabase-client");
+        const supabase = createSupabaseBrowserClient();
+        await supabase.auth.signOut();
+      }
+      // Clear mock session cookie too
+      document.cookie = "preintent_mock_session=; path=/; max-age=0";
+      document.cookie = "preintent_onboarding_done=; path=/; max-age=0";
+    } catch {
+      // best-effort
     }
-    
-    try {
-      const { createSupabaseBrowserClient } = await import("@/lib/supabase-client");
-      const supabase = createSupabaseBrowserClient();
-      await supabase.auth.signOut();
-    } catch (e) {
-      console.log("Supabase browser sign out skipped or failed", e);
-    }
-    
-    // Clear any local storage/cache just in case
-    document.cookie = "undertow_mock_session=; path=/; max-age=0; SameSite=Lax";
-    document.cookie = "undertow_onboarding_done=; path=/; max-age=0; SameSite=Lax";
-    localStorage.removeItem("undertow_company_kdoc");
-    localStorage.removeItem("undertow:cognee:profiles:v1");
-    window.location.href = "/";
+    window.location.href = "/sign-in";
   };
 
-  const Nav = () => (
-    <div style={{ display: "flex", alignItems: "center", padding: "0 20px", height: "52px", background: C.surface, borderBottom: `1px solid ${C.border}`, gap: "0", flexShrink: 0, overflowX: "auto", overflowY: "hidden" }}>
-      <a href="/dashboard" style={{ fontWeight: 700, fontSize: "15px", color: C.white, letterSpacing: "0.15em", marginRight: "32px", display: "flex", alignItems: "center", gap: "8px", flexShrink: 0, textDecoration: "none" }}>
-        <span style={{ color: C.conv }}>▼</span>UNDERTOW
-      </a>
-      {(["dashboard", "signals", "intel", "brief", "settings"] as const).map(v => (
-        <button key={v} onClick={() => setView(v)} style={{
-          background: "transparent", border: "none", padding: "0 14px", height: "52px", flexShrink: 0,
-          fontSize: "10px", fontFamily: "inherit", letterSpacing: "0.1em", cursor: "pointer",
-          color: view === v ? C.white : C.muted,
-          borderBottom: view === v ? `2px solid ${C.conv}` : "2px solid transparent",
-          textTransform: "uppercase", transition: "all 0.15s",
-        }}>{v}</button>
-      ))}
-      <div style={{ marginLeft: "auto", display: "flex", alignItems: "center", gap: "12px", fontSize: "9px" }}>
-        {memoryStatus && <span style={{ color: C.conv }}>◈ {memoryStatus}</span>}
-        {triggerFired && <span style={{ color: C.compliance, animation: "pulse 1.5s infinite" }}>⚡ TriggerWare fired</span>}
-        {companyName && (
-          <span style={{ fontSize: "10px", color: C.muted, padding: "3px 10px", background: C.surface2, border: `1px solid ${C.border}`, borderRadius: "4px" }}>
-            {companyName}
-          </span>
-        )}
-        <button
-          onClick={handleSignOut}
+  const runScan = () => {
+    if (isScanning) return;
+    setIsScanning(true); setScanStep(0); setScanDone(false); setTriggerFired(false);
+    toast.info("Full scan initiated", "Monitoring 6 accounts across 3 engines");
+    let step = 0;
+    scanRef.current = setInterval(() => {
+      step++;
+      setScanStep(step);
+      if (step === 2) toast.info("Void Scanner active", "Crawling competitor pricing pages");
+      if (step === 4) toast.info("Pain Listener hit", "Active evaluation signal detected");
+      if (step === 6) toast.success("Cognee updated", "Account intelligence profiles refreshed");
+      if (step >= SCAN_STEPS.length - 1) {
+        clearInterval(scanRef.current!);
+        setTimeout(() => {
+          const newConv = Math.min(95, accounts[0].convergence + 5);
+          setAccounts((prev) => prev.map((a, i) => i === 0 ? { ...a, convergence: newConv, status: "ALERT" as const } : a));
+          setTriggerFired(true); setIsScanning(false); setScanDone(true);
+          setScanResult(`Brex at ${newConv}/100 — TriggerWare fired — Slack delivered`);
+          toast.convergenceAlert("Brex", newConv);
+          setTimeout(() => toast.triggerWareFired("Brex"), 900);
+        }, 500);
+      }
+    }, 880);
+  };
+
+  const generateBrief = async () => {
+    setBriefLoading(true); setBrief("");
+    toast.info("Generating Intel Brief", `Analyzing ${selectedAccount.name}...`);
+
+    if (isDemoPage) {
+      streamDemoBrief(
+        selectedAccount,
+        (text) => setBrief(text),
+        () => {
+          setBriefLoading(false);
+          toast.briefGenerated(selectedAccount.name);
+        },
+      );
+      return;
+    }
+
+    try {
+      const { generateRealIntelBrief } = await import("@/app/actions");
+      const mockProfile = {
+        account: selectedAccount.name, industry: selectedAccount.industry,
+        employees: selectedAccount.employees, crmStage: "Not in pipeline",
+        lastUpdated: new Date().toISOString(),
+        void: { signals: [{ text: selectedAccount.voidEvent, source: selectedAccount.voidEvidence?.source ?? "Void Scanner", score: selectedAccount.voidScore }], subScore: selectedAccount.voidScore },
+        compliance: { signals: [{ text: selectedAccount.complianceEvent, source: selectedAccount.complianceEvidence?.source ?? "Compliance Radar", score: selectedAccount.complianceScore }], subScore: selectedAccount.complianceScore },
+        pain: { signals: [{ text: selectedAccount.painEvent, source: selectedAccount.painEvidence?.source ?? "Pain Listener", score: selectedAccount.painScore }], subScore: selectedAccount.painScore },
+        convergenceScore: selectedAccount.convergence,
+        urgency: computeUrgency(selectedAccount.convergence, Math.max(selectedAccount.voidScore, selectedAccount.complianceScore, selectedAccount.painScore)),
+        competitor: selectedAccount.competitor,
+        contact: selectedAccount.contact,
+      };
+      const realBrief = await generateRealIntelBrief(mockProfile as unknown as AccountIntelligenceProfile);
+      const formatted = `WHY NOW — 3 CONVERGING SIGNALS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+① COMPETITOR RETREAT  [${selectedAccount.voidScore}/100]  ${Math.round(selectedAccount.voidConfidence * 100)}% confidence
+${selectedAccount.voidEvent}
+Detected: ${formatRelativeTime(selectedAccount.voidEvidence?.capturedAt ?? selectedAccount.lastUpdated)}
+
+② REGULATORY PRESSURE  [${selectedAccount.complianceScore}/100]  ${Math.round(selectedAccount.complianceConfidence * 100)}% confidence
+${selectedAccount.complianceEvent}
+Detected: ${formatRelativeTime(selectedAccount.complianceEvidence?.capturedAt ?? selectedAccount.lastUpdated)}
+
+③ ACTIVE EVALUATION  [${selectedAccount.painScore}/100]  ${Math.round(selectedAccount.painConfidence * 100)}% confidence
+${selectedAccount.painEvent}${selectedAccount.audioSignal ? `\nAudio (Speechmatics): ${selectedAccount.audioSignal}` : ""}
+Detected: ${formatRelativeTime(selectedAccount.painEvidence?.capturedAt ?? selectedAccount.lastUpdated)}
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+SUGGESTED OPENING LINE
+
+"${realBrief.suggestedOpeningLine || `Hi [Name] — I noticed ${selectedAccount.competitor} made some changes recently. Given that and the regulatory tailwinds, the timing feels right for a quick conversation about how we've helped companies like ${selectedAccount.name}.`}"
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+ACCOUNT CONTEXT
+  Company : ${selectedAccount.name}
+  Industry : ${selectedAccount.industry}
+  Employees : ${selectedAccount.employees.toLocaleString()}
+  Location : ${selectedAccount.location}
+  Stack : ${selectedAccount.stack.join(" · ")}
+  Contact : ${selectedAccount.contact.title} (${selectedAccount.contact.name})
+  Competitor : ${selectedAccount.competitor}
+  Convergence : ${selectedAccount.convergence}/100
+  Confidence : ${Math.round(selectedAccount.overallConfidence * 100)}%  (${getConfidenceLevel(selectedAccount.overallConfidence).label})
+  Status : ${selectedAccount.status}`;
+
+      let i = 0;
+      const id = setInterval(() => {
+        i += 6;
+        setBrief(formatted.slice(0, i));
+        if (i >= formatted.length) {
+          clearInterval(id); setBriefLoading(false); toast.briefGenerated(selectedAccount.name);
+        }
+      }, 8);
+    } catch {
+      setBriefLoading(false); toast.error("Brief generation failed", "Using fallback");
+    }
+  };
+
+  const openEvidence = (acct: PremiumAccount, type: "void" | "compliance" | "pain" | "audio") => {
+    setEvidenceAccount(acct); setEvidenceType(type); setEvidenceOpen(true);
+  };
+
+  const handleAutopilotEnd = useCallback(() => {
+    setAutopilotActive(false);
+    setView("dashboard");
+    setSelectedAccount(PREMIUM_ACCOUNTS[0]);
+    setSignalFilter("all");
+    setEvidenceOpen(false);
+    setShareOpen(false);
+  }, []);
+
+  const autopilotActionsRef = useRef<AutopilotActions>({
+    setView: () => {},
+    runScan: () => {},
+    generateBrief: () => {},
+    selectAccount: () => {},
+    openEvidence: () => {},
+    closeEvidence: () => {},
+    openShare: () => {},
+    closeShare: () => {},
+    filterSignals: () => {},
+    getAccounts: () => PREMIUM_ACCOUNTS,
+  });
+
+  autopilotActionsRef.current = {
+    setView,
+    runScan,
+    generateBrief,
+    selectAccount: (a) => setSelectedAccount(a),
+    openEvidence,
+    closeEvidence: () => setEvidenceOpen(false),
+    openShare: () => setShareOpen(true),
+    closeShare: () => setShareOpen(false),
+    filterSignals: setSignalFilter,
+    getAccounts: () => accounts,
+  };
+
+  const selectAccountAndView = (a: PremiumAccount, v: View = "intel") => {
+    setSelectedAccount(a); setView(v);
+  };
+
+  const alertCount = accounts.filter((a) => a.status === "ALERT").length;
+  const signalCount = accounts.length * 3;
+
+  // ─── DASHBOARD VIEW ───────────────────────────────────────────────────────
+  const DashboardView = () => (
+    <motion.div key="dashboard" initial={{ opacity: 0 }} animate={{ opacity: 1 }} style={{ padding: "18px" }}>
+      {/* Live ticker */}
+      <AnimatePresence mode="wait">
+        <motion.div
+          key={tickerIdx}
+          initial={{ opacity: 0, y: -6 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: 6 }}
           style={{
-            background: "transparent",
-            border: `1px solid ${C.border}`,
-            borderRadius: "4px",
-            padding: "4px 10px",
-            fontSize: "10px",
-            color: C.muted,
-            cursor: "pointer",
-            fontFamily: "inherit",
-            letterSpacing: "0.06em",
-            flexShrink: 0,
+            marginBottom: "14px", padding: "8px 14px",
+            background: C.surface, border: `1px solid ${C.border}`, borderRadius: "6px",
+            display: "flex", alignItems: "center", gap: "10px",
           }}
         >
-          Sign Out
-        </button>
-      </div>
-    </div>
-  );
+          <LiveDot color={LIVE_SIGNALS[tickerIdx].color} pulse />
+          <span style={{ fontSize: "9px", fontWeight: 600, color: LIVE_SIGNALS[tickerIdx].color, letterSpacing: "0.08em" }}>
+            {LIVE_SIGNALS[tickerIdx].engine}
+          </span>
+          <span style={{ fontSize: "10px", color: C.text }}>
+            <span style={{ color: C.white }}>{LIVE_SIGNALS[tickerIdx].company}</span>
+            {" — "}
+            {LIVE_SIGNALS[tickerIdx].event}
+          </span>
+          <span style={{ marginLeft: "auto", fontSize: "9px", color: C.muted, flexShrink: 0 }}>
+            {LIVE_SIGNALS[tickerIdx].time} ago
+          </span>
+        </motion.div>
+      </AnimatePresence>
 
-  // ─── DASHBOARD VIEW (exact table + scan feel) ──────────────────────────────
-
-  const DashboardView = () => (
-    <div style={{ padding: "20px" }}>
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: "10px", marginBottom: "18px" }}>
-        {[
-          { label: "accounts tracked", value: "6", color: C.blue, sub: "target list" },
-          { label: "convergence alerts", value: accounts.filter(a => a.status === "ALERT").length, color: C.void, sub: "act now" },
-          { label: "signals today", value: VOID_SIGNALS.length + COMPLIANCE_SIGNALS.length + PAIN_SIGNALS.length, color: C.pain, sub: "3 engines" },
-          { label: "briefs generated", value: brief ? "1" : "0", color: C.conv, sub: "this session" },
-        ].map(({ label, value, color, sub }) => (
-          <div key={label} style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: "6px", padding: "14px 16px" }}>
-            <div style={{ fontSize: "10px", color: C.muted, marginBottom: "8px", letterSpacing: "0.05em" }}>{label}</div>
-            <div style={{ fontSize: "30px", fontWeight: 600, color, lineHeight: 1 }}>{value}</div>
-            <div style={{ fontSize: "10px", color: C.dim, marginTop: "5px" }}>{sub}</div>
-          </div>
-        ))}
+      {/* Stat cards */}
+      <div data-demo="stat-cards" style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: "8px", marginBottom: "14px" }}>
+        <StatCard label="ACCOUNTS" value={`${accounts.length}`} sub="real companies" color={C.blue} delay={0} />
+        <StatCard label="ALERTS" value={`${alertCount}`} sub="act now" color={C.void} delay={1} />
+        <StatCard label="SIGNALS TODAY" value={`${signalCount}`} sub="3 engines" color={C.pain} delay={2} />
+        <StatCard label="EST. ROI" value="500%+" sub="click to model" color={C.conv} delay={3} onClick={() => setRoiOpen(true)} />
       </div>
 
-      <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: "6px", padding: "14px 16px", marginBottom: "14px" }}>
-        <div style={{ display: "flex", alignItems: "center", gap: "14px", marginBottom: isScanning ? "12px" : "0" }}>
-          <button onClick={runDemoScan} disabled={isScanning} style={{
-            background: isScanning ? C.dim : C.blue, color: C.white, border: "none", borderRadius: "4px",
-            padding: "7px 18px", fontSize: "10px", fontFamily: "inherit", letterSpacing: "0.1em",
-            cursor: isScanning ? "not-allowed" : "pointer", flexShrink: 0
-          }}>
-            {isScanning ? "◌  SCANNING..." : "▶  RUN FULL SCAN"}
-          </button>
-          {!isScanning && !scanDone && <span style={{ fontSize: "10px", color: C.muted }}>Simulates BrightData → AI → Cognee → TriggerWare</span>}
-          {scanDone && !isScanning && (
-            <span style={{ fontSize: "10px", color: C.pain }}>
-              ✓ Scan complete — {accounts[0].name} at {accounts[0].convergence}/100
-              {triggerFired ? " — threshold crossed" : ""}
-              {slackDelivered ? " — Slack delivered" : ""}
-            </span>
-          )}
-          {sweepError && <span style={{ fontSize: "10px", color: C.void, display: "block", marginTop: 6 }}>⚠ {sweepError}</span>}
-          {sweepNotes.length > 0 && scanDone && (
-            <div style={{ fontSize: "9px", color: C.muted, marginTop: 8, lineHeight: 1.5 }}>
-              {sweepNotes.slice(0, 4).map((n, i) => (
-                <div key={i}>· {n}</div>
-              ))}
-            </div>
-          )}
+      {/* Scan panel */}
+      <div data-demo="scan-panel" style={{ marginBottom: "14px" }}>
+        <ScanPanel isScanning={isScanning} step={scanStep} done={scanDone} onScan={runScan} result={scanResult} />
+      </div>
+
+      {/* ROI preview */}
+      <div style={{ marginBottom: "14px" }}>
+        <ROIPreview onOpen={() => setRoiOpen(true)} />
+      </div>
+
+      {/* Sponsor row */}
+      <div style={{ display: "flex", gap: "6px", alignItems: "center", marginBottom: "14px", flexWrap: "wrap" }}>
+        <span style={{ fontSize: "9px", color: C.muted, letterSpacing: "0.04em", marginRight: "2px" }}>powered by</span>
+        {Object.keys(sponsorColors).map((n) => <SponsorPill key={n} name={n} />)}
+      </div>
+
+      {/* Accounts table */}
+      <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: "8px", overflow: "hidden" }}>
+        {/* Header */}
+        <div style={{
+          display: "grid",
+          gridTemplateColumns: "1.8fr 0.9fr 60px 60px 60px 64px 90px 90px",
+          padding: "8px 16px", borderBottom: `1px solid ${C.border}`,
+          fontSize: "8px", color: C.muted, letterSpacing: "0.1em", gap: "8px", alignItems: "center",
+        }}>
+          <span>COMPANY</span><span>INDUSTRY</span>
+          <span>VOID</span><span>COMPL.</span><span>PAIN</span>
+          <span>CONV.</span><span>STATUS</span><span>CONFIDENCE</span>
         </div>
 
-        {isScanning && scanStep >= 0 && (
-          <div>
-            <div style={{ background: C.border, borderRadius: "2px", height: "3px", marginBottom: "10px" }}>
-              <div style={{ width: `${((scanStep + 1) / SCAN_STEPS.length) * 100}%`, height: "100%", background: C.blue, borderRadius: "2px", transition: "width 0.9s ease" }} />
-            </div>
-            <div style={{ display: "flex", flexWrap: "wrap", gap: "6px" }}>
-              {SCAN_STEPS.map((s, i) => (
-                <span key={i} style={{ fontSize: "9px", padding: "2px 7px", borderRadius: "2px",
-                  background: i < scanStep ? `${C.pain}15` : i === scanStep ? `${C.blue}20` : C.dim + "20",
-                  color: i < scanStep ? C.pain : i === scanStep ? C.blue : C.dim,
-                  border: `1px solid ${i < scanStep ? C.pain + "30" : i === scanStep ? C.blue + "40" : C.dim + "20"}` }}>
-                  {i < scanStep ? "✓ " : i === scanStep ? "◌ " : ""}{s}
-                </span>
-              ))}
-            </div>
-          </div>
-        )}
-      </div>
-
-      <div style={{ display: "flex", gap: "8px", alignItems: "center", marginBottom: "14px" }}>
-        <span style={{ fontSize: "9px", color: C.dim, marginRight: "4px" }}>powered by</span>
-        {Object.keys(sponsorColors).map(n => <SponsorTag key={n} name={n} />)}
-      </div>
-
-      <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: "6px", overflow: "hidden" }}>
-        <div style={{ display: "grid", gridTemplateColumns: "1.6fr 1fr 56px 56px 56px 56px 90px 80px", padding: "9px 16px", borderBottom: `1px solid ${C.border}`, fontSize: "9px", color: C.muted, letterSpacing: "0.1em", gap: "8px" }}>
-          <span>COMPANY</span><span>INDUSTRY</span><span>VOID</span><span>COMPL.</span><span>PAIN</span><span>CONV.</span><span>STATUS</span><span></span>
-        </div>
         {accounts.map((a, idx) => (
-          <div key={a.id} onClick={() => { setSelectedAccount(a); setView("intel"); }}
-            style={{ display: "grid", gridTemplateColumns: "1.6fr 1fr 56px 56px 56px 56px 90px 80px", padding: "11px 16px", gap: "8px",
+          <motion.div
+            key={a.id}
+            initial={{ opacity: 0, x: -8 }}
+            animate={{ opacity: 1, x: 0, background: selectedAccount.id === a.id ? `${C.conv}06` : C.surface }}
+            transition={{ delay: idx * 0.05 }}
+            onClick={() => selectAccountAndView(a)}
+            style={{
+              display: "grid",
+              gridTemplateColumns: "1.8fr 0.9fr 60px 60px 60px 64px 90px 90px",
+              padding: "11px 16px", gap: "8px", alignItems: "center",
               borderBottom: idx < accounts.length - 1 ? `1px solid ${C.border}` : "none",
-              cursor: "pointer", background: selectedAccount?.id === a.id ? C.surface2 : "transparent" }}
-            onMouseEnter={e => (e.currentTarget.style.background = C.surface2)}
-            onMouseLeave={e => (e.currentTarget.style.background = selectedAccount?.id === a.id ? C.surface2 : "transparent")}>
-            <div style={{ alignSelf: "center" }}>
-              <div style={{ fontSize: "12px", color: C.text, fontWeight: 500 }}>{a.name}</div>
-              <div style={{ fontSize: "9px", color: C.muted, marginTop: "2px" }}>{a.employees} · {a.location}</div>
+              cursor: "pointer",
+            }}
+            whileHover={{ background: C.surface2 }}
+          >
+            <div>
+              <div style={{ fontSize: "12px", color: C.white, fontWeight: 500 }}>{a.name}</div>
+              <div style={{ fontSize: "9px", color: C.muted, marginTop: "2px" }}>
+                {a.employees.toLocaleString()} · {a.location}
+              </div>
             </div>
-            <div style={{ fontSize: "10px", color: C.muted, alignSelf: "center" }}>{a.industry}</div>
-
-            {[{v: a.voidScore, c: C.void}, {v: a.complianceScore, c: C.compliance}, {v: a.painScore, c: C.pain}].map(({v, c}, i) => (
-              <div key={i} style={{ alignSelf: "center" }}>
-                <div style={{ fontSize: "11px", color: c, fontWeight: 600, marginBottom: "4px" }}>{v}</div>
-                <Bar v={v} color={c} />
+            <div style={{ fontSize: "10px", color: C.muted }}>{a.industry}</div>
+            {[
+              [a.voidScore, C.void],
+              [a.complianceScore, C.compliance],
+              [a.painScore, C.pain],
+            ].map(([score, color], i) => (
+              <div key={i}>
+                <div style={{ fontSize: "12px", color: color as string, fontWeight: 600, marginBottom: "4px" }}>
+                  {score}
+                </div>
+                <ScoreBar value={score as number} color={color as string} delay={idx} />
               </div>
             ))}
-
-            <div style={{ alignSelf: "center" }}>
-              <div style={{ fontSize: "16px", fontWeight: 700, color: a.convergence >= 75 ? C.void : a.convergence >= 55 ? C.compliance : C.muted }}>{a.convergence}</div>
+            <div style={{ fontSize: "18px", fontWeight: 700, color: (a.convergence >= 75 ? C.void : a.convergence >= 55 ? C.compliance : C.muted) }}>
+              {a.convergence}
             </div>
-            <div style={{ alignSelf: "center" }}><StatusBadge status={a.status} /></div>
-
-            <div style={{ alignSelf: "center" }}>
-              <button onClick={e => { e.stopPropagation(); setSelectedAccount(a); setView("brief"); setBrief(""); }}
-                style={{ background: "transparent", border: `1px solid ${C.border2}`, borderRadius: "3px", padding: "4px 8px", fontSize: "9px", fontFamily: "inherit", color: C.muted, cursor: "pointer", letterSpacing: "0.05em" }}>
-                BRIEF ↗
-              </button>
-            </div>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-
-  const SignalsView = () => (
-    <div style={{ padding: 20 }}>
-      <div style={{ display: "flex", gap: 8, marginBottom: 16 }}>
-        {[
-          { key: "all", label: "ALL SIGNALS", count: VOID_SIGNALS.length + COMPLIANCE_SIGNALS.length + PAIN_SIGNALS.length },
-          { key: "void", label: "VOID SCANNER", count: VOID_SIGNALS.length, color: C.void },
-          { key: "compliance", label: "COMPLIANCE RADAR", count: COMPLIANCE_SIGNALS.length, color: C.compliance },
-          { key: "pain", label: "PAIN LISTENER", count: PAIN_SIGNALS.length, color: C.pain },
-        ].map((filter) => (
-          <button key={filter.key} onClick={() => setSignalFilter(filter.key as typeof signalFilter)} style={{
-            background: signalFilter === filter.key ? `${filter.color || C.conv}18` : "transparent",
-            border: `1px solid ${signalFilter === filter.key ? (filter.color || C.conv) + "50" : C.border}`,
-            borderRadius: 4,
-            padding: "6px 12px",
-            fontSize: 9,
-            color: signalFilter === filter.key ? (filter.color || C.white) : C.muted,
-            cursor: "pointer",
-            letterSpacing: "0.08em",
-          }}>
-            {filter.label} <span style={{ opacity: 0.7 }}>({filter.count})</span>
-          </button>
+            <div><StatusBadge status={a.status} /></div>
+            <div><ConfidenceBadge confidence={a.overallConfidence} /></div>
+          </motion.div>
         ))}
       </div>
 
-      {(signalFilter === "all" || signalFilter === "void") && (
-        <div style={{ marginBottom: 20 }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 10 }}>
-            <span style={{ fontSize: 10, color: C.void, letterSpacing: "0.1em", fontWeight: 600 }}>VOID SCANNER</span>
-            <SponsorTag name="BrightData" />
-            <span style={{ fontSize: 9, color: C.muted }}>Semantic deletions via Scraping Browser + Web Unlocker</span>
-          </div>
-          {VOID_SIGNALS.map((signal) => (
-            <div key={signal.id} style={{
-              background: C.surface,
-              borderTop: `1px solid ${C.border}`,
-              borderRight: `1px solid ${C.border}`,
-              borderBottom: `1px solid ${C.border}`,
-              borderLeft: `3px solid ${C.void}`,
-              borderRadius: 6,
-              padding: "12px 14px",
-              marginBottom: 8,
-            }}>
-              <div style={{ display: "flex", justifyContent: "space-between", gap: 12 }}>
-                <div>
-                  <div style={{ display: "flex", gap: 8, alignItems: "center", marginBottom: 5 }}>
-                    <span style={{ fontSize: 12, color: C.void, fontWeight: 600 }}>{signal.company}</span>
-                    <SevBadge s={signal.severity} />
-                    <span style={{ fontSize: 9, color: C.muted }}>{signal.ago}</span>
-                  </div>
-                  <div style={{ fontSize: 11, color: C.text, marginBottom: 6 }}>{signal.event}</div>
-                  <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
-                    <span style={{ fontSize: 9, color: C.muted }}>Affects:</span>
-                    {signal.affected.map((account) => <span key={account} style={{ fontSize: 9, padding: "1px 6px", background: `${C.void}15`, color: C.void, borderRadius: 2 }}>{account}</span>)}
-                  </div>
-                </div>
-                <div style={{ textAlign: "right" }}><SponsorTag name="BrightData" /><div style={{ fontSize: 9, color: C.muted, marginTop: 4 }}>{signal.bdTool}</div></div>
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
-
-      {(signalFilter === "all" || signalFilter === "compliance") && (
-        <div style={{ marginBottom: 20 }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 10 }}>
-            <span style={{ fontSize: 10, color: C.compliance, letterSpacing: "0.1em", fontWeight: 600 }}>COMPLIANCE RADAR</span>
-            <SponsorTag name="BrightData" />
-            <span style={{ fontSize: 9, color: C.muted }}>Regulatory feed discovery via SERP API</span>
-          </div>
-          {COMPLIANCE_SIGNALS.map((signal) => (
-            <div key={signal.id} style={{
-              background: C.surface,
-              borderTop: `1px solid ${C.border}`,
-              borderRight: `1px solid ${C.border}`,
-              borderBottom: `1px solid ${C.border}`,
-              borderLeft: `3px solid ${C.compliance}`,
-              borderRadius: 6,
-              padding: "12px 14px",
-              marginBottom: 8,
-            }}>
-              <div style={{ display: "flex", justifyContent: "space-between", gap: 12 }}>
-                <div>
-                  <div style={{ display: "flex", gap: 8, alignItems: "center", marginBottom: 5 }}>
-                    <span style={{ fontSize: 12, color: C.compliance, fontWeight: 600 }}>{signal.regulation}</span>
-                    <SevBadge s={signal.severity} />
-                    <span style={{ fontSize: 9, color: C.muted }}>via {signal.body}</span>
-                  </div>
-                  <div style={{ display: "flex", gap: 12, fontSize: 10 }}>
-                    <span style={{ color: C.text }}>Deadline: <span style={{ color: C.compliance }}>{signal.deadline}</span></span>
-                    <span style={{ color: C.muted }}>Affects {signal.affected} accounts in TAM</span>
-                    <span style={{ color: C.muted }}>detected {signal.ago}</span>
-                  </div>
-                </div>
-                <div style={{ textAlign: "right" }}><SponsorTag name="BrightData" /><div style={{ fontSize: 9, color: C.muted, marginTop: 4 }}>{signal.bdTool}</div></div>
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
-
-      {(signalFilter === "all" || signalFilter === "pain") && (
-        <div>
-          <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 10 }}>
-            <span style={{ fontSize: 10, color: C.pain, letterSpacing: "0.1em", fontWeight: 600 }}>PAIN LISTENER</span>
-            <SponsorTag name="BrightData" />
-            <SponsorTag name="Speechmatics" />
-            <SponsorTag name="Featherless AI" />
-            <span style={{ fontSize: 9, color: C.muted }}>Community and audio signals classified by open models</span>
-          </div>
-          {PAIN_SIGNALS.map((signal) => (
-            <div key={signal.id} style={{
-              background: C.surface,
-              borderTop: `1px solid ${C.border}`,
-              borderRight: `1px solid ${C.border}`,
-              borderBottom: `1px solid ${C.border}`,
-              borderLeft: `3px solid ${signal.isAudio ? C.compliance : C.pain}`,
-              borderRadius: 6,
-              padding: "12px 14px",
-              marginBottom: 8,
-            }}>
-              <div style={{ display: "flex", justifyContent: "space-between", gap: 12 }}>
-                <div>
-                  <div style={{ display: "flex", gap: 8, alignItems: "center", marginBottom: 5 }}>
-                    <span style={{ fontSize: 11, color: signal.isAudio ? C.compliance : C.pain, fontWeight: 600 }}>{signal.source}</span>
-                    {signal.isAudio && <SponsorTag name="Speechmatics" />}
-                    <span style={{ fontSize: 9, padding: "1px 6px", borderRadius: 2, background: `${C.pain}15`, color: C.pain }}>{signal.type}</span>
-                    <span style={{ fontSize: 9, color: C.muted }}>{signal.ago}</span>
-                  </div>
-                  <div style={{ fontSize: 11, color: C.text, marginBottom: 6, lineHeight: 1.5 }}>{signal.snippet}</div>
-                  <div style={{ fontSize: 9, color: C.muted }}>Company: <span style={{ color: C.pain }}>{signal.company}</span></div>
-                </div>
-                <div style={{ textAlign: "right" }}><SponsorTag name={signal.engine} /><div style={{ fontSize: 9, color: C.muted, marginTop: 4 }}>via {signal.bdTool}</div></div>
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
-    </div>
+      {/* Competitive comparison link */}
+      <div style={{ marginTop: "12px" }}>
+        <ComparisonTrigger onOpen={() => setComparisonOpen(true)} />
+      </div>
+    </motion.div>
   );
 
-  const IntelView = () => {
-    const a = selectedAccount;
-    const memoryProfile = a.id === 1 ? profile : null;
-    return (
-      <div style={{ padding: 20 }}>
-        <div style={{ marginBottom: 12, display: "flex", gap: 8, flexWrap: "wrap" }}>
-          {accounts.map(acc => (
-            <button key={acc.id} onClick={() => setSelectedAccount(acc)} style={{
-              background: selectedAccount.id === acc.id ? `${C.conv}20` : "transparent",
-              border: `1px solid ${selectedAccount.id === acc.id ? C.conv : C.border}`,
-              borderRadius: 4, padding: "5px 12px", fontSize: 10, color: selectedAccount.id === acc.id ? C.conv : C.muted, cursor: "pointer"
-            }}>{acc.name}</button>
-          ))}
-        </div>
-
-        <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 6, padding: 16, marginBottom: 12 }}>
-          <div style={{ fontSize: 18, color: C.white, fontWeight: 600 }}>{a.name}</div>
-          <div style={{ fontSize: 11, color: C.muted }}>{a.industry} · {a.employees} employees · {a.location}</div>
-          <div style={{ fontSize: 11, color: C.muted, marginTop: 3 }}>Competitor: <span style={{ color: C.void }}>{a.competitor}</span> · Contact: <span style={{ color: C.text }}>{a.contact}</span></div>
-          <div style={{ marginTop: 8, display: "flex", gap: 6 }}>{a.stack.map(t => <span key={t} style={{ fontSize: 9, padding: "2px 7px", background: C.surface2, border: `1px solid ${C.border2}`, borderRadius: 3, color: C.muted }}>{t}</span>)}</div>
-        </div>
-
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 10, marginBottom: 12 }}>
-          {[
-            { label: "VOID SCANNER", score: a.voidScore, color: C.void, event: a.voidEvent, sponsor: "BrightData" },
-            { label: "COMPLIANCE RADAR", score: a.complianceScore, color: C.compliance, event: a.complianceEvent, sponsor: "BrightData" },
-            { label: "PAIN LISTENER", score: a.painScore, color: C.pain, event: a.painEvent, sponsor: "Featherless AI" },
-          ].map(({ label, score, color, event, sponsor }) => (
-            <div key={label} style={{
-              background: C.surface,
-              borderTop: `2px solid ${color}`,
-              borderRight: `1px solid ${C.border}`,
-              borderBottom: `1px solid ${C.border}`,
-              borderLeft: `1px solid ${C.border}`,
-              borderRadius: 6,
-              padding: 14,
-            }}>
-              <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 10 }}>
-                <span style={{ fontSize: 9, color, letterSpacing: "0.08em", fontWeight: 600 }}>{label}</span>
-                <span style={{ fontSize: 20, fontWeight: 700, color }}>{score}</span>
-              </div>
-              <Bar v={score} color={color} />
-              <div style={{ fontSize: 10, color: C.muted, marginTop: 10, lineHeight: 1.5 }}>{event}</div>
-              <div style={{ marginTop: 8 }}><SponsorTag name={sponsor} /></div>
-            </div>
-          ))}
-        </div>
-
-        {a.id === 1 && (
-          <div style={{
-            background: C.surface,
-            borderTop: `1px solid ${C.border}`,
-            borderRight: `1px solid ${C.border}`,
-            borderBottom: `1px solid ${C.border}`,
-            borderLeft: `3px solid ${C.void}`,
-            borderRadius: 6,
-            padding: 14,
-            marginBottom: 12,
-          }}>
-            <div style={{ display: "flex", gap: 8, alignItems: "center", marginBottom: 10 }}>
-              <span style={{ fontSize: 10, color: C.void, fontWeight: 600 }}>VOID DIFF — PRICING TIER REMOVED</span>
-              <SponsorTag name="BrightData" />
-              <SponsorTag name="Cognee" />
-            </div>
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
-              <div style={{ background: C.surface2, border: `1px solid ${C.border2}`, borderRadius: 4, padding: 10 }}>
-                <div style={{ fontSize: 9, color: C.muted, marginBottom: 6 }}>BEFORE</div>
-                {((voidPricingRemoval.rawEvidence?.beforeTiers as string[]) || []).map((tier) => <div key={tier} style={{ fontSize: 10, color: C.text, marginBottom: 3 }}>{tier}</div>)}
-              </div>
-              <div style={{ background: C.surface2, border: `1px solid ${C.border2}`, borderRadius: 4, padding: 10 }}>
-                <div style={{ fontSize: 9, color: C.muted, marginBottom: 6 }}>AFTER</div>
-                {((voidPricingRemoval.rawEvidence?.afterTiers as string[]) || []).map((tier) => <div key={tier} style={{ fontSize: 10, color: C.text, marginBottom: 3 }}>{tier}</div>)}
-                <div style={{ fontSize: 10, color: C.void, marginTop: 6 }}>Removed: {String(voidPricingRemoval.rawEvidence?.removed || "SMB tier")}</div>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {a.audioSignal && (
-          <div style={{
-            background: C.surface,
-            borderTop: `1px solid ${C.border}`,
-            borderRight: `1px solid ${C.border}`,
-            borderBottom: `1px solid ${C.border}`,
-            borderLeft: `3px solid ${C.compliance}`,
-            borderRadius: 6,
-            padding: 12,
-            marginBottom: 12,
-          }}>
-            <div style={{ fontSize: 10, color: C.compliance, fontWeight: 600, marginBottom: 6 }}>♪ AUDIO SIGNAL — SPEECHMATICS <SponsorTag name="Speechmatics" /></div>
-            <div style={{ fontSize: 11, color: C.text }}>{a.audioSignal}</div>
-          </div>
-        )}
-
-        <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 6, padding: 14, marginBottom: 12 }}>
-          <div style={{ fontSize: 10, color: C.conv, fontWeight: 600, marginBottom: 8 }}>COGNEE — ACCOUNT MEMORY <SponsorTag name="Cognee" /></div>
-          {memoryProfile ? (
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 10 }}>
-              {[
-                { label: "last scanned", value: new Date(memoryProfile.lastUpdated).toLocaleTimeString() },
-                { label: "convergence (stored)", value: memoryProfile.convergenceScore + "/100" },
-                { label: "signals in memory", value: memoryProfile.void.signals.length + memoryProfile.compliance.signals.length + memoryProfile.pain.signals.length },
-                { label: "memory updated", value: "✓ active" },
-              ].map(x => (
-                <div key={x.label} style={{ background: C.surface2, borderRadius: 4, padding: 10 }}>
-                  <div style={{ fontSize: 9, color: C.muted }}>{x.label}</div>
-                  <div style={{ fontSize: 12, color: C.conv }}>{x.value}</div>
-                </div>
-              ))}
-            </div>
-          ) : <div style={{ fontSize: 10, color: C.muted }}>No profile yet. Run the full scan to populate Cognee memory.</div>}
-        </div>
-
-        {triggerWorkflow.fired && a.id === 1 && (
-          <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 6, padding: 14 }}>
-            <div style={{ fontSize: 10, color: "#ff8800", fontWeight: 600, marginBottom: 10 }}>TRIGGERWARE — WORKFLOW FIRED <SponsorTag name="TriggerWare" /></div>
-            <div style={{ display: "flex", gap: 0 }}>
-              {triggerWorkflow.steps.map((step, i) => {
-                const colors = [C.void, C.blue, C.compliance, C.conv];
-                const c = colors[i] || C.conv;
-                return (
-                <div key={i} style={{ display: "flex", alignItems: "center", flex: 1 }}>
-                  <div style={{ background: `${c}18`, border: `1px solid ${c}50`, borderRadius: 4, padding: "8px 10px", flex: 1 }}>
-                    <div style={{ fontSize: 10, color: c, fontWeight: 600 }}>{step.label}</div>
-                    <div style={{ fontSize: 9, color: C.muted }}>{step.detail}</div>
-                  </div>
-                  {i < triggerWorkflow.steps.length - 1 && <div style={{ padding: "0 6px", color: C.muted }}>→</div>}
-                </div>
-                );
-              })}
-            </div>
-          </div>
-        )}
-
-        <div style={{ marginTop: 14, textAlign: "right" }}>
-          <button onClick={() => { setView("brief"); setBrief(""); }} style={{ background: C.conv, color: C.white, border: "none", borderRadius: 4, padding: "8px 20px", fontSize: 10, letterSpacing: "0.1em", cursor: "pointer" }}>
-            GENERATE INTEL BRIEF ↗
-          </button>
-        </div>
-      </div>
-    );
-  };
-
-  const BriefView = () => (
-    <div style={{ padding: 20 }}>
-      <div style={{ display: "flex", gap: 8, marginBottom: 14, flexWrap: "wrap" }}>
-        {accounts.map(acc => (
-          <button key={acc.id} onClick={() => { setSelectedAccount(acc); setBrief(""); setBriefError(""); }} style={{
-            background: selectedAccount.id === acc.id ? `${C.conv}20` : "transparent",
-            border: `1px solid ${selectedAccount.id === acc.id ? C.conv : C.border}`,
-            borderRadius: 4, padding: "5px 12px", fontSize: 10, color: selectedAccount.id === acc.id ? C.conv : C.muted, cursor: "pointer"
-          }}>{acc.name}</button>
-        ))}
-      </div>
-
-      <div style={{ background: `${C.compliance}10`, border: `1px solid ${C.compliance}30`, borderRadius: 6, padding: 12, marginBottom: 14, fontSize: 10 }}>
-        AI/ML API runs server-side only. Set <span style={{ color: C.compliance }}>AI_ML_MODE=real</span> and <span style={{ color: C.compliance }}>AI_ML_API_KEY</span> in <span style={{ color: C.text }}>.env.local</span> for live generation; otherwise this uses the zero-cost mock path.
-      </div>
-
-      {!brief && !briefLoading && (
-        <button onClick={generateBrief} style={{ background: C.conv, color: C.white, border: "none", borderRadius: 4, padding: "10px 24px", fontSize: 11, letterSpacing: "0.1em", cursor: "pointer", marginBottom: 14 }}>
-          ▶ GENERATE INTEL BRIEF <SponsorTag name="AI/ML API" />
-        </button>
-      )}
-
-      {briefLoading && <div style={{ color: C.muted, fontSize: 11 }}>AI/ML API generating via {model}...</div>}
-      {briefError && <div style={{ color: C.void, fontSize: 10, marginBottom: 10 }}>{briefError}</div>}
-
-      {brief && (
-        <div>
-          <div style={{ fontSize: 10, color: C.conv, fontWeight: 600, marginBottom: 8 }}>INTEL BRIEF <SponsorTag name="AI/ML API" /> {selectedAccount.audioSignal && <SponsorTag name="Speechmatics" />}</div>
-          <pre style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 6, padding: 20, fontSize: 11, color: C.text, whiteSpace: "pre-wrap", lineHeight: 1.7 }}>{brief}</pre>
-          <div style={{ marginTop: 10, fontSize: 9, color: C.muted }}>→ TriggerWare would push this to CRM + AE Slack <SponsorTag name="TriggerWare" /></div>
-        </div>
-      )}
-    </div>
-  );
-
-  const SettingsView = () => (
-    <div style={{ padding: 20, maxWidth: 520 }}>
-      <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 6, padding: 16 }}>
-        <div style={{ fontSize: 12, color: C.text, fontWeight: 500, marginBottom: 8 }}>Sponsor Mode Configuration</div>
-        <div style={{ fontSize: 10, color: C.muted, lineHeight: 1.6 }}>
-          Real API keys are never entered in the browser. Configure <span style={{ color: C.text }}>.env.local</span> and use <span style={{ color: C.compliance }}>AI_ML_MODE=real</span> for live brief generation. All other integrations keep zero-cost mock mode unless their corresponding server-side mode and key are configured.
-        </div>
-      </div>
-
-      <div style={{ marginTop: 16, fontSize: 10, color: C.muted }}>
-        All other sponsors (Bright Data, Speechmatics, Featherless, Cognee, TriggerWare) run in zero-cost demo mode with clear attribution badges.
-      </div>
-
-      {integrationStatuses.length > 0 && (
-        <div style={{ marginTop: 16, background: C.surface, border: `1px solid ${C.border}`, borderRadius: 6, padding: 16 }}>
-          <div style={{ fontSize: 11, color: C.text, fontWeight: 500, marginBottom: 10 }}>Integration Health</div>
-          {integrationStatuses.map((status) => (
-            <div key={status.id} style={{ display: "flex", justifyContent: "space-between", gap: 12, padding: "8px 0", borderTop: `1px solid ${C.border}` }}>
-              <div>
-                <div style={{ fontSize: 10, color: C.text }}>{status.name}</div>
-                <div style={{ fontSize: 9, color: C.muted }}>{status.detail}</div>
-              </div>
-              <div style={{ fontSize: 9, color: status.status === "live" || status.status === "healthy" ? C.pain : status.status === "disabled" ? C.dim : C.compliance, whiteSpace: "nowrap" }}>
-                {status.mode} · {status.status}
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
-    </div>
-  );
+  const evidenceData =
+    evidenceType === "void" ? evidenceAccount?.voidEvidence :
+    evidenceType === "compliance" ? evidenceAccount?.complianceEvidence :
+    evidenceType === "pain" ? evidenceAccount?.painEvidence :
+    evidenceAccount?.audioEvidence;
 
   return (
-    <div style={{ background: C.bg, minHeight: "100vh", fontFamily: "'IBM Plex Mono', 'JetBrains Mono', monospace", color: C.text }}>
-      <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&display=swap');
-        @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.5} }
-        * { box-sizing: border-box; }
-        input::placeholder { color: #2a3a4a; }
-        button:hover { opacity: 0.85; }
-        ::-webkit-scrollbar { width: 4px; }
-        ::-webkit-scrollbar-thumb { background: #1a2332; }
-      `}</style>
-      {Nav()}
-      <div style={{ maxHeight: "calc(100vh - 48px)", overflowY: "auto" }}>
-        {view === "dashboard" && DashboardView()}
-        {view === "signals" && SignalsView()}
-        {view === "intel" && IntelView()}
-        {view === "brief" && BriefView()}
-        {view === "settings" && SettingsView()}
+    <div style={{
+      background: C.bg, minHeight: "100vh", color: C.text,
+      fontFamily: "'IBM Plex Mono', 'Courier New', monospace",
+      display: "flex", flexDirection: "column",
+    }}>
+      {/* ── TOP NAV ── */}
+      {!cleanMode && (
+        <div style={{
+          display: "flex", alignItems: "center", height: "52px",
+          background: `rgba(12,16,24,0.95)`, borderBottom: `1px solid ${C.border}`,
+          backdropFilter: "blur(20px)", position: "sticky", top: 0, zIndex: 40,
+          padding: "0 18px", gap: "0", flexShrink: 0,
+        }}>
+          {/* Logo */}
+          <a href={homeHref} style={{
+            display: "flex", alignItems: "center", gap: "8px",
+            fontWeight: 700, fontSize: "13px", color: C.white, letterSpacing: "0.18em",
+            marginRight: "28px", textDecoration: "none", flexShrink: 0,
+          }}>
+            <Icon.Logo />
+            PREINTENT
+          </a>
+
+          {/* Separator */}
+          <div style={{ width: "1px", height: "24px", background: C.border, marginRight: "18px" }} />
+
+          {/* Nav tabs */}
+          {NAV_ITEMS.map(({ id, label, Icon: NavIcon }) => (
+            <button
+              key={id}
+              onClick={() => setView(id)}
+              style={{
+                position: "relative", height: "52px", padding: "0 14px",
+                background: "transparent", border: "none", cursor: "pointer",
+                fontSize: "9px", fontFamily: "inherit", letterSpacing: "0.12em",
+                color: view === id ? C.white : C.muted,
+                display: "flex", alignItems: "center", gap: "6px",
+                borderBottom: view === id ? `2px solid ${C.conv}` : "2px solid transparent",
+                transition: "color 0.15s, border-color 0.15s", flexShrink: 0,
+              }}
+              onMouseEnter={(e) => { if (view !== id) e.currentTarget.style.color = C.text; }}
+              onMouseLeave={(e) => { if (view !== id) e.currentTarget.style.color = C.muted; }}
+            >
+              <NavIcon />
+              {label}
+              {id === "signals" && alertCount > 0 && (
+                <span style={{
+                  background: C.void, color: C.white, borderRadius: "99px",
+                  fontSize: "8px", padding: "0px 5px", minWidth: "16px", textAlign: "center",
+                  lineHeight: "16px",
+                }}>
+                  {alertCount}
+                </span>
+              )}
+            </button>
+          ))}
+
+          {/* Right side */}
+          <div style={{ marginLeft: "auto", display: "flex", alignItems: "center", gap: "10px", flexShrink: 0 }}>
+            <AnimatePresence>
+              {triggerFired && (
+                <motion.span
+                  initial={{ opacity: 0, scale: 0.8 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0 }}
+                  style={{ fontSize: "9px", color: C.compliance, display: "flex", alignItems: "center", gap: "4px" }}
+                >
+                  <Icon.Zap /> TriggerWare fired
+                </motion.span>
+              )}
+            </AnimatePresence>
+
+            {/* Live indicator */}
+            <div style={{ display: "flex", alignItems: "center", gap: "5px", fontSize: "9px", color: C.muted }}>
+              <LiveDot color={C.pain} pulse />
+              LIVE
+            </div>
+
+            <AutoplayTrigger onStart={startAutopilot} disabled={autopilotActive || tourActive} />
+            <TourTrigger onStart={() => setTourActive(true)} disabled={tourActive || autopilotActive} />
+
+            <button
+              onClick={() => setCleanMode(true)}
+              style={{ ...ghostBtnStyle, fontSize: "9px", padding: "4px 10px" }}
+            >
+              Clean Mode
+            </button>
+
+            {!isDemoPage && (
+              <button
+                onClick={handleSignOut}
+                style={{ ...ghostBtnStyle, fontSize: "9px", padding: "4px 10px" }}
+              >
+                Sign out
+              </button>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Clean mode exit banner */}
+      {cleanMode && (
+        <div style={{
+          position: "fixed", top: "14px", right: "14px", zIndex: 50,
+          background: `${C.conv}20`, border: `1px solid ${C.conv}40`,
+          borderRadius: "6px", padding: "6px 14px", fontSize: "10px", color: C.conv,
+          cursor: "pointer", backdropFilter: "blur(10px)",
+        }}
+          onClick={() => setCleanMode(false)}
+        >
+          Exit Clean Mode (C)
+        </div>
+      )}
+
+      {/* ── CONTENT ── */}
+      <div style={{ flex: 1, overflowY: "auto", maxWidth: "1400px", width: "100%", margin: "0 auto", paddingBottom: "40px" }}>
+        {/* Account selector sub-bar (for intel + brief) */}
+        {(view === "intel" || view === "brief") && !cleanMode && (
+          <div style={{
+            display: "flex", alignItems: "center", gap: "6px",
+            padding: "10px 18px", borderBottom: `1px solid ${C.border}`,
+            overflowX: "auto",
+          }}>
+            <span style={{ fontSize: "9px", color: C.muted, marginRight: "6px", flexShrink: 0, letterSpacing: "0.06em" }}>
+              ACCOUNT
+            </span>
+            {accounts.map((a) => (
+              <button
+                key={a.id}
+                onClick={() => setSelectedAccount(a)}
+                style={{
+                  background: selectedAccount.id === a.id ? `${C.conv}15` : "transparent",
+                  border: `1px solid ${selectedAccount.id === a.id ? C.conv : C.border}`,
+                  borderRadius: "4px", padding: "4px 10px", fontSize: "10px",
+                  color: selectedAccount.id === a.id ? C.conv : C.muted,
+                  cursor: "pointer", fontFamily: "inherit", flexShrink: 0, transition: "all 0.15s",
+                }}
+              >
+                {a.name}
+                {a.status === "ALERT" && (
+                  <span style={{ marginLeft: "5px", color: C.void, fontSize: "8px" }}>●</span>
+                )}
+              </button>
+            ))}
+          </div>
+        )}
+
+        <AnimatePresence mode="wait">
+          {view === "dashboard" && <DashboardView key="dash" />}
+          {view === "signals" && (
+            <SignalsView
+              key="sig"
+              accounts={accounts}
+              onEvidence={(acct, type) => openEvidence(acct, type)}
+              filter={signalFilter}
+              onFilterChange={setSignalFilter}
+            />
+          )}
+          {view === "intel" && (
+            <IntelView
+              key="intel"
+              account={selectedAccount}
+              onGenerateBrief={() => { setView("brief"); generateBrief(); }}
+              onEvidence={(type) => openEvidence(selectedAccount, type)}
+            />
+          )}
+          {view === "brief" && (
+            <BriefView
+              key="brief"
+              brief={brief}
+              loading={briefLoading}
+              account={selectedAccount}
+              onGenerate={generateBrief}
+              onShare={() => setShareOpen(true)}
+            />
+          )}
+          {view === "settings" && (
+            <SettingsView
+              key="settings"
+              integrationStatuses={integrationStatuses}
+              onSignOut={handleSignOut}
+              isDemoPage={isDemoPage}
+            />
+          )}
+        </AnimatePresence>
       </div>
+
+      {/* ── MODALS ── */}
+      <ROICalculator
+        isOpen={roiOpen}
+        onClose={() => setRoiOpen(false)}
+        accountName={selectedAccount?.name}
+        accountConvergence={selectedAccount?.convergence}
+      />
+
+      <EvidenceModal
+        isOpen={evidenceOpen}
+        onClose={() => setEvidenceOpen(false)}
+        evidence={evidenceData || null}
+        accountName={evidenceAccount?.name || ""}
+        signalType={evidenceType}
+      />
+
+      <BriefSharing
+        isOpen={shareOpen}
+        onClose={() => setShareOpen(false)}
+        accountName={selectedAccount?.name || ""}
+        briefContent={brief}
+        account={selectedAccount}
+      />
+
+      <CompetitiveComparison
+        isOpen={comparisonOpen}
+        onClose={() => setComparisonOpen(false)}
+        acv={50000}
+      />
+
+      <GuidedTour
+        isActive={tourActive}
+        onClose={() => setTourActive(false)}
+        accounts={accounts}
+      />
+
+      {autopilotActive && (
+        <DemoAutopilot
+          key={autopilotSession}
+          isActive
+          onEnd={handleAutopilotEnd}
+          actions={autopilotActionsRef.current}
+        />
+      )}
+
+      {!cleanMode && <TourShortcut />}
     </div>
   );
 }

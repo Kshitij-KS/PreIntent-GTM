@@ -3,7 +3,7 @@ import { expect, test } from "@playwright/test";
 test("renders and drives the stage-ready demo console", async ({ page }) => {
   await page.goto("/");
 
-  await expect(page.getByText("UNDERTOW")).toBeVisible();
+  await expect(page.getByText("PREINTENT")).toBeVisible();
   await expect(page.getByText("accounts tracked")).toBeVisible();
   await expect(page.getByText("powered by")).toBeVisible();
 

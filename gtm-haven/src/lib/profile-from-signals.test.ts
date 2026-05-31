@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { buildProfileFromSignals } from "./profile-from-signals";
-import { voidPricingRemoval, compliancePciDss, painRFintechPost } from "./undertow-demo";
+import { voidPricingRemoval, compliancePciDss, painRFintechPost } from "./preintent-demo";
 
 describe("buildProfileFromSignals", () => {
   it("computes convergence from engine signals", () => {

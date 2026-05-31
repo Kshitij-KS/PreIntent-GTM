@@ -43,7 +43,7 @@ export async function executeThresholdDelivery(
     : "";
 
   const slackText = [
-    `🌊 *Undertow Alert* — ${profile.account}`,
+    `🌊 *Preintent Alert* — ${profile.account}`,
     `Convergence: *${profile.convergenceScore}/100* · Urgency: *${profile.urgency}*`,
     `Void ${profile.void.subScore} · Compliance ${profile.compliance.subScore} · Pain ${profile.pain.subScore}`,
     opener,
@@ -57,7 +57,7 @@ export async function executeThresholdDelivery(
     env.TRIGGERWARE_WEBHOOK_URL,
     isRealMode(env, "TRIGGERWARE_MODE", ["TRIGGERWARE_WEBHOOK_URL", "TRIGGERWARE_API_KEY"]),
     {
-      event: "undertow.threshold_crossed",
+      event: "preintent.threshold_crossed",
       account: profile.account,
       convergenceScore: profile.convergenceScore,
       urgency: profile.urgency,
@@ -71,7 +71,7 @@ export async function executeThresholdDelivery(
     env.HUBSPOT_WEBHOOK_URL,
     isRealMode(env, "HUBSPOT_MODE", ["HUBSPOT_WEBHOOK_URL", "HUBSPOT_API_KEY"]),
     {
-      event: "undertow.crm_lead",
+      event: "preintent.crm_lead",
       companyName: profile.account,
       stage: profile.crmStage,
       convergenceScore: profile.convergenceScore,

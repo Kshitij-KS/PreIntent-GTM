@@ -1,15 +1,15 @@
-# Undertow Architecture And Endpoints
+# Preintent Architecture And Endpoints
 
 ## What Was Implemented
 
-This pass hardened Undertow from a polished demo shell into a mock-first backend-ready MVP aligned with `Project-GTM/Ideation and Architecture.md`.
+This pass hardened Preintent from a polished demo shell into a mock-first backend-ready MVP aligned with `Project-GTM/Ideation and Architecture.md`.
 
 Implemented changes:
 
-- Unified Undertow domain concepts around `AccountIntelligenceProfile`, `EngineSignal`, `ConvergenceResult`, `IntelBrief`, `IntegrationStatus`, and threshold actions in `src/lib/domain.ts`.
+- Unified Preintent domain concepts around `AccountIntelligenceProfile`, `EngineSignal`, `ConvergenceResult`, `IntelBrief`, `IntegrationStatus`, and threshold actions in `src/lib/domain.ts`.
 - Added real convergence logic in `src/lib/convergence.ts`, including default 33/33/33 scoring, urgency mapping, and threshold action evaluation for 50/65/75/85/95 and single-engine 100 triggers.
 - Standardized Cognee MVP persistence in `src/lib/cognee.ts` using browser `localStorage` and account-name keyed Account Intelligence Profiles.
-- Added deterministic demo engine fixtures in `src/lib/undertow-demo.ts` for Void Scanner, Compliance Radar, Pain Listener, Speechmatics audio, and Intel Brief generation.
+- Added deterministic demo engine fixtures in `src/lib/preintent-demo.ts` for Void Scanner, Compliance Radar, Pain Listener, Speechmatics audio, and Intel Brief generation.
 - Added mock-first sponsor integration adapters in `src/lib/integrations/`:
   - `bright-data.ts`
   - `speechmatics.ts`
@@ -18,16 +18,16 @@ Implemented changes:
 - Added `GET /api/health` for integration mode/status reporting.
 - Hardened `src/app/actions.ts` so real AI/ML and Featherless-compatible calls are server-side only and safely fall back to mocks.
 - Reworked `src/components/DemoDashboard.tsx` to consume the hardened architecture while keeping the dense dashboard aesthetic.
-- Replaced stale GTM Haven tests with Undertow-specific tests for convergence and integration contracts.
-- Rewrote Playwright e2e coverage around the actual Undertow demo flow.
-- Realigned Supabase reference schema to Undertow entities for future production persistence.
+- Replaced stale GTM Haven tests with Preintent-specific tests for convergence and integration contracts.
+- Rewrote Playwright e2e coverage around the actual Preintent demo flow.
+- Realigned Supabase reference schema to Preintent entities for future production persistence.
 - Updated README and production-readiness notes to distinguish live, mock, and deferred capabilities.
 
 ## Current Architecture
 
 ```mermaid
 flowchart TD
-  Dashboard["DemoDashboard"] --> DemoFixtures["Undertow Demo Fixtures"]
+  Dashboard["DemoDashboard"] --> DemoFixtures["Preintent Demo Fixtures"]
   Dashboard --> CogneeStore["Cognee MVP localStorage"]
   Dashboard --> Convergence["Convergence Engine"]
   Dashboard --> ServerActions["Server Actions"]
@@ -209,7 +209,7 @@ Purpose:
 The runtime MVP uses `localStorage` only:
 
 ```text
-undertow:cognee:profiles:v1
+preintent:cognee:profiles:v1
 ```
 
 Stored shape:

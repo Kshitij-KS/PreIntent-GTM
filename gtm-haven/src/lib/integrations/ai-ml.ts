@@ -81,7 +81,7 @@ export async function scoreVoidFromPageContent(
   const fallback = {
     subScore: 84,
     title: `${params.competitor} pricing page change detected`,
-    description: `Undertow analyzed ${params.url}. Competitor pricing or packaging may have changed — review for tier removals or SMB plan gaps affecting ${params.account}.`,
+    description: `Preintent analyzed ${params.url}. Competitor pricing or packaging may have changed — review for tier removals or SMB plan gaps affecting ${params.account}.`,
     confidence: 0.85,
   };
 

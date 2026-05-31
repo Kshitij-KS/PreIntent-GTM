@@ -1,23 +1,23 @@
-# Undertow
+# Preintent
 
 **The Convergent GTM Intelligence Platform**
 
 > **Three invisible forces. One unfair pipeline advantage.**
 
-Undertow is an always-on GTM intelligence system that simultaneously monitors competitor retreats (Void Scanner), regulatory shockwaves (Compliance Radar), and community pain signals (Pain Listener) — triangulating them against your target account list and surfacing accounts where all three forces converge into a single high-confidence buying event, delivered as an AI-generated Intel Brief to your CRM and Slack before any intent vendor, analyst, or sales rep knows the signal exists.
+PREINTENT is an always-on GTM intelligence system that simultaneously monitors competitor retreats (Void Scanner), regulatory shockwaves (Compliance Radar), and community pain signals (Pain Listener) — triangulating them against your target account list and surfacing accounts where all three forces converge into a single high-confidence buying event, delivered as an AI-generated Intel Brief to your CRM and Slack before any intent vendor, analyst, or sales rep knows the signal exists.
 
 This is the hackathon MVP implementing the exact architecture and demo flow defined in [Ideation and Architecture.md](../Ideation and Architecture.md). **RUN FULL SCAN** orchestrates the full pipeline server-side; every integration has mock fallbacks when keys are missing.
 
 ## What Works Now (MVP)
 
 - **Live sweep orchestrator** (`runLiveSweep` server action + `POST /api/sweep`): Bright Data fetch → AI/ML scoring → Featherless pain classification → Speechmatics audio → convergence → Slack/webhooks → Intel Brief.
-- Dense Undertow dashboard wired to the live sweep (scan animation + real profile updates + optional auto-brief).
+- Dense Preintent dashboard wired to the live sweep (scan animation + real profile updates + optional auto-brief).
 - Typed Account Intelligence Profiles stored in browser localStorage as the zero-cost Cognee MVP.
 - Three engine surfaces: Void Scanner, Compliance Radar, and Pain Listener with provenance on every signal.
 - Convergence scoring (33/33/33) plus threshold delivery at ≥85 (Slack incoming webhook, optional TriggerWare/HubSpot webhooks).
 - `GET /api/health` reports integration status from `.env.local`.
 - All sponsor calls are server-side only; mock mode works with zero keys.
-- Supabase SQL is future-facing reference schema for Undertow account profiles, engine signals, convergence runs, Intel Briefs, and integration connections. Runtime MVP does not require Supabase.
+- Supabase SQL is future-facing reference schema for Preintent account profiles, engine signals, convergence runs, Intel Briefs, and integration connections. Runtime MVP does not require Supabase.
 - TypeScript, lint, typecheck, unit tests, Playwright e2e, CI, and Vercel-ready build path.
 
 ## Local Setup
@@ -38,7 +38,7 @@ npm run test
 npm run build
 ```
 
-`npm run test:e2e` runs the core Undertow demo path on desktop and mobile.
+`npm run test:e2e` runs the core Preintent demo path on desktop and mobile.
 
 ## Environment
 

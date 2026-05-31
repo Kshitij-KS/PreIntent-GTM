@@ -1,73 +1,83 @@
-import type { Metadata } from "next";
+"use client";
+
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
+import { Suspense } from "react";
 import AuthForm from "@/components/auth/AuthForm";
 
-export const metadata: Metadata = {
-  title: "Sign In | Undertow — Convergent GTM Intelligence",
-  description:
-    "Sign in to Undertow and get AI-powered GTM intelligence on your target accounts.",
-};
+function SignInContent() {
+  const searchParams = useSearchParams();
+  const next = searchParams.get("next") ?? "/onboarding";
+
+  return (
+    <div style={{
+      minHeight: "100vh",
+      background: "#07090f",
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "center",
+      padding: "20px",
+      position: "relative",
+      overflow: "hidden",
+      fontFamily: "'IBM Plex Mono', 'Courier New', monospace",
+    }}>
+      {/* Subtle dot grid */}
+      <div style={{
+        position: "absolute", inset: 0,
+        backgroundImage: `
+          linear-gradient(rgba(32,112,255,0.025) 1px, transparent 1px),
+          linear-gradient(90deg, rgba(32,112,255,0.025) 1px, transparent 1px)
+        `,
+        backgroundSize: "60px 60px",
+        pointerEvents: "none",
+      }} />
+
+      {/* Purple orb top-right */}
+      <div style={{
+        position: "absolute", top: "-180px", right: "-120px",
+        width: "620px", height: "620px", borderRadius: "50%",
+        background: "radial-gradient(circle, rgba(124,58,237,0.13) 0%, transparent 68%)",
+        pointerEvents: "none",
+      }} />
+
+      {/* Blue orb bottom-left */}
+      <div style={{
+        position: "absolute", bottom: "-160px", left: "-80px",
+        width: "520px", height: "520px", borderRadius: "50%",
+        background: "radial-gradient(circle, rgba(32,112,255,0.09) 0%, transparent 68%)",
+        pointerEvents: "none",
+      }} />
+
+      {/* Green faint orb centre-left */}
+      <div style={{
+        position: "absolute", top: "50%", left: "25%",
+        transform: "translate(-50%, -50%)",
+        width: "300px", height: "300px", borderRadius: "50%",
+        background: "radial-gradient(circle, rgba(36,192,56,0.05) 0%, transparent 70%)",
+        pointerEvents: "none",
+      }} />
+
+      <div style={{ position: "relative", zIndex: 1, width: "100%", maxWidth: "420px" }}>
+        <AuthForm redirectTo={next} />
+
+        <div style={{ textAlign: "center", marginTop: "20px", display: "flex", alignItems: "center", justifyContent: "center", gap: "16px" }}>
+          <Link href="/" style={{ fontSize: "10px", color: "#4a6070", textDecoration: "none", letterSpacing: "0.04em" }}>
+            ← Homepage
+          </Link>
+          <span style={{ color: "#18232f", fontSize: "10px" }}>·</span>
+          <Link href="/demo" style={{ fontSize: "10px", color: "#4a6070", textDecoration: "none", letterSpacing: "0.04em" }}>
+            Try free demo →
+          </Link>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 export default function SignInPage() {
   return (
-    <div
-      style={{
-        minHeight: "100vh",
-        background: "#07090f",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        padding: "20px",
-        position: "relative",
-        overflow: "hidden",
-        fontFamily:
-          "'Inter', 'IBM Plex Mono', system-ui, -apple-system, sans-serif",
-      }}
-    >
-      {/* Background orbs */}
-      <div
-        style={{
-          position: "absolute",
-          top: "-200px",
-          right: "-100px",
-          width: "600px",
-          height: "600px",
-          borderRadius: "50%",
-          background:
-            "radial-gradient(circle, rgba(124, 58, 237, 0.12) 0%, transparent 70%)",
-          pointerEvents: "none",
-        }}
-      />
-      <div
-        style={{
-          position: "absolute",
-          bottom: "-200px",
-          left: "-100px",
-          width: "500px",
-          height: "500px",
-          borderRadius: "50%",
-          background:
-            "radial-gradient(circle, rgba(32, 112, 255, 0.08) 0%, transparent 70%)",
-          pointerEvents: "none",
-        }}
-      />
-
-      <div style={{ position: "relative", zIndex: 1, width: "100%", maxWidth: "420px" }}>
-        <AuthForm />
-
-        <p
-          style={{
-            textAlign: "center",
-            marginTop: "24px",
-            fontSize: "12px",
-            color: "#243040",
-          }}
-        >
-          <Link href="/" style={{ color: "#4a6070", textDecoration: "none" }}>
-            ← Back to homepage
-          </Link>
-        </p>
-      </div>
-    </div>
+    <Suspense>
+      <SignInContent />
+    </Suspense>
   );
 }

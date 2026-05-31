@@ -1,5 +1,5 @@
 import type { EngineSignal, ProviderMode } from "../domain";
-import { painPodcastTranscript } from "../undertow-demo";
+import { painPodcastTranscript } from "../preintent-demo";
 import { type EnvMap, isRealMode, normalizeMode } from "./env";
 
 export interface SpeechmaticsTranscriptResult {

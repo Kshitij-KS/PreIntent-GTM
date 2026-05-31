@@ -1,5 +1,5 @@
 /**
- * GTM Haven Auth Helpers
+ * Preintent Auth Helpers
  *
  * Supports two modes:
  *  1. MOCK mode  — works with zero config; stores session in a cookie
@@ -12,8 +12,8 @@
 
 import { cookies } from "next/headers";
 
-const MOCK_SESSION_COOKIE = "undertow_mock_session";
-const ONBOARDING_DONE_COOKIE = "undertow_onboarding_done";
+const MOCK_SESSION_COOKIE = "preintent_mock_session";
+const ONBOARDING_DONE_COOKIE = "preintent_onboarding_done";
 
 export interface MockUser {
   id: string;

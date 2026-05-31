@@ -12,6 +12,9 @@
 
 # testing
 /coverage
+
+# generated hackathon deck
+/outputs/
 /test-results
 /playwright-report
 

@@ -1,5 +1,5 @@
 insert into public.organizations (id, name, slug)
-values ('00000000-0000-4000-8000-000000000001', 'Undertow Demo Workspace', 'undertow-demo')
+values ('00000000-0000-4000-8000-000000000001', 'Preintent Demo Workspace', 'preintent-demo')
 on conflict (slug) do nothing;
 
 insert into public.account_profiles (

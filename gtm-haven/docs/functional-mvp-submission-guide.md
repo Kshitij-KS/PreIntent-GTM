@@ -1,14 +1,14 @@
-# Undertow Functional MVP Submission Guide
+# Preintent Functional MVP Submission Guide
 
 ## Goal
 
-To submit Undertow as a fully functional, non-demo-only hackathon MVP, the product should prove one real end-to-end pipeline:
+To submit Preintent as a fully functional, non-demo-only hackathon MVP, the product should prove one real end-to-end pipeline:
 
 ```text
 Live web signal -> AI extraction/classification -> Account profile update -> convergence score -> Intel Brief -> real alert or delivery
 ```
 
-The MVP does not need to be a full production SaaS. It needs to demonstrate that Undertow can ingest real market evidence and convert it into actionable GTM intelligence.
+The MVP does not need to be a full production SaaS. It needs to demonstrate that Preintent can ingest real market evidence and convert it into actionable GTM intelligence.
 
 ## Submission-Critical Work
 
@@ -127,7 +127,7 @@ If time is short, keep Speechmatics mocked and clearly labeled. The higher-prior
 
 Maya is an account executive selling compliance automation software to fintech companies. She has Acme FinTech on her target account list, but Acme is not currently in pipeline and has not shown up in any traditional intent vendor feed.
 
-Maya opens Undertow and enters:
+Maya opens Preintent and enters:
 
 - Target account: `Acme FinTech`
 - Competitor: `Stripe Atlas`
@@ -136,7 +136,7 @@ Maya opens Undertow and enters:
 
 She clicks `Run Live Sweep`.
 
-Undertow runs a Bright Data sweep against the competitor pricing page. The Scraping Browser captures the rendered page and detects that the SMB pricing tier has disappeared. The system records this as a Void Scanner signal with Bright Data provenance.
+PREINTENT runs a Bright Data sweep against the competitor pricing page. The Scraping Browser captures the rendered page and detects that the SMB pricing tier has disappeared. The system records this as a Void Scanner signal with Bright Data provenance.
 
 Next, Compliance Radar checks for PCI-DSS 4.0 enforcement content. AI/ML API extracts that the compliance deadline is approaching and that fintech/payment companies like Acme are likely in scope.
 
@@ -158,7 +158,7 @@ Urgency = HIGH
 Because the score crosses `85`, TriggerWare or Slack fires a real alert:
 
 ```text
-Undertow: Acme FinTech hit 87/100 convergence.
+Preintent: Acme FinTech hit 87/100 convergence.
 Three signals aligned: competitor retreat, regulatory pressure, active evaluation.
 Intel Brief ready.
 ```
@@ -212,6 +212,6 @@ The hackathon MVP is functionally complete when:
 
 The strongest hackathon story is not "we integrated every production system." The strongest story is:
 
-> Undertow can take one live web signal, enrich it with AI, persist it as account intelligence, detect convergence, and deliver a useful brief to a GTM workflow.
+> Preintent can take one live web signal, enrich it with AI, persist it as account intelligence, detect convergence, and deliver a useful brief to a GTM workflow.
 
 If that path works once with real sponsor APIs, the remaining engines and sources can be presented as scalable extensions of the same architecture.

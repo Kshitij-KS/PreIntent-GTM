@@ -3,7 +3,7 @@ import {
   compliancePciDss,
   painRFintechPost,
   voidPricingRemoval,
-} from "../undertow-demo";
+} from "../preintent-demo";
 import { scoreComplianceFromResearch, scoreVoidFromPageContent } from "./ai-ml";
 import { type EnvMap, isRealMode, normalizeMode } from "./env";
 
@@ -57,7 +57,7 @@ async function fetchViaBrightData(
   try {
     const res = await fetch(url, {
       headers: {
-        "User-Agent": "Undertow/1.0 (+https://undertow.dev)",
+        "User-Agent": "Preintent/1.0 (+https://preintent.dev)",
         Accept: "text/html,application/xhtml+xml",
       },
       signal: AbortSignal.timeout(20_000),
