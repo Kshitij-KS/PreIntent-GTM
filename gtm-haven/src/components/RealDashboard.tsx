@@ -23,7 +23,6 @@ import { EvidenceModal } from "@/components/ui/evidence-panel";
 import { BriefSharing } from "@/components/ui/brief-sharing";
 import { CompetitiveComparison, ComparisonTrigger } from "@/components/ui/competitive-comparison";
 import {
-  PREMIUM_ACCOUNTS,
   formatRelativeTime,
   getConfidenceLevel,
   type PremiumAccount,
@@ -1189,8 +1188,8 @@ export default function RealDashboard({
   const toast = createToastHelpers(addToast);
 
   const [view, setView] = useState<View>("dashboard");
-  const [accounts, setAccounts] = useState<PremiumAccount[]>(PREMIUM_ACCOUNTS);
-  const [selectedAccount, setSelectedAccount] = useState<PremiumAccount>(PREMIUM_ACCOUNTS[0]);
+  const [accounts, setAccounts] = useState<PremiumAccount[]>([]);
+  const [selectedAccount, setSelectedAccount] = useState<PremiumAccount | null>(null);
   const [knowledgeDoc, setKnowledgeDoc] = useState<CompanyKnowledgeDoc | null>(initialKnowledgeDoc ?? null);
   const [isScanning, setIsScanning] = useState(false);
   const [scanStep, setScanStep] = useState(-1);
@@ -1204,7 +1203,7 @@ export default function RealDashboard({
   >([]);
   const [evidenceOpen, setEvidenceOpen] = useState(false);
   const [evidenceType, setEvidenceType] = useState<"void" | "compliance" | "pain" | "audio">("void");
-  const [evidenceAccount, setEvidenceAccount] = useState<PremiumAccount>(PREMIUM_ACCOUNTS[0]);
+  const [evidenceAccount, setEvidenceAccount] = useState<PremiumAccount | null>(null);
   const [shareOpen, setShareOpen] = useState(false);
   const [comparisonOpen, setComparisonOpen] = useState(false);
   const [signalFilter, setSignalFilter] = useState<"all" | "void" | "compliance" | "pain">("all");
@@ -1532,6 +1531,7 @@ export default function RealDashboard({
 
   // ── GENERATE BRIEF — uses real AI/ML API ─────────────────────────────────
   const generateBrief = useCallback(async () => {
+    if (!selectedAccount) return;
     setBriefLoading(true);
     setBrief("");
     toast.info("Generating Intel Brief", `Analyzing ${selectedAccount.name}...`);
