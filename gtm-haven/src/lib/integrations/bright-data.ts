@@ -183,6 +183,6 @@ const pricingFetch = await fetchViaBrightData(
   return {
     mode: "real",
     signals,
-    note: notes.join(" · ");
+    note: notes.join(" · "),
   };
 }
