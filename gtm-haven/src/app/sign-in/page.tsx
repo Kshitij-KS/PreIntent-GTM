@@ -7,7 +7,9 @@ import AuthForm from "@/components/auth/AuthForm";
 
 function SignInContent() {
   const searchParams = useSearchParams();
-  const next = searchParams.get("next") ?? "/onboarding";
+  const next = searchParams.get("next") ?? "/dashboard";
+  const tabParam = searchParams.get("tab");
+  const initialTab = tabParam === "signup" ? "signup" : "signin";
 
   return (
     <div style={{
@@ -58,7 +60,7 @@ function SignInContent() {
       }} />
 
       <div style={{ position: "relative", zIndex: 1, width: "100%", maxWidth: "420px" }}>
-        <AuthForm redirectTo={next} />
+        <AuthForm redirectTo={next} initialTab={initialTab} />
 
         <div style={{ textAlign: "center", marginTop: "20px", display: "flex", alignItems: "center", justifyContent: "center", gap: "16px" }}>
           <Link href="/" style={{ fontSize: "10px", color: "#4a6070", textDecoration: "none", letterSpacing: "0.04em" }}>

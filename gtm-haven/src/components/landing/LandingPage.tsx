@@ -360,7 +360,7 @@ export default function LandingPage() {
             Sign In
           </a>
           <a
-            href="/sign-in"
+            href="/sign-in?tab=signup"
             id="nav-cta"
             style={{
               padding: "9px 20px",
@@ -469,7 +469,7 @@ export default function LandingPage() {
 
           <div style={{ display: "flex", gap: "12px", justifyContent: "center", flexWrap: "wrap" }}>
             <a
-              href="/sign-in"
+              href="/sign-in?tab=signup"
               id="hero-cta-primary"
               style={{
                 display: "inline-flex",
@@ -805,7 +805,7 @@ enforcement coming in August..."`}
             Onboard your company, let the AI build your intelligence workspace, and watch the signals roll in. No credit card required.
           </p>
           <a
-            href="/sign-in"
+            href="/sign-in?tab=signup"
             id="bottom-cta"
             style={{
               display: "inline-flex",

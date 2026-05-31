@@ -6,10 +6,11 @@ interface AuthFormProps {
   onSuccess?: () => void;
   /** Where to send the user after a successful auth. Defaults to /onboarding */
   redirectTo?: string;
+  initialTab?: "signin" | "signup";
 }
 
-export default function AuthForm({ onSuccess, redirectTo = "/onboarding" }: AuthFormProps) {
-  const [tab, setTab] = useState<"signin" | "signup">("signin");
+export default function AuthForm({ onSuccess, redirectTo = "/onboarding", initialTab = "signin" }: AuthFormProps) {
+  const [tab, setTab] = useState<"signin" | "signup">(initialTab);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [name, setName] = useState("");
@@ -32,7 +33,7 @@ export default function AuthForm({ onSuccess, redirectTo = "/onboarding" }: Auth
       const supabase = createSupabaseBrowserClient();
       const { error } = await supabase.auth.signInWithOAuth({
         provider: "google",
-        options: { redirectTo: `${window.location.origin}/api/auth/callback?next=${encodeURIComponent(redirectTo)}` },
+        options: { redirectTo: `${window.location.origin}/api/auth/callback?next=auto` },
       });
       if (error) throw error;
     } catch (err) {
@@ -53,18 +54,18 @@ export default function AuthForm({ onSuccess, redirectTo = "/onboarding" }: Auth
               email, password, options: { data: { name } },
             });
             if (error) throw error;
-            if (data.session) { onSuccess?.(); window.location.href = redirectTo; }
+            if (data.session) { onSuccess?.(); window.location.href = "/onboarding"; }
             else setError("Check your email for the confirmation link.");
           } else {
             const { error } = await supabase.auth.signInWithPassword({ email, password });
             if (error) throw error;
-            onSuccess?.(); window.location.href = redirectTo;
+            onSuccess?.(); window.location.href = "/dashboard";
           }
         } else {
           const { mockSignIn } = await import("@/lib/auth");
           const result = await mockSignIn(email, password);
           if (!result.success) { setError(result.error ?? "Authentication failed"); return; }
-          onSuccess?.(); window.location.href = redirectTo;
+          onSuccess?.(); window.location.href = tab === "signup" ? "/onboarding" : "/dashboard";
         }
       } catch (err) {
         setError(err instanceof Error ? err.message : "An error occurred");

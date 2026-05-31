@@ -31,9 +31,27 @@ export async function GET(request: Request) {
         }
       );
 
-      const { error } = await supabase.auth.exchangeCodeForSession(code);
+      const { data, error } = await supabase.auth.exchangeCodeForSession(code);
       if (!error) {
-        return NextResponse.redirect(new URL(next, requestUrl.origin));
+        let redirectPath = next;
+        
+        // If auto routing is requested (from OAuth), determine if it's a new user
+        if (next === 'auto' && data.user) {
+          const createdAt = new Date(data.user.created_at).getTime();
+          const now = Date.now();
+          // If created within the last 2 minutes, treat as a new signup
+          const isNewUser = (now - createdAt) < 120000;
+          
+          if (isNewUser) {
+            redirectPath = '/onboarding';
+          } else {
+            redirectPath = '/dashboard';
+          }
+        } else if (next === 'auto') {
+          redirectPath = '/dashboard';
+        }
+
+        return NextResponse.redirect(new URL(redirectPath, requestUrl.origin));
       } else {
         console.error('Supabase auth callback error:', error.message);
       }

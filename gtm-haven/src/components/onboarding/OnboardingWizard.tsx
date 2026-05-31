@@ -721,6 +721,21 @@ export default function OnboardingWizard() {
 
         <div style={{ fontSize: "11px", color: C.dim, lineHeight: 1.6, marginTop: "auto" }}>
           Your data is used only to configure your PreIntent intelligence workspace.
+          <div style={{ marginTop: "16px" }}>
+            <button 
+              onClick={async () => {
+                await fetch('/api/auth/signout', { method: 'POST' });
+                window.location.href = '/sign-in';
+              }}
+              style={{
+                background: 'transparent', border: 'none',
+                color: C.muted, fontSize: '11px', cursor: 'pointer',
+                textDecoration: 'underline', padding: 0
+              }}
+            >
+              Sign out
+            </button>
+          </div>
         </div>
       </div>
 
