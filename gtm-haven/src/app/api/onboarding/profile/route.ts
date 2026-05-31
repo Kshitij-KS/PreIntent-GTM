@@ -33,6 +33,23 @@ export async function POST(request: Request) {
       },
     });
 
+    // Fire-and-forget: resolve competitors in the background.
+    // We pass competitors + context inline so this works even before the org
+    // record is fully consistent in Supabase.
+    const competitorPayload = {
+      competitors: doc.scanConfig.competitors.filter(Boolean),
+      context: doc,
+    };
+    const resolveUrl = new URL("/api/competitors/resolve", request.url).toString();
+    fetch(resolveUrl, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(competitorPayload),
+    }).catch((err) => {
+      // Non-fatal — the dashboard will show a "pending" state and offer a re-resolve button
+      console.warn("[Onboarding] Fire-and-forget competitor resolution failed:", err);
+    });
+
     return NextResponse.json({ success: true, doc });
   } catch (err) {
     const message =

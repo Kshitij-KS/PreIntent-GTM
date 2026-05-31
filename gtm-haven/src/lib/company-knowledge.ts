@@ -3,6 +3,8 @@
  * Generated during onboarding — forms the AI context for all GTM actions.
  */
 
+export type { ResolvedCompetitor, ResolutionStatus } from "./integrations/competitor-resolver";
+
 export interface CompanyOnboardingData {
   // Step 1 — Company Basics
   companyName: string;
@@ -75,6 +77,17 @@ export interface CompanyKnowledgeDoc {
     regulatoryKeywords: string[];
     communityKeywords: string[];
   };
+
+  /**
+   * AI-resolved competitor list — populated asynchronously after onboarding
+   * by the Competitor Resolution Agent via /api/competitors/resolve.
+   * Each entry has the canonical name, verified website URL, and confidence score.
+   * This field is persisted to Supabase and cached in localStorage.
+   */
+  resolvedCompetitors?: import("./integrations/competitor-resolver").ResolvedCompetitor[];
+
+  /** Overall resolution status of the competitors list */
+  competitorResolutionStatus?: "pending" | "resolving" | "resolved" | "failed";
 }
 
 function buildMockKnowledgeDoc(

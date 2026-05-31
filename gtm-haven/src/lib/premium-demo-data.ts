@@ -35,10 +35,11 @@ export interface PremiumAccount {
   industry: string;
   employees: number;
   location: string;
-  website: string;
-  linkedinUrl: string;
+  website?: string;
+  linkedinUrl?: string;
   competitor: string;
-  competitorUrl: string;
+  competitorUrl?: string;
+  competitorPricingUrl?: string;
   voidScore: number;
   voidConfidence: number;
   complianceScore: number;
@@ -143,18 +144,18 @@ export function generateRealisticTimestamp(hoursAgo: number): string {
 }
 
 export function formatRelativeTime(isoString: string): string {
-  const now = new Date("2025-05-30T14:30:00Z").getTime();
+  const now = Date.now();
   const then = new Date(isoString).getTime();
   const diffMs = now - then;
-  const diffMins = Math.floor(diffMs / (1000 * 60));
-  const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
-  const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+  const diffMins = Math.floor(Math.abs(diffMs) / (1000 * 60));
+  const diffHours = Math.floor(Math.abs(diffMs) / (1000 * 60 * 60));
+  const diffDays = Math.floor(Math.abs(diffMs) / (1000 * 60 * 60 * 24));
 
-  if (diffMins < 5) return "just now";
-  if (diffMins < 60) return `${diffMins}m`;
-  if (diffHours < 24) return `${diffHours}h`;
+  if (diffMins < 2) return "just now";
+  if (diffMins < 60) return `${diffMins}m ago`;
+  if (diffHours < 24) return `${diffHours}h ago`;
   if (diffDays === 1) return "yesterday";
-  return `${diffDays}d`;
+  return `${diffDays}d ago`;
 }
 
 export function formatDetailedTime(isoString: string): string {

@@ -182,7 +182,7 @@ function seedAccountToPremium(seed: {
   employees: string;
   competitor: string;
   whyNow: string;
-}, index: number): PremiumAccount {
+}, index: number, knowledgeDoc?: CompanyKnowledgeDoc | null): PremiumAccount {
   // Parse employee range to a midpoint number
   const empStr = seed.employees || "200–500";
   const empMatch = empStr.match(/(\d+)/);
@@ -196,6 +196,15 @@ function seedAccountToPremium(seed: {
     details: ["Click 'Run Full Scan' to fetch live signals for this account"],
   };
 
+  // Use resolved competitor URL if available, otherwise undefined (sweep will derive it)
+  const resolvedCompetitor = knowledgeDoc?.resolvedCompetitors?.find(
+    (rc) => rc.originalName === seed.competitor || rc.resolvedName === seed.competitor
+  );
+  const competitorUrl = resolvedCompetitor?.website
+    ? resolvedCompetitor.website.replace(/^https?:\/\//, "")
+    : undefined;
+  const competitorPricingUrl = resolvedCompetitor?.pricingUrl || undefined;
+
   return {
     id: 100 + index,
     name: seed.name,
@@ -203,10 +212,11 @@ function seedAccountToPremium(seed: {
     industry: seed.industry,
     employees,
     location: "Unknown",
-    website: seed.name.toLowerCase().replace(/\s+/g, "") + ".com",
-    linkedinUrl: `linkedin.com/company/${seed.name.toLowerCase().replace(/\s+/g, "-")}`,
+    website: undefined,
+    linkedinUrl: undefined,
     competitor: seed.competitor,
-    competitorUrl: seed.competitor.toLowerCase().replace(/\s+/g, "") + ".com",
+    competitorUrl,
+    competitorPricingUrl,
     voidScore: 0,
     voidConfidence: 0,
     complianceScore: 0,
@@ -216,7 +226,7 @@ function seedAccountToPremium(seed: {
     convergence: 0,
     overallConfidence: 0,
     status: "MONITOR" as const,
-    contact: { title: "Decision Maker", name: seed.name + " Contact", linkedin: "" },
+    contact: { title: "Decision Maker", name: "", linkedin: "" },
     stack: [],
     voidEvent: seed.whyNow || `Monitor ${seed.competitor} pricing changes`,
     voidEvidence: placeholder,
@@ -629,6 +639,218 @@ const AddAccountModal = ({
   );
 };
 
+// ─── COMPETITOR INTEL PANEL ───────────────────────────────────────────────────
+const CompetitorIntelPanel = ({ doc }: { doc: CompanyKnowledgeDoc }) => {
+  type ResolvedCompetitor = NonNullable<CompanyKnowledgeDoc["resolvedCompetitors"]>[number];
+  const [resolvedList, setResolvedList] = useState<ResolvedCompetitor[]>(
+    doc.resolvedCompetitors ?? [],
+  );
+  const [resolutionStatus, setResolutionStatus] = useState<string>(
+    doc.competitorResolutionStatus ?? (doc.resolvedCompetitors?.length ? "resolved" : "pending"),
+  );
+  const [resolving, setResolving] = useState(false);
+
+  useEffect(() => {
+    if (
+      resolutionStatus === "pending" &&
+      doc.scanConfig.competitors.length > 0 &&
+      resolvedList.length === 0
+    ) {
+      triggerResolution();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const triggerResolution = async () => {
+    if (resolving) return;
+    setResolving(true);
+    setResolutionStatus("resolving");
+    try {
+      const res = await fetch("/api/competitors/resolve", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          competitors: doc.scanConfig.competitors.filter(Boolean),
+          context: doc,
+        }),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        if (data.success && Array.isArray(data.resolved)) {
+          setResolvedList(data.resolved);
+          setResolutionStatus("resolved");
+          try {
+            const cached = localStorage.getItem("preintent_company_kdoc");
+            if (cached) {
+              const parsed = JSON.parse(cached);
+              parsed.resolvedCompetitors = data.resolved;
+              parsed.competitorResolutionStatus = "resolved";
+              localStorage.setItem("preintent_company_kdoc", JSON.stringify(parsed));
+            }
+          } catch { /* non-fatal */ }
+        }
+      } else {
+        setResolutionStatus("failed");
+      }
+    } catch {
+      setResolutionStatus("failed");
+    } finally {
+      setResolving(false);
+    }
+  };
+
+  const confidenceColor = (c: number) =>
+    c >= 0.8 ? C.pain : c >= 0.5 ? C.compliance : C.muted;
+
+  const statusIcon = (s: string) => {
+    if (s === "resolved") return { icon: "✓", color: C.pain };
+    if (s === "ambiguous") return { icon: "~", color: C.compliance };
+    if (s === "mock") return { icon: "◎", color: C.conv };
+    return { icon: "?", color: C.muted };
+  };
+
+  const isResolving = resolving || resolutionStatus === "resolving";
+
+  return (
+    <div style={{
+      background: C.surface, border: `1px solid ${C.border}`,
+      borderRadius: "8px", padding: "16px", marginBottom: "14px",
+    }}>
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "14px" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+          <div style={{ fontSize: "9px", color: "#00aaff", fontWeight: 700, letterSpacing: "0.1em" }}>
+            COMPETITOR INTELLIGENCE
+          </div>
+          {isResolving && (
+            <span style={{ fontSize: "9px", color: C.conv }}>◌ Resolving...</span>
+          )}
+          {resolutionStatus === "resolved" && !isResolving && (
+            <span style={{
+              fontSize: "8px", padding: "1px 6px", borderRadius: "3px",
+              background: `${C.pain}15`, color: C.pain, border: `1px solid ${C.pain}30`,
+            }}>✓ VERIFIED</span>
+          )}
+          {resolutionStatus === "failed" && !isResolving && (
+            <span style={{
+              fontSize: "8px", padding: "1px 6px", borderRadius: "3px",
+              background: `${C.void}15`, color: C.void, border: `1px solid ${C.void}30`,
+            }}>✗ FAILED</span>
+          )}
+        </div>
+        <button
+          onClick={triggerResolution}
+          disabled={isResolving}
+          style={{
+            display: "flex", alignItems: "center", gap: "5px",
+            background: "transparent", border: `1px solid ${C.border}`,
+            borderRadius: "5px", padding: "4px 10px", fontSize: "9px",
+            color: isResolving ? C.muted : "#00aaff", cursor: isResolving ? "not-allowed" : "pointer",
+            fontFamily: "inherit", letterSpacing: "0.06em", transition: "all 0.15s",
+          }}
+        >
+          {isResolving ? "◌" : "↻"} {isResolving ? "Resolving" : "Re-resolve"}
+        </button>
+      </div>
+
+      <div style={{ fontSize: "9px", color: C.muted, marginBottom: "12px", lineHeight: 1.6 }}>
+        The AI Agent searches Bright Data SERP to find the exact company behind each competitor name,
+        then uses your company context to disambiguate and verify the website URL.
+      </div>
+
+      {resolvedList.length > 0 ? (
+        <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+          {resolvedList.map((comp, i) => {
+            const si = statusIcon(comp.status);
+            const confColor = confidenceColor(comp.confidence);
+            return (
+              <motion.div
+                key={comp.originalName}
+                initial={{ opacity: 0, x: -8 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: i * 0.05 }}
+                style={{
+                  background: C.bg, border: `1px solid ${C.border}`,
+                  borderRadius: "7px", padding: "12px 14px",
+                  borderLeft: `3px solid ${confColor}`,
+                }}
+              >
+                <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: "12px" }}>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: "7px", marginBottom: "3px", flexWrap: "wrap" }}>
+                      <span style={{
+                        fontSize: "8px", width: "16px", height: "16px",
+                        display: "inline-flex", alignItems: "center", justifyContent: "center",
+                        borderRadius: "50%", background: `${si.color}20`, color: si.color, flexShrink: 0,
+                      }}>{si.icon}</span>
+                      <span style={{ fontSize: "12px", fontWeight: 600, color: C.white }}>{comp.resolvedName}</span>
+                      {comp.resolvedName !== comp.originalName && (
+                        <span style={{ fontSize: "9px", color: C.muted }}>(entered as &quot;{comp.originalName}&quot;)</span>
+                      )}
+                    </div>
+                    {comp.website && (
+                      <a href={comp.website} target="_blank" rel="noopener noreferrer"
+                        style={{ fontSize: "10px", color: "#00aaff", textDecoration: "none", display: "inline-flex", alignItems: "center", gap: "4px", marginBottom: "4px" }}
+                        onMouseEnter={(e) => (e.currentTarget.style.textDecoration = "underline")}
+                        onMouseLeave={(e) => (e.currentTarget.style.textDecoration = "none")}
+                      >
+                        ↗ {comp.website.replace(/^https?:\/\//, "")}
+                      </a>
+                    )}
+                    {comp.pricingUrl && comp.pricingUrl !== comp.website && (
+                      <a href={comp.pricingUrl} target="_blank" rel="noopener noreferrer"
+                        style={{ fontSize: "9px", color: C.compliance, textDecoration: "none", display: "inline-flex", alignItems: "center", gap: "3px", marginLeft: "10px" }}
+                        onMouseEnter={(e) => (e.currentTarget.style.textDecoration = "underline")}
+                        onMouseLeave={(e) => (e.currentTarget.style.textDecoration = "none")}
+                      >
+                        $ Pricing
+                      </a>
+                    )}
+                    {comp.description && (
+                      <div style={{ fontSize: "10px", color: C.muted, marginTop: "4px", lineHeight: 1.5 }}>
+                        {comp.description.slice(0, 120)}{comp.description.length > 120 ? "..." : ""}
+                      </div>
+                    )}
+                  </div>
+                  <div style={{ textAlign: "right", flexShrink: 0 }}>
+                    <div style={{
+                      fontSize: "8px", padding: "2px 7px", borderRadius: "3px",
+                      background: `${confColor}15`, color: confColor,
+                      border: `1px solid ${confColor}30`, marginBottom: "4px", whiteSpace: "nowrap",
+                    }}>
+                      {Math.round(comp.confidence * 100)}% conf.
+                    </div>
+                    <div style={{ fontSize: "8px", color: C.muted, whiteSpace: "nowrap" }}>{comp.status}</div>
+                  </div>
+                </div>
+              </motion.div>
+            );
+          })}
+        </div>
+      ) : (
+        <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
+          {doc.scanConfig.competitors.map((c) => (
+            <div key={c} style={{
+              background: C.bg, border: `1px solid ${C.border}`,
+              borderRadius: "7px", padding: "11px 14px",
+              display: "flex", alignItems: "center", gap: "10px",
+            }}>
+              {isResolving
+                ? <span style={{ fontSize: "9px", color: C.conv, flexShrink: 0 }}>◌</span>
+                : <span style={{ fontSize: "9px", color: C.muted, flexShrink: 0 }}>▸</span>
+              }
+              <span style={{ fontSize: "12px", color: isResolving ? C.muted : C.void }}>{c}</span>
+              {isResolving && <span style={{ fontSize: "9px", color: C.muted, marginLeft: "auto" }}>searching...</span>}
+            </div>
+          ))}
+        </div>
+      )}
+      <div style={{ marginTop: "10px", fontSize: "9px", color: C.muted }}>
+        Powered by Bright Data SERP + AI/ML API disambiguation · URLs verified and used as sweep targets
+      </div>
+    </div>
+  );
+};
+
 // ─── KNOWLEDGE DOC PANEL ─────────────────────────────────────────────────────
 const KnowledgeView = ({ doc }: { doc: CompanyKnowledgeDoc | null }) => {
   if (!doc) {
@@ -724,6 +946,9 @@ const KnowledgeView = ({ doc }: { doc: CompanyKnowledgeDoc | null }) => {
         </div>
       </div>
 
+      {/* ── COMPETITOR INTELLIGENCE PANEL ─────────────────────────────────── */}
+      <CompetitorIntelPanel doc={doc} />
+
       {/* Opportunities */}
       <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: "8px", padding: "16px", marginBottom: "14px" }}>
         <div style={{ fontSize: "9px", color: C.compliance, fontWeight: 700, letterSpacing: "0.1em", marginBottom: "14px" }}>TOP GTM OPPORTUNITIES</div>
@@ -773,8 +998,13 @@ const KnowledgeView = ({ doc }: { doc: CompanyKnowledgeDoc | null }) => {
   );
 };
 
-// ─── SIGNALS VIEW ─────────────────────────────────────────────────────────────
-const SignalsView = ({ accounts, onEvidence, filter, onFilterChange }: {
+// ─── SIGNALS PANEL ─────────────────────────────────────────────────────────────
+const SignalsView = ({
+  accounts,
+  onEvidence,
+  filter,
+  onFilterChange,
+}: {
   accounts: PremiumAccount[];
   onEvidence: (acct: PremiumAccount, type: "void" | "compliance" | "pain") => void;
   filter: "all" | "void" | "compliance" | "pain";
@@ -1255,8 +1485,8 @@ export default function RealDashboard({
               // Check setup status from knowledge doc
               if (Array.isArray(doc.seedAccounts) && doc.seedAccounts.length > 0) {
                 setSetupComplete(true);
-                // Convert seed accounts to PremiumAccount format and add them
-                const seedPremium = doc.seedAccounts.map((s, i) => seedAccountToPremium(s, i));
+                // Convert seed accounts — pass doc so resolved URLs can be used
+                const seedPremium = doc.seedAccounts.map((s, i) => seedAccountToPremium(s, i, doc));
                 if (seedPremium.length > 0) {
                   setAccounts((prev) => {
                     const prevIds = new Set(prev.map((a) => a.id));
@@ -1278,9 +1508,9 @@ export default function RealDashboard({
         }
       } else {
         setSetupComplete(true);
-        // Add seed accounts from knowledge doc
+        // Add seed accounts from knowledge doc, passing doc for resolved URLs
         if (initialKnowledgeDoc.seedAccounts?.length > 0) {
-          const seedPremium = initialKnowledgeDoc.seedAccounts.map((s, i) => seedAccountToPremium(s, i));
+          const seedPremium = initialKnowledgeDoc.seedAccounts.map((s, i) => seedAccountToPremium(s, i, initialKnowledgeDoc));
           if (seedPremium.length > 0) {
             setAccounts((prev) => {
               const prevIds = new Set(prev.map((a) => a.id));
@@ -1380,7 +1610,20 @@ export default function RealDashboard({
     // Run real sweep for each account (with concurrency limit = 2)
     const runAccountSweep = async (account: PremiumAccount) => {
       const doc = knowledgeDoc;
-      const competitor = account.competitor || doc?.scanConfig.competitors[0] || "Competitor";
+      // Use account-level competitor if set; fall back to first resolved competitor from knowledge doc
+      const competitor = account.competitor ||
+        doc?.resolvedCompetitors?.[0]?.originalName ||
+        doc?.scanConfig.competitors[0] ||
+        undefined;
+
+      // Use resolved pricing URL if available
+      const resolvedComp = doc?.resolvedCompetitors?.find(
+        (rc) => rc.originalName === competitor || rc.resolvedName === competitor
+      );
+      const competitorPricingUrl =
+        account.competitorPricingUrl ||
+        resolvedComp?.pricingUrl ||
+        (account.competitorUrl ? `https://${account.competitorUrl}` : undefined);
 
       try {
         const res = await fetch("/api/sweep", {
@@ -1391,7 +1634,7 @@ export default function RealDashboard({
             industry: account.industry,
             employees: account.employees,
             competitor,
-            competitorPricingUrl: account.competitorUrl ? `https://${account.competitorUrl}` : undefined,
+            competitorPricingUrl,
             regulatoryQuery: doc?.scanConfig.regulatoryKeywords[0],
             crmStage: "Not in pipeline",
           }),
