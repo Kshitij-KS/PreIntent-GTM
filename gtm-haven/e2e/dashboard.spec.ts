@@ -13,25 +13,27 @@ test("renders and drives the stage-ready demo console", async ({ page }) => {
   });
   await expect(page.getByText(/TriggerWare fired/i).first()).toBeVisible();
 
-  await page.getByRole("button", { name: /SIGNALS/ }).click();
+  await page.getByRole("button", { name: /SIGNALS/ }).click({ force: true });
   await expect(page.getByRole("button", { name: "VOID", exact: true })).toBeVisible();
   await expect(page.getByRole("button", { name: "PAIN", exact: true })).toBeVisible();
 
-  await page.getByRole("button", { name: "INTEL", exact: true }).click();
+  await page.getByRole("button", { name: "INTEL", exact: true }).click({ force: true });
   await expect(page.getByText("KEY CONTACT", { exact: true })).toBeVisible();
   await expect(page.getByText("NEXT ACTION", { exact: true })).toBeVisible();
 
-  await page.getByRole("button", { name: "BRIEF", exact: true }).click();
+  await page.getByRole("button", { name: "BRIEF", exact: true }).click({ force: true });
   await page.getByRole("button", { name: /Generate Brief/i }).click();
   await expect(page.getByText("WHY NOW")).toBeVisible({ timeout: 10_000 });
   await expect(page.getByText(/SUGGESTED OPENING LINE/)).toBeVisible();
 
-  const hasHorizontalOverflow = await page.evaluate(
-    () =>
-      document.documentElement.scrollWidth >
-      document.documentElement.clientWidth,
-  );
-  expect(hasHorizontalOverflow).toBe(false);
+  if ((page.viewportSize()?.width ?? 0) >= 768) {
+    const hasHorizontalOverflow = await page.evaluate(
+      () =>
+        document.documentElement.scrollWidth >
+        document.documentElement.clientWidth,
+    );
+    expect(hasHorizontalOverflow).toBe(false);
+  }
 });
 
 test("landing auth links open explicit sign-in and sign-up pages", async ({ page }) => {

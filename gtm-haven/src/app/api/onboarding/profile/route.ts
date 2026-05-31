@@ -103,7 +103,9 @@ async function persistCompanyKnowledge(
   const { error: profileError } = await supabase
     .from("user_profiles")
     .update({ knowledge_organization_id: orgId })
-    .eq("user_id", user.id);
+    .eq("user_id", user.id)
+    .select("user_id")
+    .single();
 
   if (profileError) throw profileError;
 }

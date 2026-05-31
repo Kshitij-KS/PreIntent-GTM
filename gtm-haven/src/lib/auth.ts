@@ -105,7 +105,9 @@ export async function mockSignIn(
 
   const cookieStore = await cookies();
   cookieStore.set(MOCK_SESSION_COOKIE, JSON.stringify(user), {
-    httpOnly: true,
+    // Mock mode is intentionally browser-readable so the client dashboard can
+    // mirror session state without a real auth provider.
+    httpOnly: false,
     path: "/",
     maxAge: 60 * 60 * 24 * 30, // 30 days
     sameSite: "lax",
@@ -150,14 +152,16 @@ export async function markOnboardingComplete(): Promise<void> {
     const { error } = await supabase
       .from("user_profiles")
       .update({ setup_status: "complete" })
-      .eq("user_id", user.id);
+      .eq("user_id", user.id)
+      .select("user_id")
+      .single();
 
     if (error) throw error;
     return;
   }
 
   cookieStore.set(ONBOARDING_DONE_COOKIE, "1", {
-    httpOnly: true,
+    httpOnly: false,
     path: "/",
     maxAge: 60 * 60 * 24 * 365,
     sameSite: "lax",
