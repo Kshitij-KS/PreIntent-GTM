@@ -1,7 +1,7 @@
 "use server";
 
 /**
- * PreIntent Server Actions — live sweep orchestration + sponsor calls.
+ * PreIntent Server Actions Ã¢â‚¬â€ live sweep orchestration + sponsor calls.
  * Set *_MODE=real and API keys in .env.local; mocks apply automatically when keys are missing.
  */
 
@@ -26,7 +26,7 @@ const intelBriefPayloadSchema = z.object({
   suggestedOpeningLine: z
     .string()
     .default(
-      "Hi [Name] — the timing looks interesting given recent changes at your current vendor.",
+      "Hi [Name] Ã¢â‚¬â€ the timing looks interesting given recent changes at your current vendor.",
     ),
   accountContext: z
     .object({
@@ -102,7 +102,7 @@ Return ONLY valid JSON in this exact shape (no markdown, no extra text):
     {"engine": "compliance", "subScore": ${profile.compliance.subScore}, "narrative": "..."},
     {"engine": "pain", "subScore": ${profile.pain.subScore}, "narrative": "..."}
   ],
-  "suggestedOpeningLine": "Hi [Name] — ...",
+  "suggestedOpeningLine": "Hi [Name] Ã¢â‚¬â€ ...",
   "accountContext": {
     "industry": "${profile.industry}",
     "size": "${profile.employees}",
@@ -144,14 +144,14 @@ Return ONLY valid JSON in this exact shape (no markdown, no extra text):
       convergenceScore: profile.convergenceScore,
       urgency:
         profile.urgency === "CRITICAL"
-          ? "CRITICAL — act today"
-          : `${profile.urgency} — act within 5 days`,
+          ? "CRITICAL Ã¢â‚¬â€ act today"
+          : `${profile.urgency} Ã¢â‚¬â€ act within 5 days`,
       generatedAt: now,
       generatedBy: "ai_ml_api",
       whyNow: parsed.whyNow || [],
       suggestedOpeningLine:
         parsed.suggestedOpeningLine ||
-        "Hi [Name] — the timing looks interesting given recent changes at your current vendor.",
+        "Hi [Name] Ã¢â‚¬â€ the timing looks interesting given recent changes at your current vendor.",
       accountContext: parsed.accountContext || {
         industry: profile.industry,
         size: String(profile.employees),
@@ -162,7 +162,7 @@ Return ONLY valid JSON in this exact shape (no markdown, no extra text):
       recommendedActions: [
         "Create HubSpot lead with full signal breakdown",
         "Send personalized Slack alert to assigned AE with brief attached",
-        "Add task: 'Call within 48h — high convergence, active evaluation signal'",
+        "Add task: 'Call within 48h Ã¢â‚¬â€ high convergence, active evaluation signal'",
       ],
     };
   } catch (err) {
@@ -285,7 +285,7 @@ async function buildPainSignal(
   const { scorePainFromText } = await import("@/lib/integrations/ai-ml");
   const painText =
     input.painText ||
-    `evaluating alternatives to ${input.competitor} — contract renewal approaching`;
+    `evaluating alternatives to ${input.competitor} - contract renewal approaching`;
 
   const scored = await scorePainFromText(process.env, {
     account: input.account,
@@ -317,7 +317,7 @@ async function buildPainSignal(
 }
 
 export async function runLiveSweep(input: LiveSweepInput): Promise<LiveSweepResult> {
-  // Orchestrates the full 3-engine GTM intelligence sweep: Bright Data → Audio → Pain Classification → Profile Building → Delivery
+  // Orchestrates the full 3-engine GTM intelligence sweep: Bright Data Ã¢â€ â€™ Audio Ã¢â€ â€™ Pain Classification Ã¢â€ â€™ Profile Building Ã¢â€ â€™ Delivery
   const notes: string[] = [];
 
   try {
@@ -351,7 +351,7 @@ export async function runLiveSweep(input: LiveSweepInput): Promise<LiveSweepResu
 
     const painText =
       input.painText ||
-      `evaluating alternatives to ${input.competitor} — anyone tried alternatives? Contract is up in 60 days`;
+      `evaluating alternatives to ${input.competitor} - anyone tried alternatives? Contract is up in 60 days`;
 
     const classification: PainClassification = await classifyPainSignal(
       painText,
