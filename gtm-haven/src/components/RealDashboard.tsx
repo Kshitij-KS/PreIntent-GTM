@@ -1219,10 +1219,9 @@ export default function RealDashboard({
       if (storedAccounts) {
         const parsed = JSON.parse(storedAccounts) as PremiumAccount[];
         if (Array.isArray(parsed) && parsed.length > 0) {
-          // Merge: stored custom accounts alongside PREMIUM_ACCOUNTS (keep both)
-          const existingIds = new Set(PREMIUM_ACCOUNTS.map((a) => a.id));
-          const customAccounts = parsed.filter((a) => !existingIds.has(a.id));
-          setAccounts([...PREMIUM_ACCOUNTS, ...customAccounts]);
+          // Load stored accounts directly
+          // eslint-disable-next-line
+          setAccounts(parsed);
         }
       }
 
@@ -1238,12 +1237,10 @@ export default function RealDashboard({
             setSetupComplete(true);
             // Convert seed accounts to PremiumAccount format and add them
             const seedPremium = doc.seedAccounts.map((s, i) => seedAccountToPremium(s, i));
-            const existingIds = new Set(PREMIUM_ACCOUNTS.map((a) => a.id));
-            const newSeedAccounts = seedPremium.filter((a) => !existingIds.has(a.id));
-            if (newSeedAccounts.length > 0) {
+            if (seedPremium.length > 0) {
               setAccounts((prev) => {
                 const prevIds = new Set(prev.map((a) => a.id));
-                return [...prev, ...newSeedAccounts.filter((a) => !prevIds.has(a.id))];
+                return [...prev, ...seedPremium.filter((a) => !prevIds.has(a.id))];
               });
             }
           }

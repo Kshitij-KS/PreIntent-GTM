@@ -80,9 +80,60 @@ export interface EvidencePanel {
 }
 
 // ─── REAL ACCOUNTS DATA ─────────────────────────────────────────────────────
-
-
-
+export const PREMIUM_ACCOUNTS: PremiumAccount[] = [
+  {
+    id: 1,
+    name: "Brex",
+    displayName: "Brex",
+    industry: "Financial Services",
+    employees: 1200,
+    location: "San Francisco, CA",
+    website: "brex.com",
+    linkedinUrl: "linkedin.com/company/brex",
+    competitor: "Stripe",
+    competitorUrl: "stripe.com",
+    voidScore: 85,
+    voidConfidence: 0.92,
+    complianceScore: 12,
+    complianceConfidence: 0.8,
+    painScore: 78,
+    painConfidence: 0.88,
+    convergence: 89,
+    overallConfidence: 0.9,
+    status: "ALERT",
+    contact: {
+      title: "VP of Finance",
+      name: "Sarah Chen",
+      linkedin: "linkedin.com/in/mock",
+    },
+    stack: ["Salesforce", "Marketo", "AWS"],
+    voidEvent: "Stripe Atlas SMB fast-track tier silently removed",
+    voidEvidence: {
+      title: "Pricing Page Change",
+      type: "screenshot",
+      source: "stripe.com/pricing",
+      capturedAt: new Date().toISOString(),
+      details: ["Tier removed"],
+    },
+    complianceEvent: "No compliance event",
+    complianceEvidence: {
+      title: "None",
+      type: "document",
+      source: "System",
+      capturedAt: new Date().toISOString(),
+      details: [],
+    },
+    painEvent: "Evaluating alternatives to HubSpot",
+    painEvidence: {
+      title: "Reddit Thread",
+      type: "transcript",
+      source: "r/saas",
+      capturedAt: new Date().toISOString(),
+      details: [],
+    },
+    lastUpdated: new Date().toISOString()
+  }
+];
 // ─── TIME-BASED REALISM UTILITIES ─────────────────────────────────────────────
 
 export function generateRealisticTimestamp(hoursAgo: number): string {
