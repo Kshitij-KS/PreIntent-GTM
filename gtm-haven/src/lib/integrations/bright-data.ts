@@ -108,7 +108,7 @@ export async function runBrightDataSweep(
   const signals: EngineSignal[] = [];
   const now = new Date().toISOString();
 
-   const pricingFetch = await fetchViaBrightData(
+const pricingFetch = await fetchViaBrightData(
      pricingUrl,
      env,
      env.BRIGHT_DATA_ZONE || "web_unlocker",
@@ -141,7 +141,7 @@ export async function runBrightDataSweep(
      });
      notes.push(`Void: ${pricingFetch.source} fetch OK (${pricingUrl})`);
    } else {
-     throw new Error("Bright Data pricing fetch failed: Empty body or timeout.");
+     throw new Error(`Bright Data pricing fetch failed: Empty body or timeout for URL: ${pricingUrl}`);
    }
 
   const serpFetch = await fetchViaBrightData(
@@ -183,6 +183,6 @@ export async function runBrightDataSweep(
   return {
     mode: "real",
     signals,
-    note: notes.join(" · "),
+    note: notes.join(" · ");
   };
 }

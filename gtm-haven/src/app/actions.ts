@@ -268,9 +268,19 @@ JSON shape:
   }
 }
 
+interface PainClassification {
+  signalType: string;
+  urgency: string;
+  competitorMentioned: string | null;
+  inferredSeniority: string;
+  companyAttribution: string;
+  confidence: number;
+  model: string;
+}
+
 async function buildPainSignal(
   input: LiveSweepInput,
-  classification: Record<string, unknown>,
+  classification: PainClassification,
 ): Promise<EngineSignal> {
   const { scorePainFromText } = await import("@/lib/integrations/ai-ml");
   const painText =
@@ -294,7 +304,7 @@ async function buildPainSignal(
     description: scored.description,
     eventTime: now,
     subScore: scored.subScore,
-    confidence: Number(classification.confidence) || scored.confidence || 0.9,
+    confidence: classification.confidence ?? scored.confidence ?? 0.9,
     provenance: {
       sponsor: "featherless",
       tool: "Featherless (open model)",
@@ -307,6 +317,7 @@ async function buildPainSignal(
 }
 
 export async function runLiveSweep(input: LiveSweepInput): Promise<LiveSweepResult> {
+  // Orchestrates the full 3-engine GTM intelligence sweep: Bright Data → Audio → Pain Classification → Profile Building → Delivery
   const notes: string[] = [];
 
   try {
@@ -342,7 +353,7 @@ export async function runLiveSweep(input: LiveSweepInput): Promise<LiveSweepResu
       input.painText ||
       `evaluating alternatives to ${input.competitor} — anyone tried alternatives? Contract is up in 60 days`;
 
-    const classification = await classifyPainSignal(
+    const classification: PainClassification = await classifyPainSignal(
       painText,
       `Account: ${input.account}, Industry: ${input.industry}, Competitor: ${input.competitor}`,
     );

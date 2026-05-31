@@ -107,6 +107,6 @@ export async function transcribeAudioSignal(
         note: "Real mode configured; using demo transcript until audio URL job completes",
       },
     },
-    note: "Speechmatics real mode — demo transcript fallback (provide SPEECHMATICS_AUDIO_URL for live job).",
+    note: "Speechmatics real mode -— demo transcript fallback (provide SPEECHMATICS_AUDIO_URL for live job).",
   };
 }
