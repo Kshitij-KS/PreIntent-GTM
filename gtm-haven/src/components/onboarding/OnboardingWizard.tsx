@@ -719,7 +719,8 @@ export default function OnboardingWizard() {
             <button 
               onClick={async () => {
                 await fetch('/api/auth/signout', { method: 'POST' });
-                window.location.href = '/sign-in';
+                const { handleSignOutClient } = await import("@/lib/signout-helper");
+                await handleSignOutClient();
               }}
               style={{
                 background: 'transparent', border: 'none',
