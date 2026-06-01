@@ -506,3 +506,89 @@ button, select, input, textarea { font: inherit; }
     transition-duration: 0.01ms !important;
   }
 }
+
+/* ─── MOBILE RESPONSIVENESS ─────────────────────────────────────────────────── */
+@media (max-width: 768px) {
+  .dashboard-container {
+    flex-direction: column;
+  }
+  
+  .sidebar-nav {
+    width: 100% !important;
+    position: static !important;
+    height: auto !important;
+  }
+  
+  .main-content {
+    width: 100% !important;
+    padding: 16px !important;
+  }
+  
+  .signal-card {
+    min-width: 100% !important;
+  }
+  
+  .stats-grid {
+    grid-template-columns: 1fr !important;
+  }
+  
+  .nav-tabs {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+}
+
+@media (max-width: 480px) {
+  html, body {
+    font-size: 14px;
+  }
+  
+  .dashboard-header h1 {
+    font-size: 20px !important;
+  }
+  
+  .action-button {
+    padding: 10px 16px !important;
+    font-size: 12px !important;
+  }
+}
+
+/* ─── TOUCH OPTIMIZATIONS ───────────────────────────────────────────────────── */
+@media (hover: none) and (pointer: coarse) {
+  button, a, [role="button"] {
+    min-height: 44px;
+    min-width: 44px;
+  }
+  
+  .signal-card {
+    padding: 16px;
+  }
+}
+
+/* ─── ACCESSIBILITY ─────────────────────────────────────────────────────────── */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.skip-link {
+  position: absolute;
+  top: -40px;
+  left: 0;
+  background: var(--conv);
+  color: var(--white);
+  padding: 8px 16px;
+  z-index: 100;
+  transition: top 0.2s;
+}
+
+.skip-link:focus {
+  top: 0;
+}

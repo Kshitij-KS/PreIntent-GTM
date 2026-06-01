@@ -847,12 +847,16 @@ enforcement coming in August..."`}
           <span style={{ color: C.conv }}>Bright Data · AI/ML API · Featherless · Speechmatics</span>
         </div>
         <div style={{ display: "flex", gap: "20px" }}>
-          {["Privacy", "Terms", "Contact"].map((link) => (
-            <a key={link} href="#" style={{ fontSize: "12px", color: C.muted, transition: "color 0.2s" }}
+          {[
+            { name: "Privacy", href: "/privacy" },
+            { name: "Terms", href: "/terms" },
+            { name: "Contact", href: "/contact" }
+          ].map((link) => (
+            <a key={link.name} href={link.href} style={{ fontSize: "12px", color: C.muted, transition: "color 0.2s" }}
               onMouseEnter={(e) => (e.currentTarget.style.color = C.text)}
               onMouseLeave={(e) => (e.currentTarget.style.color = C.muted)}
             >
-              {link}
+              {link.name}
             </a>
           ))}
         </div>

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
+import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import type { AccountIntelligenceProfile } from "@/lib/domain";
@@ -1200,14 +1201,14 @@ ACCOUNT CONTEXT
           padding: "0 18px", gap: "0", flexShrink: 0,
         }}>
           {/* Logo */}
-          <a href={homeHref} style={{
+          <Link href={homeHref} style={{
             display: "flex", alignItems: "center", gap: "8px",
             fontWeight: 700, fontSize: "13px", color: C.white, letterSpacing: "0.18em",
             marginRight: "28px", textDecoration: "none", flexShrink: 0,
           }}>
             <Icon.Logo />
             PREINTENT
-          </a>
+          </Link>
 
           {/* Separator */}
           <div style={{ width: "1px", height: "24px", background: C.border, marginRight: "18px" }} />
