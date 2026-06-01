@@ -27,6 +27,24 @@ describe("computeUrgency", () => {
     expect(computeUrgency(65, 84)).toBe("MEDIUM");
     expect(computeUrgency(49, 84)).toBe("LOW");
   });
+
+  it("handles boundary values correctly", () => {
+    // CRITICAL bounds
+    expect(computeUrgency(95, 0)).toBe("CRITICAL"); // Exact boundary for CRITICAL
+    expect(computeUrgency(94, 100)).toBe("CRITICAL"); // maxSingleEngine overrides
+
+    // HIGH bounds
+    expect(computeUrgency(94, 99)).toBe("HIGH"); // Upper bound for HIGH
+    expect(computeUrgency(85, 0)).toBe("HIGH"); // Lower bound for HIGH
+
+    // MEDIUM bounds
+    expect(computeUrgency(84, 99)).toBe("MEDIUM"); // Upper bound for MEDIUM
+    expect(computeUrgency(65, 0)).toBe("MEDIUM"); // Lower bound for MEDIUM
+
+    // LOW bounds
+    expect(computeUrgency(64, 99)).toBe("LOW"); // Upper bound for LOW
+    expect(computeUrgency(0, 0)).toBe("LOW"); // Absolute minimum
+  });
 });
 
 describe("evaluateThresholdActions", () => {
