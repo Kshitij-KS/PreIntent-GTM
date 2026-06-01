@@ -209,7 +209,7 @@ async function callAIForKnowledgeDoc(
 
   const prompt = `You are an elite GTM strategist building a company intelligence document for PreIntent, a convergent GTM intelligence platform.
 
-Analyze this company and generate a detailed Company Knowledge Document.
+Analyze this company and generate a detailed Company Knowledge Document. Perform deep market research based on your knowledge base to synthesize accurate strategic insights, rather than just summarizing the input. In addition to the provided Top Competitors, use your knowledge base to identify at least 2-3 other direct or emerging competitors working silently on the same segment of products.
 
 Company: ${data.companyName}
 Industry: ${data.industry}
@@ -222,6 +222,7 @@ Main Pain Points: ${data.mainPainPoints}
 GTM Goals: ${data.gtmGoals}
 Existing Tools: ${data.existingTools.join(", ")}
 
+Merge the newly identified competitors with the provided competitors in the \`scanConfig.competitors\` array. Use verifiable intelligence and concrete references to back up your analysis.
 Return ONLY valid JSON matching this exact structure (no markdown, no extra text):
 {
   "segmentSummary": "2-3 sentence strategic segment overview",
