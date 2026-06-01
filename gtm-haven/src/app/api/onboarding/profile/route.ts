@@ -1,128 +1,124 @@
-import { NextResponse } from "next/server";
-import { generateCompanyKnowledgeDoc } from "@/lib/company-knowledge";
-import type { CompanyKnowledgeDoc, CompanyOnboardingData } from "@/lib/company-knowledge";
-import { completeCompanyOnboarding } from "@/lib/onboarding-completion";
-import { z } from "zod";
+import { NextResponse } from 'next/server';
+import { createClient } from '@supabase/supabase-js';
+import { runLiveSweep } from '@/actions/sweep-actions';
+import { updateOrgStatus } from '@/actions/org-actions';
+import { resolveCompetitors } from '@/actions/competitor-actions';
 
-const onboardingSchema = z.object({
-  companyName: z.string().min(1),
-  website: z.string().optional(),
-  industry: z.string().min(1),
-  teamSize: z.string().min(1),
-  hq: z.string().min(1),
-  icpDescription: z.string().min(1),
-  targetVerticals: z.array(z.string()),
-  topCompetitors: z.array(z.string()),
-  mainPainPoints: z.string(),
-  crm: z.string().default("None"),
-  existingTools: z.array(z.string()).default([]),
-  gtmGoals: z.string().min(1),
-  revenueTarget: z.string().optional(),
-});
-
-export async function POST(request: Request) {
+export async function POST(req: Request) {
   try {
-    const body = onboardingSchema.parse(await request.json());
-    const data = body as CompanyOnboardingData;
-    const doc = await completeCompanyOnboarding(data, {
-      generateKnowledgeDoc: generateCompanyKnowledgeDoc,
-      persistKnowledgeDoc: persistCompanyKnowledge,
-      markComplete: async () => {
-        const { markOnboardingComplete } = await import("@/lib/auth");
-        await markOnboardingComplete();
-      },
+    const body = await req.json();
+    const { orgId, seedAccounts } = body;
+
+    if (!orgId || !seedAccounts || !Array.isArray(seedAccounts)) {
+      return NextResponse.json(
+        { error: 'Missing orgId or seedAccounts' },
+        { status: 400 }
+      );
+    }
+
+    // Initialize Supabase client
+    const supabase = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.SUPABASE_SERVICE_ROLE_KEY!
+    );
+
+    console.log(`[InitialSweep] Starting comprehensive sweep for org ${orgId} with ${seedAccounts.length} accounts`);
+
+    const sweepResults = [];
+    const errors = [];
+
+    // Run live sweeps for ALL seed accounts sequentially to avoid rate limits
+    for (const account of seedAccounts) {
+      try {
+        console.log(`[InitialSweep] Sweeping account: ${account.name}`);
+        
+        // Execute the full live sweep pipeline (BrightData -> AI -> Featherless -> Speechmatics)
+        const result = await runLiveSweep({
+          companyName: account.name,
+          websiteUrl: account.website, // Uses resolved website from onboarding
+          includeCompetitors: true,    // Leverages resolved competitor data
+        });
+
+        if (result.success && result.data) {
+          sweepResults.push({
+            account: account.name,
+            ...result.data,
+          });
+
+          // Persist Account Profile
+          if (result.data.profile) {
+            await supabase.from('account_profiles').insert({
+              org_id: orgId,
+              account_name: account.name,
+              website: account.website,
+              convergence_score: result.data.profile.convergenceScore,
+              urgency_level: result.data.profile.urgencyLevel,
+              last_scanned: new Date().toISOString(),
+              raw_data: result.data.profile,
+            });
+          }
+
+          // Persist Signals
+          if (result.data.signals && result.data.signals.length > 0) {
+            const signalsToInsert = result.data.signals.map((signal: any) => ({
+              org_id: orgId,
+              account_name: account.name,
+              signal_type: signal.type,
+              confidence: signal.confidence,
+              description: signal.description,
+              source_url: signal.sourceUrl,
+              detected_at: new Date().toISOString(),
+            }));
+            await supabase.from('engine_signals').insert(signalsToInsert);
+          }
+
+          // Persist Convergence Run
+          if (result.data.convergence) {
+            await supabase.from('convergence_runs').insert({
+              org_id: orgId,
+              account_name: account.name,
+              overall_score: result.data.convergence.overallScore,
+              pain_score: result.data.convergence.painScore,
+              void_score: result.data.convergence.voidScore,
+              compliance_score: result.data.convergence.complianceScore,
+              run_date: new Date().toISOString(),
+            });
+          }
+
+          // Persist Intel Brief
+          if (result.data.brief) {
+            await supabase.from('intel_briefs').insert({
+              org_id: orgId,
+              account_name: account.name,
+              title: `Initial Intelligence Brief - ${account.name}`,
+              content: result.data.brief,
+              generated_at: new Date().toISOString(),
+            });
+          }
+        } else {
+          errors.push({ account: account.name, error: result.error || 'Sweep failed' });
+        }
+      } catch (err: any) {
+        console.error(`[InitialSweep] Error sweeping ${account.name}:`, err);
+        errors.push({ account: account.name, error: err.message });
+      }
+    }
+
+    // Update organization status to 'resolved' indicating initial data population is done
+    await updateOrgStatus(orgId, 'resolved');
+
+    return NextResponse.json({
+      success: true,
+      message: `Initial sweep completed for ${seedAccounts.length} accounts`,
+      results: sweepResults,
+      errors: errors.length > 0 ? errors : undefined,
     });
 
-    // Fire-and-forget: resolve competitors in the background.
-    // We pass competitors + context inline so this works even before the org
-    // record is fully consistent in Supabase.
-    const competitorPayload = {
-      competitors: doc.scanConfig.competitors.filter(Boolean),
-      context: doc,
-    };
-    const resolveUrl = new URL("/api/competitors/resolve", request.url).toString();
-    fetch(resolveUrl, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(competitorPayload),
-    }).catch((err) => {
-      // Non-fatal — the dashboard will show a "pending" state and offer a re-resolve button
-      console.warn("[Onboarding] Fire-and-forget competitor resolution failed:", err);
-    });
-
-    return NextResponse.json({ success: true, doc });
-  } catch (err) {
-    const message =
-      err instanceof Error ? err.message : "Invalid onboarding data";
-    return NextResponse.json({ success: false, error: message }, { status: 400 });
+  } catch (error: any) {
+    console.error('[InitialSweep] Critical error:', error);
+    return NextResponse.json(
+      { error: 'Failed to run initial sweep', details: error.message },
+      { status: 500 }
+    );
   }
-}
-
-async function persistCompanyKnowledge(
-  body: CompanyOnboardingData,
-  doc: CompanyKnowledgeDoc,
-) {
-  const hasSupabase = Boolean(
-    process.env.NEXT_PUBLIC_SUPABASE_URL &&
-      process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY,
-  );
-  if (!hasSupabase) return;
-
-  const { createSupabaseServerClient } = await import("@/lib/supabase");
-  const supabase = await createSupabaseServerClient();
-  const {
-    data: { user },
-    error: userError,
-  } = await supabase.auth.getUser();
-
-  if (userError || !user) {
-    throw userError ?? new Error("Authentication required");
-  }
-
-  const { data: orgMember, error: memberError } = await supabase
-    .from("organization_members")
-    .select("organization_id")
-    .eq("user_id", user.id)
-    .maybeSingle();
-
-  if (memberError) throw memberError;
-
-  let orgId = orgMember?.organization_id;
-  if (!orgId) {
-    const { data: organization, error: organizationError } = await supabase
-      .from("organizations")
-      .insert({
-        name: body.companyName,
-        slug: `${body.companyName.toLowerCase().replace(/[^a-z0-9]+/g, "-")}-${Date.now()}`,
-        owner_user_id: user.id,
-        company_knowledge: doc,
-      })
-      .select("id")
-      .single();
-
-    if (organizationError) throw organizationError;
-    orgId = organization.id;
-
-    const { error: membershipError } = await supabase
-      .from("organization_members")
-      .insert({ organization_id: orgId, user_id: user.id, role: "owner" });
-
-    if (membershipError) throw membershipError;
-  } else {
-    const { error: organizationError } = await supabase
-      .from("organizations")
-      .update({ company_knowledge: doc })
-      .eq("id", orgId);
-
-    if (organizationError) throw organizationError;
-  }
-
-  const { error: profileError } = await supabase
-    .from("user_profiles")
-    .update({ knowledge_organization_id: orgId })
-    .eq("user_id", user.id)
-    .select("user_id")
-    .single();
-
-  if (profileError) throw profileError;
 }
