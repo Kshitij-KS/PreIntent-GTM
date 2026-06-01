@@ -1988,7 +1988,6 @@ async function build() {
   fs.mkdirSync(outDir, { recursive: true });
   const outFile = path.join(outDir, "PREINTENT_Hackathon_Deck.pptx");
   await pres.writeFile({ fileName: outFile });
-  console.log("Wrote:", outFile);
 }
 
 build().catch((e) => {
