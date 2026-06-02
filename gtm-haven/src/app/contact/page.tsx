@@ -56,7 +56,9 @@ export default function ContactPage() {
             className="btn-primary"
             style={{ 
               display: "inline-flex",
-              padding: "14px 32px", 
+              alignItems: "center",
+              justifyContent: "center",
+              padding: "8px 32px",
               fontSize: "16px",
               textDecoration: "none"
             }}

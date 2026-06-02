@@ -310,10 +310,10 @@ const ScanPanel = ({ isScanning, step, done, onScan, result }: {
           onClick={onScan}
           disabled={isScanning}
           style={{
-            display: "flex", alignItems: "center", gap: "7px",
+            display: "flex", alignItems: "center", justifyContent: "center", gap: "7px",
             background: isScanning ? C.dim : `linear-gradient(135deg, #1560cc, ${C.blue})`,
             color: C.white, border: "none", borderRadius: "5px",
-            padding: "7px 18px", fontSize: "10px", fontFamily: "inherit",
+            padding: "5px 18px", fontSize: "10px", fontFamily: "inherit",
             letterSpacing: "0.1em", cursor: isScanning ? "not-allowed" : "pointer", flexShrink: 0,
             boxShadow: isScanning ? "none" : `0 6px 18px ${C.blue}30`,
           }}

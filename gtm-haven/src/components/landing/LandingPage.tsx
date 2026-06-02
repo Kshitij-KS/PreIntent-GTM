@@ -363,7 +363,10 @@ export default function LandingPage() {
             href="/sign-up"
             id="nav-cta"
             style={{
-              padding: "9px 20px",
+              display: "inline-flex",
+              alignItems: "center",
+              justifyContent: "center",
+              padding: "6px 20px",
               fontSize: "13px",
               fontWeight: 700,
               background: "linear-gradient(135deg, #7c3aed, #9060ff)",

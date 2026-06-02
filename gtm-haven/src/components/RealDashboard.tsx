@@ -446,10 +446,10 @@ const ScanPanel = ({ isScanning, step, done, onScan, result }: {
           onClick={onScan}
           disabled={isScanning}
           style={{
-            display: "flex", alignItems: "center", gap: "7px",
+            display: "flex", alignItems: "center", justifyContent: "center", gap: "7px",
             background: isScanning ? C.dim : `linear-gradient(135deg, #1560cc, ${C.blue})`,
             color: C.white, border: "none", borderRadius: "5px",
-            padding: "7px 18px", fontSize: "10px", fontFamily: "inherit",
+            padding: "5px 18px", fontSize: "10px", fontFamily: "inherit",
             letterSpacing: "0.1em", cursor: isScanning ? "not-allowed" : "pointer", flexShrink: 0,
             boxShadow: isScanning ? "none" : `0 6px 18px ${C.blue}30`,
           }}
@@ -1935,9 +1935,10 @@ ${realBrief.whyNow?.map((w, i) => `[${["VOID", "COMPLIANCE", "PAIN"][i] || w.eng
           <Link
             href="/onboarding"
             style={{
+              display: "inline-flex", alignItems: "center", justifyContent: "center",
               background: `linear-gradient(135deg, #7c3aed, ${C.conv})`,
               color: C.white, textDecoration: "none", fontSize: "11px",
-              padding: "8px 16px", borderRadius: "6px", fontWeight: 700,
+              padding: "6px 16px", borderRadius: "6px", fontWeight: 700,
               whiteSpace: "nowrap", boxShadow: `0 4px 14px ${C.conv}30`,
             }}
           >
