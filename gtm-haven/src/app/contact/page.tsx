@@ -53,23 +53,12 @@ export default function ContactPage() {
         <div style={{ textAlign: "center" }}>
           <Link 
             href="/sign-up" 
+            className="btn-primary"
             style={{ 
-              display: "inline-block",
-              backgroundColor: C.conv, 
-              color: C.white, 
+              display: "inline-flex",
               padding: "14px 32px", 
-              borderRadius: "8px", 
-              fontWeight: 600,
-              textDecoration: "none",
-              transition: "transform 0.2s, box-shadow 0.2s"
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.transform = "translateY(-2px)";
-              e.currentTarget.style.boxShadow = "0 8px 20px rgba(124, 58, 237, 0.4)";
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.transform = "translateY(0)";
-              e.currentTarget.style.boxShadow = "none";
+              fontSize: "16px",
+              textDecoration: "none"
             }}
           >
             Get Started Free
