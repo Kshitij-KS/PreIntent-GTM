@@ -1,8 +1,13 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
-import { runLiveSweep } from '@/actions/sweep-actions';
-import { updateOrgStatus } from '@/actions/org-actions';
-import { resolveCompetitors } from '@/actions/competitor-actions';
+import { runLiveSweep } from '@/app/actions';
+
+async function updateOrgStatus(orgId: string, status: string, supabase: any) {
+  return await supabase
+    .from('organizations')
+    .update({ status })
+    .eq('id', orgId);
+}
 
 export async function POST(req: Request) {
   try {
@@ -34,64 +39,65 @@ export async function POST(req: Request) {
         
         // Execute the full live sweep pipeline (BrightData -> AI -> Featherless -> Speechmatics)
         const result = await runLiveSweep({
-          companyName: account.name,
-          websiteUrl: account.website, // Uses resolved website from onboarding
-          includeCompetitors: true,    // Leverages resolved competitor data
+          account: account.name,
+          industry: 'Unknown',
+          employees: 'Unknown',
+          competitor: 'Unknown',
         });
 
-        if (result.success && result.data) {
+        if (result.success) {
           sweepResults.push({
             account: account.name,
-            ...result.data,
+            ...result,
           });
 
           // Persist Account Profile
-          if (result.data.profile) {
+          if (result.profile) {
             await supabase.from('account_profiles').insert({
               org_id: orgId,
               account_name: account.name,
               website: account.website,
-              convergence_score: result.data.profile.convergenceScore,
-              urgency_level: result.data.profile.urgencyLevel,
+              convergence_score: result.profile.convergenceScore,
+              urgency_level: result.profile.urgency,
               last_scanned: new Date().toISOString(),
-              raw_data: result.data.profile,
+              raw_data: result.profile,
             });
           }
 
           // Persist Signals
-          if (result.data.signals && result.data.signals.length > 0) {
-            const signalsToInsert = result.data.signals.map((signal: any) => ({
+          if (result.signals && result.signals.length > 0) {
+            const signalsToInsert = result.signals.map((signal: any) => ({
               org_id: orgId,
               account_name: account.name,
-              signal_type: signal.type,
+              signal_type: signal.engine,
               confidence: signal.confidence,
               description: signal.description,
-              source_url: signal.sourceUrl,
+              source_url: signal.provenance?.url || '',
               detected_at: new Date().toISOString(),
             }));
             await supabase.from('engine_signals').insert(signalsToInsert);
           }
 
           // Persist Convergence Run
-          if (result.data.convergence) {
+          if (result.profile) {
             await supabase.from('convergence_runs').insert({
               org_id: orgId,
               account_name: account.name,
-              overall_score: result.data.convergence.overallScore,
-              pain_score: result.data.convergence.painScore,
-              void_score: result.data.convergence.voidScore,
-              compliance_score: result.data.convergence.complianceScore,
+              overall_score: result.profile.convergenceScore,
+              pain_score: result.profile.pain.subScore,
+              void_score: result.profile.void.subScore,
+              compliance_score: result.profile.compliance.subScore,
               run_date: new Date().toISOString(),
             });
           }
 
           // Persist Intel Brief
-          if (result.data.brief) {
+          if (result.brief) {
             await supabase.from('intel_briefs').insert({
               org_id: orgId,
               account_name: account.name,
               title: `Initial Intelligence Brief - ${account.name}`,
-              content: result.data.brief,
+              content: result.brief,
               generated_at: new Date().toISOString(),
             });
           }
@@ -105,7 +111,7 @@ export async function POST(req: Request) {
     }
 
     // Update organization status to 'resolved' indicating initial data population is done
-    await updateOrgStatus(orgId, 'resolved');
+    await updateOrgStatus(orgId, 'resolved', supabase);
 
     return NextResponse.json({
       success: true,
