@@ -48,10 +48,10 @@ export default function DemoPage() {
           <Link
             href="/sign-up"
             style={{
-              display: "inline-flex", alignItems: "center", gap: "6px",
+              display: "inline-flex", alignItems: "center", justifyContent: "center", gap: "6px",
               background: "linear-gradient(135deg, #7c3aed, #9060ff)",
               color: "#fff", textDecoration: "none",
-              padding: "6px 14px", borderRadius: "5px",
+              padding: "4px 14px", borderRadius: "5px",
               fontSize: "10px", fontWeight: 600, letterSpacing: "0.08em",
               boxShadow: "0 4px 14px rgba(144,96,255,0.3)",
             }}

@@ -188,8 +188,9 @@ button, select, input, textarea { font: inherit; }
 .btn-primary {
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 8px;
-  padding: 10px 20px;
+  padding: 8px 20px;
   background: linear-gradient(135deg, #7c3aed, #9060ff);
   border: none;
   border-radius: 8px;
