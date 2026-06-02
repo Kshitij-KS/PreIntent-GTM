@@ -15,6 +15,7 @@
  */
 
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
+import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import type { AccountIntelligenceProfile } from "@/lib/domain";
 import { computeUrgency } from "@/lib/convergence";
@@ -578,7 +579,7 @@ const AddAccountModal = ({
             <div style={{ fontSize: "14px", fontWeight: 700, color: C.white }}>Add Account to Monitor</div>
             <div style={{ fontSize: "11px", color: C.muted, marginTop: "3px" }}>Triggers a live sweep immediately</div>
           </div>
-          <button onClick={onClose} style={{ background: "none", border: "none", color: C.muted, cursor: "pointer", fontSize: "18px" }}>×</button>
+          <button onClick={onClose} aria-label="Close modal" style={{ background: "none", border: "none", color: C.muted, cursor: "pointer", fontSize: "18px" }}>×</button>
         </div>
 
         <div style={{ display: "grid", gap: "16px" }}>
@@ -1931,7 +1932,7 @@ ${realBrief.whyNow?.map((w, i) => `[${["VOID", "COMPLIANCE", "PAIN"][i] || w.eng
               Finish onboarding to generate your company knowledge doc and configure your scan targets.
             </div>
           </div>
-          <a
+          <Link
             href="/onboarding"
             style={{
               background: `linear-gradient(135deg, #7c3aed, ${C.conv})`,
@@ -1941,7 +1942,7 @@ ${realBrief.whyNow?.map((w, i) => `[${["VOID", "COMPLIANCE", "PAIN"][i] || w.eng
             }}
           >
             Complete Setup →
-          </a>
+          </Link>
         </motion.div>
       )}
 
