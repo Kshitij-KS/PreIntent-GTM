@@ -1977,7 +1977,7 @@ ${realBrief.whyNow?.map((w, i) => `[${["VOID", "COMPLIANCE", "PAIN"][i] || w.eng
       )}
 
       {/* Stat cards */}
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: "8px", marginBottom: "14px" }}>
+      <div className="stats-grid" style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: "8px", marginBottom: "14px" }}>
         <StatCard label="ACCOUNTS" value={`${accounts.length}`} sub="monitored" color={C.blue} delay={0} />
         <StatCard label="ALERTS" value={`${alertCount}`} sub="act now" color={C.void} delay={1} />
         <StatCard label="SIGNALS" value={`${signalCount}`} sub="3 engines" color={C.pain} delay={2} />
@@ -2111,7 +2111,7 @@ ${realBrief.whyNow?.map((w, i) => `[${["VOID", "COMPLIANCE", "PAIN"][i] || w.eng
     evidenceAccount?.audioEvidence;
 
   return (
-    <div style={{
+    <div className="dashboard-container" style={{
       background: C.bg, minHeight: "100vh", color: C.text,
       fontFamily: "'IBM Plex Mono', 'Courier New', monospace",
       display: "flex", flexDirection: "column",
@@ -2124,7 +2124,7 @@ ${realBrief.whyNow?.map((w, i) => `[${["VOID", "COMPLIANCE", "PAIN"][i] || w.eng
       `}</style>
 
       {/* ── TOP NAV ── */}
-      <div style={{
+      <div className="sidebar-nav" style={{
         display: "flex", alignItems: "center", height: "52px",
         background: `rgba(12,16,24,0.95)`, borderBottom: `1px solid ${C.border}`,
         backdropFilter: "blur(20px)", position: "sticky", top: 0, zIndex: 40,
@@ -2143,9 +2143,10 @@ ${realBrief.whyNow?.map((w, i) => `[${["VOID", "COMPLIANCE", "PAIN"][i] || w.eng
           <div style={{ width: "1px", height: "24px", background: C.border, marginRight: "18px" }} />
 
           {/* Nav tabs */}
-          {NAV_ITEMS.map(({ id, label, Icon: NavIcon }) => (
-            <button
-              key={id}
+          <div className="nav-tabs" style={{ display: "flex", height: "100%" }}>
+            {NAV_ITEMS.map(({ id, label, Icon: NavIcon }) => (
+              <button
+                key={id}
               onClick={() => setView(id)}
               style={{
                 position: "relative", height: "52px", padding: "0 14px",
@@ -2156,22 +2157,23 @@ ${realBrief.whyNow?.map((w, i) => `[${["VOID", "COMPLIANCE", "PAIN"][i] || w.eng
                 borderBottom: view === id ? `2px solid ${C.conv}` : "2px solid transparent",
                 transition: "color 0.15s, border-color 0.15s", flexShrink: 0,
               }}
-              onMouseEnter={(e) => { if (view !== id) e.currentTarget.style.color = C.text; }}
-              onMouseLeave={(e) => { if (view !== id) e.currentTarget.style.color = C.muted; }}
-            >
-              <NavIcon />
-              {label}
-              {id === "signals" && alertCount > 0 && (
-                <span style={{
-                  background: C.void, color: C.white, borderRadius: "99px",
-                  fontSize: "8px", padding: "0px 5px", minWidth: "16px", textAlign: "center",
-                  lineHeight: "16px",
-                }}>
-                  {alertCount}
-                </span>
-              )}
-            </button>
-          ))}
+                onMouseEnter={(e) => { if (view !== id) e.currentTarget.style.color = C.text; }}
+                onMouseLeave={(e) => { if (view !== id) e.currentTarget.style.color = C.muted; }}
+              >
+                <NavIcon />
+                {label}
+                {id === "signals" && alertCount > 0 && (
+                  <span style={{
+                    background: C.void, color: C.white, borderRadius: "99px",
+                    fontSize: "8px", padding: "0px 5px", minWidth: "16px", textAlign: "center",
+                    lineHeight: "16px",
+                  }}>
+                    {alertCount}
+                  </span>
+                )}
+              </button>
+            ))}
+          </div>
 
           {/* Right side */}
           <div style={{ marginLeft: "auto", display: "flex", alignItems: "center", gap: "10px", flexShrink: 0 }}>
@@ -2212,7 +2214,7 @@ ${realBrief.whyNow?.map((w, i) => `[${["VOID", "COMPLIANCE", "PAIN"][i] || w.eng
         </div>
 
       {/* ── CONTENT ── */}
-      <div style={{ flex: 1, overflowY: "auto", maxWidth: "1400px", width: "100%", margin: "0 auto", paddingBottom: "40px" }}>
+      <div className="main-content" style={{ flex: 1, overflowY: "auto", maxWidth: "1400px", width: "100%", margin: "0 auto", paddingBottom: "40px" }}>
         {/* Account selector sub-bar */}
         {(view === "intel" || view === "brief") && (
           <div style={{
