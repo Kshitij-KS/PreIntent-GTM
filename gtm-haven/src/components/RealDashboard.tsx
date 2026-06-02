@@ -2140,7 +2140,7 @@ ${realBrief.whyNow?.map((w, i) => `[${["VOID", "COMPLIANCE", "PAIN"][i] || w.eng
             PREINTENT
           </a>
 
-          <div style={{ width: "1px", height: "24px", background: C.border, marginRight: "18px" }} />
+          <div className="hide-on-mobile" style={{ width: "1px", height: "24px", background: C.border, marginRight: "18px" }} />
 
           {/* Nav tabs */}
           <div className="nav-tabs" style={{ display: "flex", height: "100%" }}>
