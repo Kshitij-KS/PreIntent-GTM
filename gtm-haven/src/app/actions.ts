@@ -128,19 +128,26 @@ Return ONLY valid JSON (no markdown):
 }`;
 
     try {
-      const res = await fetchWithTimeout(`${config.endpoint}/chat/completions`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${config.apiKey}`,
+      // Long completion (≈1200 tokens): request the maximum budget the helper
+      // permits (capped at 30s) rather than the short 10s default, so a slow
+      // but successful provider response is not aborted prematurely.
+      const res = await fetchWithTimeout(
+        `${config.endpoint}/chat/completions`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${config.apiKey}`,
+          },
+          body: JSON.stringify({
+            model: config.model,
+            messages: [{ role: "user", content: prompt }],
+            temperature: 0.4,
+            max_tokens: 1200,
+          }),
         },
-        body: JSON.stringify({
-          model: config.model,
-          messages: [{ role: "user", content: prompt }],
-          temperature: 0.4,
-          max_tokens: 1200,
-        }),
-      });
+        30_000,
+      );
 
       if (res.ok) {
         const data = await res.json();

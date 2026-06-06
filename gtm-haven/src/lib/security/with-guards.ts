@@ -3,11 +3,14 @@
  * the correct order before any business logic runs:
  *
  *   1. payload-size (413)
- *   2. rate-limit (429)
- *   3. auth (401/403/400)
+ *   2. auth (401/403/400)
+ *   3. rate-limit (429) — keyed by authenticated user id, else source IP
  *   4. input-validation (400)
  *   5. handler
  *
+ * Auth runs before rate-limiting so authenticated callers are limited per
+ * identity rather than per shared IP (Req 6.3); both still precede the handler,
+ * so a rejected request performs no external call or persistence (Req 6.6).
  * Any thrown error is caught and routed through the Error_Responder under a
  * single correlation id. Mutating endpoints emit one audit event on completion
  * (Req 1.2, 2.1, 2.2, 4.1, 4.3, 6.6, 8.1, 8.5).
@@ -80,17 +83,8 @@ export function withGuards<TBody = unknown>(
         }
       }
 
-      // 2. Rate-limit (429) — cheaply shed floods before auth/validation.
-      if (options.rateLimit) {
-        // Pre-auth caller key uses IP; a userId refinement happens after auth
-        // but the budget is keyed consistently per identity-or-IP.
-        const decision = checkRateLimit(callerKeyFrom(null, request), options.endpointId);
-        if (!decision.allowed) {
-          return rateLimitResponse(decision.retryAfterSeconds ?? 60, correlationId);
-        }
-      }
-
-      // 3. Auth (401/403/400).
+      // 2. Auth (401/403/400) — resolve the caller first so rate limits can be
+      //    keyed per identity rather than per shared IP.
       const authMode = options.auth ?? { kind: "none" };
       if (authMode.kind === "session") {
         const result = await requireSession();
@@ -101,6 +95,19 @@ export function withGuards<TBody = unknown>(
         const result = await requireOrgMembership(orgId);
         if (!result.ok) return authErrorResponse(result.status, correlationId);
         caller = result.caller;
+      }
+
+      // 3. Rate-limit (429) — keyed by authenticated user id when present, else
+      //    by source IP (Req 6.3). Still runs before validation and the handler
+      //    so no external call or persistence occurs on a rejected request.
+      if (options.rateLimit) {
+        const decision = checkRateLimit(
+          callerKeyFrom(caller?.userId ?? null, request),
+          options.endpointId,
+        );
+        if (!decision.allowed) {
+          return rateLimitResponse(decision.retryAfterSeconds ?? 60, correlationId);
+        }
       }
 
       // 4. Input-validation (400).
