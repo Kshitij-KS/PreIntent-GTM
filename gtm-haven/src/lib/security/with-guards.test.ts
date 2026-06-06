@@ -87,4 +87,35 @@ describe("withGuards ordering and short-circuiting", () => {
     const text = await res.text();
     expect(text).not.toContain("/secret/path");
   });
+
+  it("rate-limits authenticated callers per user id, not per shared IP", async () => {
+    const { NextResponse } = await import("next/server");
+    const { withGuards } = await import("./with-guards");
+    const handler = vi.fn(async () => NextResponse.json({ ok: true }));
+    const route = withGuards(
+      { endpointId: "shared-ip-endpoint", rateLimit: true, auth: { kind: "session" }, bodySchema },
+      handler,
+    );
+
+    // Two distinct users behind the same NAT/proxy IP.
+    const sharedIpHeaders = { "x-forwarded-for": "203.0.113.7" };
+    const reqFor = (body: unknown) =>
+      new Request("https://example.com/api/x", {
+        method: "POST",
+        headers: { ...sharedIpHeaders, "content-type": "application/json" },
+        body: JSON.stringify(body),
+      });
+
+    // User A exhausts their own budget (10 allowed, 11th rejected).
+    requireSession.mockResolvedValue({ ok: true, caller: { userId: "user-A" } });
+    for (let i = 0; i < 10; i += 1) {
+      const res = await route(reqFor({ name: "x" }));
+      expect(res.status).toBe(200);
+    }
+    expect((await route(reqFor({ name: "x" }))).status).toBe(429);
+
+    // User B — same IP — is unaffected.
+    requireSession.mockResolvedValue({ ok: true, caller: { userId: "user-B" } });
+    expect((await route(reqFor({ name: "x" }))).status).toBe(200);
+  });
 });
