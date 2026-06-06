@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
+import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import type { AccountIntelligenceProfile } from "@/lib/domain";
@@ -309,10 +310,10 @@ const ScanPanel = ({ isScanning, step, done, onScan, result }: {
           onClick={onScan}
           disabled={isScanning}
           style={{
-            display: "flex", alignItems: "center", gap: "7px",
+            display: "flex", alignItems: "center", justifyContent: "center", gap: "7px",
             background: isScanning ? C.dim : `linear-gradient(135deg, #1560cc, ${C.blue})`,
             color: C.white, border: "none", borderRadius: "5px",
-            padding: "7px 18px", fontSize: "10px", fontFamily: "inherit",
+            padding: "5px 18px", fontSize: "10px", fontFamily: "inherit",
             letterSpacing: "0.1em", cursor: isScanning ? "not-allowed" : "pointer", flexShrink: 0,
             boxShadow: isScanning ? "none" : `0 6px 18px ${C.blue}30`,
           }}
@@ -1091,7 +1092,7 @@ ACCOUNT CONTEXT
       </AnimatePresence>
 
       {/* Stat cards */}
-      <div data-demo="stat-cards" style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: "8px", marginBottom: "14px" }}>
+      <div data-demo="stat-cards" className="stats-grid" style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: "8px", marginBottom: "14px" }}>
         <StatCard label="ACCOUNTS" value={`${accounts.length}`} sub="real companies" color={C.blue} delay={0} />
         <StatCard label="ALERTS" value={`${alertCount}`} sub="act now" color={C.void} delay={1} />
         <StatCard label="SIGNALS TODAY" value={`${signalCount}`} sub="3 engines" color={C.pain} delay={2} />
@@ -1186,36 +1187,37 @@ ACCOUNT CONTEXT
     evidenceAccount?.audioEvidence;
 
   return (
-    <div style={{
+    <div className="dashboard-container" style={{
       background: C.bg, minHeight: "100vh", color: C.text,
       fontFamily: "'IBM Plex Mono', 'Courier New', monospace",
       display: "flex", flexDirection: "column",
     }}>
       {/* ── TOP NAV ── */}
       {!cleanMode && (
-        <div style={{
+        <div className="sidebar-nav" style={{
           display: "flex", alignItems: "center", height: "52px",
           background: `rgba(12,16,24,0.95)`, borderBottom: `1px solid ${C.border}`,
           backdropFilter: "blur(20px)", position: "sticky", top: 0, zIndex: 40,
           padding: "0 18px", gap: "0", flexShrink: 0,
         }}>
           {/* Logo */}
-          <a href={homeHref} style={{
+          <Link href={homeHref} style={{
             display: "flex", alignItems: "center", gap: "8px",
             fontWeight: 700, fontSize: "13px", color: C.white, letterSpacing: "0.18em",
             marginRight: "28px", textDecoration: "none", flexShrink: 0,
           }}>
             <Icon.Logo />
             PREINTENT
-          </a>
+          </Link>
 
           {/* Separator */}
-          <div style={{ width: "1px", height: "24px", background: C.border, marginRight: "18px" }} />
+          <div className="hide-on-mobile" style={{ width: "1px", height: "24px", background: C.border, marginRight: "18px" }} />
 
           {/* Nav tabs */}
-          {NAV_ITEMS.map(({ id, label, Icon: NavIcon }) => (
-            <button
-              key={id}
+          <div className="nav-tabs" style={{ display: "flex", height: "100%" }}>
+            {NAV_ITEMS.map(({ id, label, Icon: NavIcon }) => (
+              <button
+                key={id}
               onClick={() => setView(id)}
               style={{
                 position: "relative", height: "52px", padding: "0 14px",
@@ -1226,22 +1228,23 @@ ACCOUNT CONTEXT
                 borderBottom: view === id ? `2px solid ${C.conv}` : "2px solid transparent",
                 transition: "color 0.15s, border-color 0.15s", flexShrink: 0,
               }}
-              onMouseEnter={(e) => { if (view !== id) e.currentTarget.style.color = C.text; }}
-              onMouseLeave={(e) => { if (view !== id) e.currentTarget.style.color = C.muted; }}
-            >
-              <NavIcon />
-              {label}
-              {id === "signals" && alertCount > 0 && (
-                <span style={{
-                  background: C.void, color: C.white, borderRadius: "99px",
-                  fontSize: "8px", padding: "0px 5px", minWidth: "16px", textAlign: "center",
-                  lineHeight: "16px",
-                }}>
-                  {alertCount}
-                </span>
-              )}
-            </button>
-          ))}
+                onMouseEnter={(e) => { if (view !== id) e.currentTarget.style.color = C.text; }}
+                onMouseLeave={(e) => { if (view !== id) e.currentTarget.style.color = C.muted; }}
+              >
+                <NavIcon />
+                {label}
+                {id === "signals" && alertCount > 0 && (
+                  <span style={{
+                    background: C.void, color: C.white, borderRadius: "99px",
+                    fontSize: "8px", padding: "0px 5px", minWidth: "16px", textAlign: "center",
+                    lineHeight: "16px",
+                  }}>
+                    {alertCount}
+                  </span>
+                )}
+              </button>
+            ))}
+          </div>
 
           {/* Right side */}
           <div style={{ marginLeft: "auto", display: "flex", alignItems: "center", gap: "10px", flexShrink: 0 }}>
@@ -1301,7 +1304,7 @@ ACCOUNT CONTEXT
       )}
 
       {/* ── CONTENT ── */}
-      <div style={{ flex: 1, overflowY: "auto", maxWidth: "1400px", width: "100%", margin: "0 auto", paddingBottom: "40px" }}>
+      <div className="main-content" style={{ flex: 1, overflowY: "auto", maxWidth: "1400px", width: "100%", margin: "0 auto", paddingBottom: "40px" }}>
         {/* Account selector sub-bar (for intel + brief) */}
         {(view === "intel" || view === "brief") && !cleanMode && (
           <div style={{
