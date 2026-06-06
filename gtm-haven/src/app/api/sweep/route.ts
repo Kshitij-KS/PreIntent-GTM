@@ -5,8 +5,8 @@ import { sweepBodySchema, type SweepBody } from "@/lib/security/schemas";
 
 /**
  * POST /api/sweep — Mutating_Endpoint.
- * Guards: payload-size (413) → rate-limit (429) → auth session (401) →
- * body validation (400) → handler. Errors are sanitized by withGuards.
+ * Guards: payload-size (413) → auth (401, mock or Supabase) → rate-limit (429)
+ * → body validation (400) → handler.
  */
 export const POST = withGuards<SweepBody>(
   {
