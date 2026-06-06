@@ -7,7 +7,7 @@ import {
 } from "./error-responder";
 import type { ValidationFieldError } from "./input-validator";
 
-describe("error responder — sanitization", () => {
+describe("error responder  -  sanitization", () => {
   // Feature: preintent-security-quality-hardening, Property 5: Client error responses are sanitized
   // Validates: Requirements 4.1, 4.2, 8.2
   it("Property 5: sanitized body never contains sensitive tokens from the error", async () => {

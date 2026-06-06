@@ -2,8 +2,8 @@
  * PreIntent Auth Helpers
  *
  * Supports two modes:
- *  1. MOCK mode  — works with zero config; stores session in a cookie
- *  2. REAL mode  — Supabase (when NEXT_PUBLIC_SUPABASE_URL is configured)
+ *  1. MOCK mode   -  works with zero config; stores session in a cookie
+ *  2. REAL mode   -  Supabase (when NEXT_PUBLIC_SUPABASE_URL is configured)
  *
  * Server-side helpers use Next.js cookies(); client-side helpers use document.cookie.
  */
@@ -40,7 +40,7 @@ export async function getSession(): Promise<SessionResult> {
   const cookieStore = await cookies();
 
   if (isSupabaseConfigured()) {
-    // Real Supabase path — delegate to supabase.ts
+    // Real Supabase path  -  delegate to supabase.ts
     try {
       const { createSupabaseServerClient } = await import("@/lib/supabase");
       const supabase = await createSupabaseServerClient();

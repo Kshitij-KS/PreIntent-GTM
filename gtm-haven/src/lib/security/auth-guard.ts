@@ -1,5 +1,5 @@
 /**
- * Auth_Guard — authentication + organization-membership authorization.
+ * Auth_Guard  -  authentication + organization-membership authorization.
  *
  * Uses the app's `getSession()` which handles both mock sessions (cookie-based)
  * and real Supabase sessions transparently. Organization membership checks use

@@ -79,8 +79,8 @@ function buildPendingSignal(
     id: `${engine}-${account.toLowerCase().replace(/\s+/g, "-")}-${Date.now()}`,
     engine,
     title: isVoid
-      ? `${competitor} — pricing intelligence pending`
-      : `${industry} regulatory landscape — analysis pending`,
+      ? `${competitor}  -  pricing intelligence pending`
+      : `${industry} regulatory landscape  -  analysis pending`,
     description: isVoid
       ? `Bright Data sweep will populate live competitor pricing data for ${competitor} once API keys are configured. Add BRIGHT_DATA_API_KEY and AI_ML_API_KEY to enable real-time analysis.`
       : `Compliance radar will monitor regulatory changes affecting ${industry} companies once API keys are configured. Add BRIGHT_DATA_API_KEY and AI_ML_API_KEY to enable.`,
@@ -91,7 +91,7 @@ function buildPendingSignal(
       sponsor: "bright_data",
       tool: engine === "void" ? "Scraping Browser" : "SERP API",
       capturedAt: now,
-      note: "Pending — configure BRIGHT_DATA_API_KEY and AI_ML_API_KEY to enable live sweeps.",
+      note: "Pending  -  configure BRIGHT_DATA_API_KEY and AI_ML_API_KEY to enable live sweeps.",
     },
     rawEvidence: { status: "pending_api_key" },
   };
@@ -194,7 +194,7 @@ export async function runBrightDataSweep(
     const hasAiKey = Boolean(env.AI_ML_API_KEY?.trim());
 
     if (!hasAiKey) {
-      // Both Bright Data and AI/ML missing — return pending stubs
+      // Both Bright Data and AI/ML missing  -  return pending stubs
       return {
         mode: "mock",
         signals: [
@@ -205,7 +205,7 @@ export async function runBrightDataSweep(
       };
     }
 
-    // AI key exists but no Bright Data — try direct fetch for partial data
+    // AI key exists but no Bright Data  -  try direct fetch for partial data
     const [pricingFetch, serpFetch] = await Promise.all([
       fetchViaBrightData(pricingUrl, { ...env, BRIGHT_DATA_API_KEY: undefined }, undefined),
       fetchViaBrightData(serpUrl, { ...env, BRIGHT_DATA_API_KEY: undefined }, undefined),
@@ -243,7 +243,7 @@ export async function runBrightDataSweep(
       }
     } else {
       signals.push(buildPendingSignal("void", input.account, input.competitor, input.industry, now));
-      notes.push("Void: direct fetch returned empty — add BRIGHT_DATA_API_KEY for full access");
+      notes.push("Void: direct fetch returned empty  -  add BRIGHT_DATA_API_KEY for full access");
     }
 
     const researchBody = serpFetch.body ||
@@ -316,12 +316,12 @@ export async function runBrightDataSweep(
       });
       notes.push(`Void: ${pricingFetch.source} fetch OK (${pricingUrl})`);
     } catch {
-      // AI scoring failed but we have the page — use heuristic signal
+      // AI scoring failed but we have the page  -  use heuristic signal
       signals.push(buildHeuristicVoidSignal(input.account, input.competitor, pricingUrl, pricingFetch.source, now));
       notes.push(`Void: page fetched via ${pricingFetch.source}; AI scoring failed`);
     }
   } else {
-    // Could not fetch pricing page — return pending stub, don't throw
+    // Could not fetch pricing page  -  return pending stub, don't throw
     signals.push(buildPendingSignal("void", input.account, input.competitor, input.industry, now));
     notes.push(`Void: fetch failed for ${pricingUrl}`);
   }

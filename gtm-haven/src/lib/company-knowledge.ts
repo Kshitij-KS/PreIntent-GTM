@@ -1,25 +1,25 @@
 /**
  * Company Knowledge Document
- * Generated during onboarding — forms the AI context for all GTM actions.
+ * Generated during onboarding  -  forms the AI context for all GTM actions.
  */
 
 export type { ResolvedCompetitor, ResolutionStatus } from "./integrations/competitor-resolver";
 
 export interface CompanyOnboardingData {
-  // Step 1 — Company Basics
+  // Step 1  -  Company Basics
   companyName: string;
   website?: string;
   industry: string;
   teamSize: string;
   hq: string;
 
-  // Step 2 — GTM Context
+  // Step 2  -  GTM Context
   icpDescription: string;
   targetVerticals: string[];
   topCompetitors: string[];
   mainPainPoints: string;
 
-  // Step 3 — Stack + Goals
+  // Step 3  -  Stack + Goals
   crm: string;
   existingTools: string[];
   gtmGoals: string;
@@ -79,7 +79,7 @@ export interface CompanyKnowledgeDoc {
   };
 
   /**
-   * AI-resolved competitor list — populated asynchronously after onboarding
+   * AI-resolved competitor list  -  populated asynchronously after onboarding
    * by the Competitor Resolution Agent via /api/competitors/resolve.
    * Each entry has the canonical name, verified website URL, and confidence score.
    * This field is persisted to Supabase and cached in localStorage.
@@ -142,7 +142,7 @@ function buildMockKnowledgeDoc(
         (acc, comp) => ({
           ...acc,
           [comp]: {
-            opportunity: `${comp} customers experiencing pricing pressure and support gaps — active evaluation signals detected`,
+            opportunity: `${comp} customers experiencing pricing pressure and support gaps  -  active evaluation signals detected`,
             timing: "Act within next 30 days for highest conversion",
           },
         }),

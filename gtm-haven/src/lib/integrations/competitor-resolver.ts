@@ -2,13 +2,13 @@
  * Competitor Resolution Agent
  *
  * Addresses the core problem: competitor names entered during onboarding (e.g. "Stripe")
- * are ambiguous — multiple companies use the same word. This agent uses Bright Data SERP
+ * are ambiguous  -  multiple companies use the same word. This agent uses Bright Data SERP
  * to find candidate companies, then uses the AI/ML API + company knowledge-doc context to
  * disambiguate and return the canonical competitor with a verified website URL.
  *
  * Modes (driven by BRIGHT_DATA_MODE + AI_ML_MODE):
- *   real  — live SERP search + AI disambiguation
- *   mock  — deterministic mock data (demo / CI)
+ *   real   -  live SERP search + AI disambiguation
+ *   mock   -  deterministic mock data (demo / CI)
  */
 
 import { type EnvMap, isRealMode } from "./env";
@@ -88,7 +88,7 @@ async function searchSerp(
 /**
  * Lightweight HTML parser for Google SERP results.
  * Extracts title, URL and snippet from organic result blocks.
- * Resilient to Google's structural changes — uses multiple selector patterns.
+ * Resilient to Google's structural changes  -  uses multiple selector patterns.
  */
 function parseSerpHtml(html: string): SerpCandidate[] {
   const candidates: SerpCandidate[] = [];
@@ -201,7 +201,7 @@ ${candidateList || "No results found."}
 
 Task: Identify which result (if any) is the correct B2B software competitor to "${context.companyName}". Consider industry fit, company type (B2B vs B2C), and relevance to the context.
 
-Return ONLY valid JSON — no markdown, no explanation:
+Return ONLY valid JSON  -  no markdown, no explanation:
 {
   "resolvedName": "canonical company name",
   "website": "https://example.com",
@@ -247,7 +247,7 @@ If no candidate is a plausible B2B competitor, set confidence to 0.1 and use the
 // ─── Mock Resolution ─────────────────────────────────────────────────────────
 
 /**
- * Deterministic mock resolution — used in demo mode, CI, or when API keys are absent.
+ * Deterministic mock resolution  -  used in demo mode, CI, or when API keys are absent.
  * Maps common competitor names to known websites so the UI is always useful.
  */
 const KNOWN_COMPETITORS: Record<string, { website: string; pricingUrl: string; description: string }> = {
@@ -291,7 +291,7 @@ function buildMockResolution(originalName: string): ResolvedCompetitor {
     };
   }
 
-  // Unknown competitor — construct plausible fallback
+  // Unknown competitor  -  construct plausible fallback
   const slug = key.replace(/[^a-z0-9]/g, "");
   return {
     originalName,
@@ -336,7 +336,7 @@ export async function resolveCompetitor(
   const hasBrightData = isRealMode(env, "BRIGHT_DATA_MODE", ["BRIGHT_DATA_API_KEY"]);
   const hasAiMl = env.AI_ML_MODE === "real" && Boolean(env.AI_ML_API_KEY?.trim());
 
-  // Mock mode or no keys — return deterministic mock
+  // Mock mode or no keys  -  return deterministic mock
   if (!hasBrightData && !hasAiMl) {
     return buildMockResolution(trimmed);
   }
@@ -371,7 +371,7 @@ export async function resolveCompetitor(
     };
   }
 
-  // SERP only (no AI) — use the top result as best guess
+  // SERP only (no AI)  -  use the top result as best guess
   const top = candidates[0];
   return {
     originalName: trimmed,
@@ -416,7 +416,7 @@ export async function resolveAllCompetitors(
             resolvedName: name,
             website: "",
             pricingUrl: "",
-            description: "Resolution failed — will retry on next sweep.",
+            description: "Resolution failed  -  will retry on next sweep.",
             confidence: 0,
             status: "not_found" as ResolutionStatus,
             resolvedAt: new Date().toISOString(),

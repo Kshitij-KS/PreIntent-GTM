@@ -84,7 +84,7 @@ export function getIntegrationStatuses(env: EnvMap = process.env): IntegrationSt
   return PROVIDERS.map((providerConfig) => {
     const mode = normalizeMode(env[providerConfig.modeKey]);
     const hasKey = hasAnyKey(env, providerConfig.keyNames);
-    // Presence-only boolean — never expose the secret value or any substring (Req 3.3).
+    // Presence-only boolean  -  never expose the secret value or any substring (Req 3.3).
     const configured = providerConfig.keyNames.length === 0 ? true : hasKey;
 
     if (mode === "disabled") {

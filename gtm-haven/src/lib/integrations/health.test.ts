@@ -54,7 +54,7 @@ describe("getIntegrationStatuses", () => {
 
 import fc from "fast-check";
 
-describe("integration status — secret non-leak", () => {
+describe("integration status  -  secret non-leak", () => {
   // Feature: preintent-security-quality-hardening, Property 3: Integration status never leaks secret values
   // Validates: Requirements 3.3, 3.4
   it("Property 3: status never contains a secret value; presence is a boolean", () => {

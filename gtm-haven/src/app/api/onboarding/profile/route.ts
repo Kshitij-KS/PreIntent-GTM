@@ -4,10 +4,10 @@ import { onboardingDataSchema, type OnboardingData } from "@/lib/security/schema
 import { generateCompanyKnowledgeDoc } from "@/lib/company-knowledge";
 
 /**
- * POST /api/onboarding/profile — generates the Company Knowledge Document from
+ * POST /api/onboarding/profile  -  generates the Company Knowledge Document from
  * the onboarding wizard payload.
  *
- * Guards (via withGuards): payload-size (413), auth (401 — mock or Supabase
+ * Guards (via withGuards): payload-size (413), auth (401  -  mock or Supabase
  * session), rate-limit (429), input validation against `onboardingDataSchema`
  * (400), sanitized errors, and an audit event on completion.
  */

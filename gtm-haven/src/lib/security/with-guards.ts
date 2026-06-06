@@ -1,10 +1,10 @@
 /**
- * withGuards — composition wrapper that sequences the cross-cutting concerns in
+ * withGuards  -  composition wrapper that sequences the cross-cutting concerns in
  * the correct order before any business logic runs:
  *
  *   1. payload-size (413)
  *   2. auth (401/403/400)
- *   3. rate-limit (429) — keyed by authenticated user id, else source IP
+ *   3. rate-limit (429)  -  keyed by authenticated user id, else source IP
  *   4. input-validation (400)
  *   5. handler
  *
@@ -68,7 +68,7 @@ export function withGuards<TBody = unknown>(
     let outcome: "success" | "failure" = "failure";
 
     try {
-      // 1. Payload-size (413) — before the body is buffered.
+      // 1. Payload-size (413)  -  before the body is buffered.
       const sizeCheck = enforcePayloadSize(request, options.maxBytes);
       if (!sizeCheck.ok) return payloadTooLargeResponse(correlationId);
 
@@ -83,7 +83,7 @@ export function withGuards<TBody = unknown>(
         }
       }
 
-      // 2. Auth (401/403/400) — resolve the caller first so rate limits can be
+      // 2. Auth (401/403/400)  -  resolve the caller first so rate limits can be
       //    keyed per identity rather than per shared IP.
       const authMode = options.auth ?? { kind: "none" };
       if (authMode.kind === "session") {
@@ -97,7 +97,7 @@ export function withGuards<TBody = unknown>(
         caller = result.caller;
       }
 
-      // 3. Rate-limit (429) — keyed by authenticated user id when present, else
+      // 3. Rate-limit (429)  -  keyed by authenticated user id when present, else
       //    by source IP (Req 6.3). Still runs before validation and the handler
       //    so no external call or persistence occurs on a rejected request.
       if (options.rateLimit) {

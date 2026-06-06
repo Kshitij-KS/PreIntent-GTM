@@ -5,7 +5,7 @@ import { commandCenterBodySchema, type CommandCenterBody } from "@/lib/security/
 /**
  * Command Center API.
  * GET lists pending commands (public, read-only).
- * POST queues a validated command (auth required — mock or Supabase session).
+ * POST queues a validated command (auth required  -  mock or Supabase session).
  */
 export function GET() {
   return NextResponse.json({

@@ -1,5 +1,5 @@
 /**
- * Error_Responder — converts caught errors and validation failures into
+ * Error_Responder  -  converts caught errors and validation failures into
  * sanitized, client-facing responses. Full diagnostics are logged server-side
  * by the Logger; the client only ever sees a generic message, an error
  * category, and the request's correlation id (Req 4.1, 4.2, 4.4, 4.5, 4.6, 8.1,
@@ -32,7 +32,7 @@ function withCorrelationHeader(res: NextResponse, correlationId: string): NextRe
 
 /**
  * Sanitized response for an unhandled error. Never includes stack traces, raw
- * external messages, file paths, hostnames, IPs, DB identifiers, or secrets —
+ * external messages, file paths, hostnames, IPs, DB identifiers, or secrets  - 
  * the input `error` is intentionally not read into the body.
  */
 export function toErrorResponse(_error: unknown, correlationId: string): NextResponse {

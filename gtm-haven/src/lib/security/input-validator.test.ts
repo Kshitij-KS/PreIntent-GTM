@@ -15,7 +15,7 @@ function makeReq(contentLength: number | null): Request {
   return new Request("https://example.com/api/x", { method: "POST", headers });
 }
 
-describe("input validator — invalid input rejection", () => {
+describe("input validator  -  invalid input rejection", () => {
   // Feature: preintent-security-quality-hardening, Property 2: Invalid input is rejected with no side effects
   // Validates: Requirements 1.1, 1.2, 1.3, 1.8, 2.6
   it("Property 2: non-conforming input always produces a failure result with field errors", () => {
@@ -31,7 +31,7 @@ describe("input validator — invalid input rejection", () => {
       fc.property(invalidArb, (input) => {
         const result = parseBody(schema, input);
         if (result.ok) {
-          // If it parsed, it genuinely conformed — assert the oracle agrees.
+          // If it parsed, it genuinely conformed  -  assert the oracle agrees.
           expect(schema.safeParse(input).success).toBe(true);
         } else {
           expect(result.errors.length).toBeGreaterThan(0);

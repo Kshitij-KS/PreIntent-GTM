@@ -118,7 +118,7 @@ describe("withGuards ordering and short-circuiting", () => {
     }
     expect((await route(reqFor({ name: "x" }))).status).toBe(429);
 
-    // User B — same IP — is unaffected.
+    // User B  -  same IP  -  is unaffected.
     requireSession.mockResolvedValue({ ok: true, caller: { userId: "user-B" } });
     expect((await route(reqFor({ name: "x" }))).status).toBe(200);
   });

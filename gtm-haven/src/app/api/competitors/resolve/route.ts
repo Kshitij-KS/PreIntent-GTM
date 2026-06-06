@@ -8,7 +8,7 @@ import { requireSession, requireOrgMembership } from "@/lib/security/auth-guard"
 import { authErrorResponse } from "@/lib/security/error-responder";
 
 const requestSchema = z.object({
-  /** Supabase organization ID — when provided, reads + writes to Supabase */
+  /** Supabase organization ID  -  when provided, reads + writes to Supabase */
   orgId: z.string().uuid().optional(),
   /**
    * Alternatively: inline competitors + context without a Supabase round-trip.
@@ -21,7 +21,7 @@ const requestSchema = z.object({
 type ResolveBody = z.infer<typeof requestSchema>;
 
 /**
- * POST /api/competitors/resolve — Mutating_Endpoint.
+ * POST /api/competitors/resolve  -  Mutating_Endpoint.
  * Guards (via withGuards): payload-size, rate-limit, body validation, error
  * sanitization, audit. Auth is conditional on path:
  *  - org-scoped path → requireOrgMembership (Req 2.3, 2.4)

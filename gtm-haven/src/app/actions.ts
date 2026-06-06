@@ -1,7 +1,7 @@
 "use server";
 
 /**
- * PreIntent Server Actions — live sweep orchestration + sponsor calls.
+ * PreIntent Server Actions  -  live sweep orchestration + sponsor calls.
  *
  * Production rules:
  *  - Authenticated / onboarded users NEVER see demo data.
@@ -35,7 +35,7 @@ const intelBriefPayloadSchema = z.object({
   suggestedOpeningLine: z
     .string()
     .default(
-      "Hi [Name] — I noticed some movement at your current vendor recently that seemed worth a quick conversation.",
+      "Hi [Name]  -  I noticed some movement at your current vendor recently that seemed worth a quick conversation.",
     ),
   accountContext: z
     .object({
@@ -117,7 +117,7 @@ Return ONLY valid JSON (no markdown):
     {"engine": "compliance", "subScore": ${profile.compliance.subScore}, "narrative": "2-4 sentence analysis"},
     {"engine": "pain", "subScore": ${profile.pain.subScore}, "narrative": "2-4 sentence analysis"}
   ],
-  "suggestedOpeningLine": "Hi [Name] — ...",
+  "suggestedOpeningLine": "Hi [Name]  -  ...",
   "accountContext": {
     "industry": "${profile.industry}",
     "size": "${profile.employees}",
@@ -162,8 +162,8 @@ Return ONLY valid JSON (no markdown):
           convergenceScore: profile.convergenceScore,
           urgency:
             profile.urgency === "CRITICAL"
-              ? "CRITICAL — act today"
-              : `${profile.urgency} — act within 5 days`,
+              ? "CRITICAL  -  act today"
+              : `${profile.urgency}  -  act within 5 days`,
           generatedAt: now,
           generatedBy: "ai_ml_api",
           whyNow: parsed.whyNow,
@@ -183,7 +183,7 @@ Return ONLY valid JSON (no markdown):
   }
 
   // ── Deterministic structured brief (no AI key / AI failed) ────────────────
-  // This is NOT demo data — it's built directly from the real account signals.
+  // This is NOT demo data  -  it's built directly from the real account signals.
   return buildStructuredBrief(profile, id, now);
 }
 
@@ -229,12 +229,12 @@ function buildStructuredBrief(
   ];
 
   const suggestedOpeningLine = hasPendingSignals
-    ? `Hi [Name] — we're setting up your PreIntent intelligence workspace. Once configured, we'll surface the exact moment to reach out to ${profile.account}.`
+    ? `Hi [Name]  -  we're setting up your PreIntent intelligence workspace. Once configured, we'll surface the exact moment to reach out to ${profile.account}.`
     : profile.convergenceScore >= 85
-    ? `Hi [Name] — our intelligence platform flagged ${profile.account} as a high-urgency opportunity. The timing looks compelling right now.`
+    ? `Hi [Name]  -  our intelligence platform flagged ${profile.account} as a high-urgency opportunity. The timing looks compelling right now.`
     : profile.convergenceScore >= 55
-    ? `Hi [Name] — we're seeing some early signals around ${profile.account} that might be worth a conversation.`
-    : `Hi [Name] — we're monitoring ${profile.account} for buying signals. I'll reach out when the timing looks right.`;
+    ? `Hi [Name]  -  we're seeing some early signals around ${profile.account} that might be worth a conversation.`
+    : `Hi [Name]  -  we're monitoring ${profile.account} for buying signals. I'll reach out when the timing looks right.`;
 
   return {
     id,
@@ -242,8 +242,8 @@ function buildStructuredBrief(
     convergenceScore: profile.convergenceScore,
     urgency:
       profile.urgency === "CRITICAL"
-        ? "CRITICAL — act today"
-        : `${profile.urgency} — ${hasPendingSignals ? "configure API keys to activate" : "act within 5 days"}`,
+        ? "CRITICAL  -  act today"
+        : `${profile.urgency}  -  ${hasPendingSignals ? "configure API keys to activate" : "act within 5 days"}`,
     generatedAt: now,
     generatedBy: "mock",
     whyNow,
@@ -272,15 +272,15 @@ function buildRecommendedActions(profile: AccountIntelligenceProfile): string[] 
 
   if (profile.convergenceScore >= 85) {
     return [
-      `Reach out to ${profile.account} immediately — convergence at ${profile.convergenceScore}/100`,
+      `Reach out to ${profile.account} immediately  -  convergence at ${profile.convergenceScore}/100`,
       "Create HubSpot lead with full signal breakdown attached",
       "Send personalized Slack alert to assigned AE",
-      "Schedule follow-up task within 48h — high urgency window",
+      "Schedule follow-up task within 48h  -  high urgency window",
     ];
   }
 
   return [
-    `Continue monitoring ${profile.account} — convergence at ${profile.convergenceScore}/100`,
+    `Continue monitoring ${profile.account}  -  convergence at ${profile.convergenceScore}/100`,
     "Run next sweep in 7 days to track signal progression",
     "Set up Slack alert for threshold ≥ 75",
   ];
@@ -341,7 +341,7 @@ export async function classifyPainSignal(
 ): Promise<PainClassification> {
   const config = getPainClassifierConfig();
 
-  // No classifier configured — return honest zero-confidence classification
+  // No classifier configured  -  return honest zero-confidence classification
   // instead of fake "active evaluation, 0.91 confidence" hardcode
   if (!config) {
     return {
@@ -349,7 +349,7 @@ export async function classifyPainSignal(
       urgency: "unknown",
       competitorMentioned: null,
       inferredSeniority: "unknown",
-      companyAttribution: "Pending classification — configure FEATHERLESS_API_KEY, GROQ_API_KEY, or GEMINI_API_KEY",
+      companyAttribution: "Pending classification  -  configure FEATHERLESS_API_KEY, GROQ_API_KEY, or GEMINI_API_KEY",
       confidence: 0,
       model: "pending_configuration",
     };
@@ -402,7 +402,7 @@ JSON shape:
         urgency: "unknown",
         competitorMentioned: null,
         inferredSeniority: "unknown",
-        companyAttribution: "Classification response failed validation — applied safe fallback.",
+        companyAttribution: "Classification response failed validation  -  applied safe fallback.",
         confidence: 0,
         model: "validation_fallback",
       };
@@ -415,7 +415,7 @@ JSON shape:
       urgency: "unknown",
       competitorMentioned: null,
       inferredSeniority: "unknown",
-      companyAttribution: "Classification failed — check classifier API key",
+      companyAttribution: "Classification failed  -  check classifier API key",
       confidence: 0,
       model: "error_fallback",
     };
@@ -431,14 +431,14 @@ async function buildPainSignal(
   const now = new Date().toISOString();
   const painText =
     input.painText ||
-    `Evaluating alternatives to ${input.competitor} — contract renewal approaching, need a decision soon.`;
+    `Evaluating alternatives to ${input.competitor}  -  contract renewal approaching, need a decision soon.`;
 
   // If classifier had no config, return a zero-score pending pain signal
   if (classification.model === "pending_configuration" || classification.confidence === 0) {
     return {
       id: `pain-${input.account.toLowerCase().replace(/\s+/g, "-")}-${Date.now()}`,
       engine: "pain",
-      title: `Pain signals — ${input.account} (pending)`,
+      title: `Pain signals  -  ${input.account} (pending)`,
       description: `Pain signal classification requires a classifier API key (FEATHERLESS_API_KEY, GROQ_API_KEY, or GEMINI_API_KEY). Configure one to enable live community signal analysis for ${input.account}.`,
       eventTime: now,
       subScore: 0,
@@ -447,13 +447,13 @@ async function buildPainSignal(
         sponsor: "featherless",
         tool: "Featherless (open model)",
         capturedAt: now,
-        note: "Pending — configure classifier API key to enable live pain signal classification.",
+        note: "Pending  -  configure classifier API key to enable live pain signal classification.",
       },
       rawEvidence: { status: "pending_configuration", competitor: input.competitor },
     };
   }
 
-  // Real classification result — try to score it with AI/ML, else use heuristic
+  // Real classification result  -  try to score it with AI/ML, else use heuristic
   const { scorePainFromText } = await import("@/lib/integrations/ai-ml");
   let title: string;
   let description: string;
@@ -470,12 +470,12 @@ async function buildPainSignal(
     description = scored.description;
     subScore = scored.subScore;
   } catch {
-    // AI scoring failed — derive score from classifier confidence
+    // AI scoring failed  -  derive score from classifier confidence
     const urgencyMultiplier =
       classification.urgency === "high" ? 0.9 :
       classification.urgency === "medium" ? 0.6 : 0.3;
     subScore = Math.round(classification.confidence * urgencyMultiplier * 100);
-    title = `${classification.signalType} signal — ${input.account}`;
+    title = `${classification.signalType} signal  -  ${input.account}`;
     description = `${painText} (Classified as ${classification.signalType}, urgency: ${classification.urgency})`;
   }
 
@@ -551,7 +551,7 @@ export async function runLiveSweep(input: LiveSweepInput): Promise<LiveSweepResu
       `Account: ${input.account}, Industry: ${input.industry}, Competitor: ${input.competitor}`,
     );
     console.log(`[runLiveSweep] Step 3 done (${Date.now() - startTime}ms): model=${classification.model}, urgency=${classification.urgency}`);
-    notes.push(`Pain classifier: ${classification.model} — ${classification.signalType} (${classification.urgency})`);
+    notes.push(`Pain classifier: ${classification.model}  -  ${classification.signalType} (${classification.urgency})`);
 
     const painSignal = await buildPainSignal(input, classification);
     signals.push(painSignal);

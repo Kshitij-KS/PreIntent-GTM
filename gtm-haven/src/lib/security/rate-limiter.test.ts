@@ -5,7 +5,7 @@ import { createTestClock } from "./__tests__/test-clock";
 
 afterEach(() => __setRateStore(null));
 
-describe("rate limiter — window enforcement", () => {
+describe("rate limiter  -  window enforcement", () => {
   // Feature: preintent-security-quality-hardening, Property 10: Rate-limit window enforcement
   // Validates: Requirements 6.1, 6.2, 6.4
   it("Property 10: first 10 allowed, 11th rejected with Retry-After in 1..60", () => {
@@ -55,7 +55,7 @@ describe("rate limiter — window enforcement", () => {
   });
 });
 
-describe("rate limiter — budget independence", () => {
+describe("rate limiter  -  budget independence", () => {
   // Feature: preintent-security-quality-hardening, Property 11: Rate-limit budgets are independent per caller and per endpoint
   // Validates: Requirements 6.3, 6.5
   it("Property 11: exhausting one (caller,endpoint) does not affect another", () => {

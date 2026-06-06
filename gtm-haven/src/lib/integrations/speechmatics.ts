@@ -11,7 +11,7 @@ export interface SpeechmaticsTranscriptResult {
  * Transcribes audio for pain signals.
  * Real mode: submits a job to Speechmatics ASR API.
  * Mock mode: returns a structured signal based on the competitor + account context.
- * No demo/preintent-demo imports — safe for authenticated users.
+ * No demo/preintent-demo imports  -  safe for authenticated users.
  */
 export async function transcribeAudioSignal(
   params: {
@@ -29,7 +29,7 @@ export async function transcribeAudioSignal(
     return { mode, signal: null, note: "Speechmatics disabled by SPEECHMATICS_MODE." };
   }
 
-  // Context-aware transcript — uses account/competitor context, never hardcoded demo names
+  // Context-aware transcript  -  uses account/competitor context, never hardcoded demo names
   const contextualTranscript =
     params.demoTranscript ||
     `We're evaluating alternatives to ${params.competitor}. Their support response times have degraded significantly and we have a contract renewal coming up in 60 days. We need to make a decision soon.`;
@@ -41,7 +41,7 @@ export async function transcribeAudioSignal(
       signal: {
         id: `pain-audio-${params.account.toLowerCase().replace(/\s+/g, "-")}-${Date.now()}`,
         engine: "pain",
-        title: `Audio signal — ${params.account}`,
+        title: `Audio signal  -  ${params.account}`,
         description: contextualTranscript,
         eventTime: now,
         subScore: 0,
@@ -50,7 +50,7 @@ export async function transcribeAudioSignal(
           sponsor: "speechmatics",
           tool: "Speechmatics",
           capturedAt: now,
-          note: "Pending — configure SPEECHMATICS_API_KEY and SPEECHMATICS_AUDIO_URL to enable live transcription.",
+          note: "Pending  -  configure SPEECHMATICS_API_KEY and SPEECHMATICS_AUDIO_URL to enable live transcription.",
         },
         rawEvidence: { status: "pending_api_key", competitor: params.competitor },
       },
@@ -85,7 +85,7 @@ export async function transcribeAudioSignal(
           signal: {
             id: `pain-audio-${params.account.toLowerCase().replace(/\s+/g, "-")}-${Date.now()}`,
             engine: "pain",
-            title: `Audio transcription submitted — ${params.account}`,
+            title: `Audio transcription submitted  -  ${params.account}`,
             description: `Speechmatics job ${job.id || "created"} submitted for ${params.audioUrl}. Full transcript will be available after processing completes.`,
             eventTime: now,
             subScore: 67,
@@ -115,7 +115,7 @@ export async function transcribeAudioSignal(
     signal: {
       id: `pain-audio-${params.account.toLowerCase().replace(/\s+/g, "-")}-${Date.now()}`,
       engine: "pain",
-      title: `Audio intelligence — ${params.account}`,
+      title: `Audio intelligence  -  ${params.account}`,
       description: contextualTranscript,
       eventTime: now,
       subScore: 45,
@@ -124,7 +124,7 @@ export async function transcribeAudioSignal(
         sponsor: "speechmatics",
         tool: "Speechmatics",
         capturedAt: now,
-        note: "Real mode active — provide SPEECHMATICS_AUDIO_URL for live transcription job",
+        note: "Real mode active  -  provide SPEECHMATICS_AUDIO_URL for live transcription job",
       },
       rawEvidence: { competitor: params.competitor, status: "no_audio_url" },
     },

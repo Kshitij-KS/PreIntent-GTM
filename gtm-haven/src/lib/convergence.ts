@@ -1,5 +1,5 @@
 /**
- * Convergence Engine — pure weighted scoring (MVP)
+ * Convergence Engine  -  pure weighted scoring (MVP)
  * Default 33/33/33 as specified in the architecture doc.
  * AI/ML API will later provide the per-engine sub-scores in production.
  */

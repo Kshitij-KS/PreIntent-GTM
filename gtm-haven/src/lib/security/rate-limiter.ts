@@ -1,5 +1,5 @@
 /**
- * Rate_Limiter — in-process rolling-window limiter with fail-closed behavior.
+ * Rate_Limiter  -  in-process rolling-window limiter with fail-closed behavior.
  *
  * Default budget: 10 requests / 60s per (callerKey, endpointId) (Req 6.1, 6.2).
  * Budgets are independent per caller and per endpoint (Req 6.5). When the

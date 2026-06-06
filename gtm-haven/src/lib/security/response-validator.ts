@@ -1,5 +1,5 @@
 /**
- * Response_Validator — schema validation, timeouts, and fallbacks for external
+ * Response_Validator  -  schema validation, timeouts, and fallbacks for external
  * and model responses. Downstream logic only ever sees validated data or the
  * defined fallback, never raw untrusted output (Req 5.1–5.7).
  */

@@ -23,7 +23,7 @@ describe("getDemoOpeningLine", () => {
     } as unknown as PremiumAccount;
 
     const line = getDemoOpeningLine(fallbackAccount);
-    expect(line).toContain("Hi John —");
+    expect(line).toContain("Hi John  - ");
     expect(line).toContain("I noticed MegaCorp made recent changes");
     expect(line).toContain("with the quick brown fox jumps over the lazy dog and this is a ve...");
     expect(line).toContain("companies like UnknownCorp.");
@@ -40,7 +40,7 @@ describe("getDemoOpeningLine", () => {
     } as unknown as PremiumAccount;
 
     const line = getDemoOpeningLine(fallbackAccount);
-    expect(line).toContain("Hi Jane —");
+    expect(line).toContain("Hi Jane  - ");
     expect(line).toContain("with minor event...");
   });
 });

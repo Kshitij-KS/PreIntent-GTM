@@ -1,5 +1,5 @@
 /**
- * Cognee MVP — Persistent Account Intelligence Profiles via browser localStorage
+ * Cognee MVP  -  Persistent Account Intelligence Profiles via browser localStorage
  * Per architecture doc: "Artifact's persistent window.storage to store Account Intelligence Profiles across sessions."
  * Zero cost, zero backend. Full Cognee service is post-hackathon.
  */

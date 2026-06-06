@@ -43,7 +43,7 @@ export async function executeThresholdDelivery(
     : "";
 
   const slackText = [
-    `🌊 *PreIntent Alert* — ${profile.account}`,
+    `🌊 *PreIntent Alert*  -  ${profile.account}`,
     `Convergence: *${profile.convergenceScore}/100* · Urgency: *${profile.urgency}*`,
     `Void ${profile.void.subScore} · Compliance ${profile.compliance.subScore} · Pain ${profile.pain.subScore}`,
     opener,

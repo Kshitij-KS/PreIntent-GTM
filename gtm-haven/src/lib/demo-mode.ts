@@ -1,5 +1,5 @@
 /**
- * Public demo sandbox — convincing mock data only, no live API calls.
+ * Public demo sandbox  -  convincing mock data only, no live API calls.
  */
 
 import { formatRelativeTime, getConfidenceLevel, type PremiumAccount } from "./premium-demo-data";
@@ -12,7 +12,7 @@ export type DemoIntegrationStatus = {
   detail?: string;
 };
 
-/** Integration panel for /demo — reads as fully wired, no MOCK labels. */
+/** Integration panel for /demo  -  reads as fully wired, no MOCK labels. */
 export const DEMO_INTEGRATION_STATUSES: DemoIntegrationStatus[] = [
   { id: "bright_data", name: "Bright Data", status: "live", mode: "real" },
   { id: "ai_ml_api", name: "AI/ML API", status: "live", mode: "real" },
@@ -26,30 +26,30 @@ export const DEMO_INTEGRATION_STATUSES: DemoIntegrationStatus[] = [
 
 const OPENING_LINES: Record<string, string> = {
   Brex:
-    "Hi Sarah — Stripe Atlas removed their SMB fast-track tier three days ago, and I saw your team discussing alternatives on r/fintech. With PCI-DSS 4.0 enforcement in 89 days, I thought now might be the right time to compare how we've helped treasury teams consolidate entity formation and compliance.",
+    "Hi Sarah  -  Stripe Atlas removed their SMB fast-track tier three days ago, and I saw your team discussing alternatives on r/fintech. With PCI-DSS 4.0 enforcement in 89 days, I thought now might be the right time to compare how we've helped treasury teams consolidate entity formation and compliance.",
   Notion:
-    "Hi Jordan — Notion's primary competitor just sunset their team migration path, and your compliance score jumped this week. Given the active evaluation signals we're seeing, I wanted to share how similar product-led companies consolidated vendor risk before their renewal window closed.",
+    "Hi Jordan  -  Notion's primary competitor just sunset their team migration path, and your compliance score jumped this week. Given the active evaluation signals we're seeing, I wanted to share how similar product-led companies consolidated vendor risk before their renewal window closed.",
   Vercel:
-    "Hi Alex — Your competitor quietly removed startup credits from their edge tier last week. With three pain signals converging and your team asking about alternatives in public forums, the timing feels right for a fifteen-minute comparison.",
+    "Hi Alex  -  Your competitor quietly removed startup credits from their edge tier last week. With three pain signals converging and your team asking about alternatives in public forums, the timing feels right for a fifteen-minute comparison.",
   Rippling:
-    "Hi Priya — Rippling's void score crossed threshold after a competitor retreat on payroll APIs. Combined with the regulatory pressure we're tracking and your team's public evaluation thread, I thought a quick conversation could save you weeks of manual research.",
+    "Hi Priya  -  Rippling's void score crossed threshold after a competitor retreat on payroll APIs. Combined with the regulatory pressure we're tracking and your team's public evaluation thread, I thought a quick conversation could save you weeks of manual research.",
   Mercury:
-    "Hi David — Mercury has three independent signals pointing to the same buying window. A competitor pricing change, compliance deadline pressure, and an active evaluation post — all in the last ten days. Worth a quick call?",
+    "Hi David  -  Mercury has three independent signals pointing to the same buying window. A competitor pricing change, compliance deadline pressure, and an active evaluation post  -  all in the last ten days. Worth a quick call?",
   Linear:
-    "Hi Karri — Linear's convergence score hit 78 this morning. Competitor retreat plus compliance tailwind plus your eng team's public tooling evaluation — all triangulated. I have a brief ready if you have five minutes.",
+    "Hi Karri  -  Linear's convergence score hit 78 this morning. Competitor retreat plus compliance tailwind plus your eng team's public tooling evaluation  -  all triangulated. I have a brief ready if you have five minutes.",
 };
 
 export function getDemoOpeningLine(account: PremiumAccount): string {
   return (
     OPENING_LINES[account.name] ??
-    `Hi ${account.contact.name.split(" ")[0]} — I noticed ${account.competitor} made recent changes, and with ${account.complianceEvent.slice(0, 60).toLowerCase()}..., the timing feels right for a quick conversation about how we've helped companies like ${account.name}.`
+    `Hi ${account.contact.name.split(" ")[0]}  -  I noticed ${account.competitor} made recent changes, and with ${account.complianceEvent.slice(0, 60).toLowerCase()}..., the timing feels right for a quick conversation about how we've helped companies like ${account.name}.`
   );
 }
 
 export function formatDemoBrief(account: PremiumAccount): string {
   const opening = getDemoOpeningLine(account);
 
-  return `WHY NOW — 3 CONVERGING SIGNALS
+  return `WHY NOW  -  3 CONVERGING SIGNALS
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 ① COMPETITOR RETREAT  [${account.voidScore}/100]  ${Math.round(account.voidConfidence * 100)}% confidence
@@ -85,7 +85,7 @@ ACCOUNT CONTEXT
   Status : ${account.status}`;
 }
 
-/** Stream a pre-written brief into state — no server round-trip. */
+/** Stream a pre-written brief into state  -  no server round-trip. */
 export function streamDemoBrief(
   account: PremiumAccount,
   onChunk: (text: string) => void,

@@ -5,7 +5,7 @@ import { __setRateStore } from "@/lib/security/rate-limiter";
  * Route-level example tests (task 13.7).
  * Validates: Requirements 10.1, 10.2, 2.8, 8.5
  *
- * Auth and server actions are mocked — mock-first, zero network.
+ * Auth and server actions are mocked  -  mock-first, zero network.
  */
 
 const getSession = vi.fn();

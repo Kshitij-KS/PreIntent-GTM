@@ -1,5 +1,5 @@
 /**
- * Input_Validator — pure (no I/O) parsing of request bodies and params plus a
+ * Input_Validator  -  pure (no I/O) parsing of request bodies and params plus a
  * payload-size guard. The validator never invokes business logic; on failure
  * the route returns 400 (or 413 for oversize) and performs no external call or
  * persistence (Req 1.1, 1.2, 1.3, 1.4, 1.8).

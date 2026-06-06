@@ -17,7 +17,7 @@ const conformingArb = fc.record({
   competitor: fc.option(fc.string(), { nil: null }),
 });
 
-describe("response validator — round-trip identity", () => {
+describe("response validator  -  round-trip identity", () => {
   // Feature: preintent-security-quality-hardening, Property 8: Response_Validator round-trip identity
   // Validates: Requirements 5.1, 5.7, 10.4
   it("Property 8: validating a conformant value returns it unchanged (deep-equal)", () => {
@@ -34,7 +34,7 @@ describe("response validator — round-trip identity", () => {
   });
 });
 
-describe("response validator — non-conforming fallback", () => {
+describe("response validator  -  non-conforming fallback", () => {
   // Feature: preintent-security-quality-hardening, Property 9: Non-conforming responses fall back without mutating state
   // Validates: Requirements 5.2, 5.5
   it("Property 9: non-conforming responses signal fallback (ok:false)", () => {

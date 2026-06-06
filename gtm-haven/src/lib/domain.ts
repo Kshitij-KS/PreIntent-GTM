@@ -88,7 +88,7 @@ export interface IntelBrief {
   id: string;
   account: string;
   convergenceScore: number;
-  urgency: string; // HIGH — act within X days
+  urgency: string; // HIGH  -  act within X days
   generatedAt: string;
   generatedBy: "ai_ml_api" | "mock";
 
@@ -133,14 +133,14 @@ export const demoSteps: DemoStep[] = [
     id: "void",
     label: "Void Scanner",
     title: "Competitor X removed SMB pricing tier (semantic deletion via Cognee)",
-    talkTrack: "Bright Data Scraping Browser captured the page. Cognee detected the tier count dropped from 4 → 3 — not just text change.",
+    talkTrack: "Bright Data Scraping Browser captured the page. Cognee detected the tier count dropped from 4 → 3  -  not just text change.",
     nextClick: "Drop the regulatory bulletin.",
     engine: "void",
   },
   {
     id: "compliance",
     label: "Compliance Radar",
-    title: "PCI-DSS 4.0 enforcement in 87 days — Acme in scope, no acknowledgment",
+    title: "PCI-DSS 4.0 enforcement in 87 days  -  Acme in scope, no acknowledgment",
     talkTrack: "SERP API + AI/ML API extracted scope. Web Scraper confirmed no compliance blog or hiring.",
     nextClick: "Surface the community pain signal.",
     engine: "compliance",
@@ -156,7 +156,7 @@ export const demoSteps: DemoStep[] = [
   {
     id: "convergence",
     label: "Convergence",
-    title: "Score crosses 85 — TriggerWare fires",
+    title: "Score crosses 85  -  TriggerWare fires",
     talkTrack: "All three sub-scores feed the weighted composite. The moment it hits threshold, the workflow visualization runs.",
     nextClick: "Open the Intel Brief.",
   },
@@ -185,7 +185,7 @@ export interface IntegrationStatus {
   /** Presence-only flag: true when the required secret is configured. Never the value. */
   configured: boolean;
   lastSyncAt: string | null;
-  detail: string; // e.g. "Mocked — realistic signals with Bright Data Scraping Browser tags"
+  detail: string; // e.g. "Mocked  -  realistic signals with Bright Data Scraping Browser tags"
 }
 
 // === Lightweight action state for demo (visual only) ===
