@@ -1,27 +1,23 @@
 import { NextResponse } from "next/server";
 import { runLiveSweep, type LiveSweepInput } from "@/app/actions";
-import { z } from "zod";
+import { withGuards } from "@/lib/security/with-guards";
+import { sweepBodySchema, type SweepBody } from "@/lib/security/schemas";
 
-const sweepBodySchema = z.object({
-  account: z.string().min(1),
-  industry: z.string().min(1),
-  employees: z.union([z.number(), z.string()]),
-  competitor: z.string().min(1),
-  competitorPricingUrl: z.string().url().optional(),
-  regulatoryQuery: z.string().optional(),
-  painText: z.string().optional(),
-  audioUrl: z.string().url().optional(),
-  audioTranscript: z.string().optional(),
-  crmStage: z.string().optional(),
-});
-
-export async function POST(request: Request) {
-  try {
-    const body = sweepBodySchema.parse(await request.json());
+/**
+ * POST /api/sweep — Mutating_Endpoint.
+ * Guards: payload-size (413) → rate-limit (429) → auth session (401) →
+ * body validation (400) → handler. Errors are sanitized by withGuards.
+ */
+export const POST = withGuards<SweepBody>(
+  {
+    endpointId: "sweep",
+    rateLimit: true,
+    auth: { kind: "session" },
+    bodySchema: sweepBodySchema,
+    mutating: true,
+  },
+  async ({ body }) => {
     const result = await runLiveSweep(body as LiveSweepInput);
     return NextResponse.json(result);
-  } catch (err) {
-    const message = err instanceof Error ? err.message : "Invalid sweep request";
-    return NextResponse.json({ success: false, error: message }, { status: 400 });
-  }
-}
+  },
+);

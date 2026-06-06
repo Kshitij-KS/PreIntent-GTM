@@ -84,6 +84,8 @@ export function getIntegrationStatuses(env: EnvMap = process.env): IntegrationSt
   return PROVIDERS.map((providerConfig) => {
     const mode = normalizeMode(env[providerConfig.modeKey]);
     const hasKey = hasAnyKey(env, providerConfig.keyNames);
+    // Presence-only boolean — never expose the secret value or any substring (Req 3.3).
+    const configured = providerConfig.keyNames.length === 0 ? true : hasKey;
 
     if (mode === "disabled") {
       return {
@@ -92,18 +94,21 @@ export function getIntegrationStatuses(env: EnvMap = process.env): IntegrationSt
         provider: providerConfig.provider,
         mode,
         status: "disabled",
+        configured,
         lastSyncAt: null,
         detail: "Disabled by environment mode.",
       };
     }
 
     if (mode === "real" && providerConfig.keyNames.length > 0 && !hasKey) {
+      // Real mode requested but key absent → not_configured + mock fallback (Req 3.4, 3.5).
       return {
         id: providerConfig.id,
         name: providerConfig.name,
         provider: providerConfig.provider,
         mode,
         status: "not_configured",
+        configured: false,
         lastSyncAt: null,
         detail: `Set one of ${providerConfig.keyNames.join(", ")} to enable real mode.`,
       };
@@ -115,6 +120,7 @@ export function getIntegrationStatuses(env: EnvMap = process.env): IntegrationSt
       provider: providerConfig.provider,
       mode,
       status: mode === "real" ? "live" : "healthy",
+      configured,
       lastSyncAt: mode === "real" ? now : null,
       detail: mode === "real" ? "Configured for server-side live calls." : providerConfig.mockDetail,
     };

@@ -9,30 +9,55 @@ async function updateOrgStatus(orgId: string, status: string, supabase: any) {
     .eq('id', orgId);
 }
 
-export async function POST(req: Request) {
-  try {
-    const body = await req.json();
+/**
+ * POST /api/onboarding/profile — Mutating_Endpoint.
+ *
+ * Rewritten for security + type-safety:
+ *  - Auth (org membership for `orgId`), input validation (`orgId` +
+ *    `seedAccounts`), and rate-limiting all run (via withGuards) BEFORE any
+ *    service-role client is constructed (Req 2.5, 2.6, 6.5).
+ *  - Calls the real `runLiveSweep(input: LiveSweepInput)` and consumes
+ *    `LiveSweepResult` (`.success` / `.profile` / `.signals` / `.brief`) — no
+ *    non-existent modules or `.data` shape, and no `any` typing (Req 9.3–9.5).
+ */
+interface SweepOutcome {
+  account: string;
+  convergenceScore: number;
+  urgency: string;
+}
+
+interface SweepError {
+  account: string;
+  error: string;
+}
+
+export const POST = withGuards<OnboardingProfileBody>(
+  {
+    endpointId: "onboarding-profile",
+    rateLimit: true,
+    auth: { kind: "org", orgIdFrom: (body) => (body as { orgId?: unknown } | undefined)?.orgId },
+    bodySchema: onboardingProfileBodySchema,
+    mutating: true,
+  },
+  async ({ body, correlationId }) => {
     const { orgId, seedAccounts } = body;
 
-    if (!orgId || !seedAccounts || !Array.isArray(seedAccounts)) {
-      return NextResponse.json(
-        { error: 'Missing orgId or seedAccounts' },
-        { status: 400 }
-      );
-    }
-
-    // Initialize Supabase client
-    const supabase = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.SUPABASE_SERVICE_ROLE_KEY!
+    const hasSupabase = Boolean(
+      process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.SUPABASE_SERVICE_ROLE_KEY,
     );
 
-    console.log(`[InitialSweep] Starting comprehensive sweep for org ${orgId} with ${seedAccounts.length} accounts`);
+    const { createClient } = await import("@supabase/supabase-js");
+    const supabase = hasSupabase
+      ? createClient(
+          process.env.NEXT_PUBLIC_SUPABASE_URL as string,
+          process.env.SUPABASE_SERVICE_ROLE_KEY as string,
+        )
+      : null;
 
-    const sweepResults = [];
-    const errors = [];
+    const results: SweepOutcome[] = [];
+    const errors: SweepError[] = [];
 
-    // Run live sweeps for ALL seed accounts sequentially to avoid rate limits
+    // Run sweeps sequentially to avoid external rate limits.
     for (const account of seedAccounts) {
       try {
         console.log(`[InitialSweep] Sweeping account: ${account.name}`);
@@ -62,7 +87,6 @@ export async function POST(req: Request) {
               last_scanned: new Date().toISOString(),
               raw_data: result.profile,
             });
-          }
 
           // Persist Signals
           if (result.signals && result.signals.length > 0) {
@@ -89,7 +113,6 @@ export async function POST(req: Request) {
               compliance_score: result.profile.compliance.subScore,
               run_date: new Date().toISOString(),
             });
-          }
 
           // Persist Intel Brief
           if (result.brief) {
@@ -102,11 +125,14 @@ export async function POST(req: Request) {
             });
           }
         } else {
-          errors.push({ account: account.name, error: result.error || 'Sweep failed' });
+          errors.push({ account: account.name, error: result.error ?? "Sweep failed" });
         }
-      } catch (err: any) {
-        console.error(`[InitialSweep] Error sweeping ${account.name}:`, err);
-        errors.push({ account: account.name, error: err.message });
+      } catch (err) {
+        const message = err instanceof Error ? err.message : "Sweep failed";
+        logger.error("onboarding-profile", correlationId, "account sweep failed", {
+          account: account.name,
+        });
+        errors.push({ account: account.name, error: message });
       }
     }
 
@@ -116,15 +142,8 @@ export async function POST(req: Request) {
     return NextResponse.json({
       success: true,
       message: `Initial sweep completed for ${seedAccounts.length} accounts`,
-      results: sweepResults,
+      results,
       errors: errors.length > 0 ? errors : undefined,
     });
-
-  } catch (error: any) {
-    console.error('[InitialSweep] Critical error:', error);
-    return NextResponse.json(
-      { error: 'Failed to run initial sweep', details: error.message },
-      { status: 500 }
-    );
-  }
-}
+  },
+);

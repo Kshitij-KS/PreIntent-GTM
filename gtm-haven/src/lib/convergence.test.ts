@@ -75,3 +75,41 @@ describe("evaluateThresholdActions", () => {
     ]);
   });
 });
+
+import fc from "fast-check";
+
+describe("convergence score range invariant", () => {
+  // Feature: preintent-security-quality-hardening, Property 18: Convergence score range invariant
+  // Validates: Requirements 10.5
+  it("Property 18: score is always within 0..100 for any sub-score triple", () => {
+    fc.assert(
+      fc.property(
+        fc.integer({ min: 0, max: 100 }),
+        fc.integer({ min: 0, max: 100 }),
+        fc.integer({ min: 0, max: 100 }),
+        (voidSub, complianceSub, painSub) => {
+          const score = computeConvergenceScore(voidSub, complianceSub, painSub);
+          expect(score).toBeGreaterThanOrEqual(0);
+          expect(score).toBeLessThanOrEqual(100);
+        },
+      ),
+      { numRuns: 100 },
+    );
+  });
+
+  it("Property 18: stays in range even for out-of-bounds inputs", () => {
+    fc.assert(
+      fc.property(
+        fc.integer({ min: -1000, max: 1000 }),
+        fc.integer({ min: -1000, max: 1000 }),
+        fc.integer({ min: -1000, max: 1000 }),
+        (a, b, c) => {
+          const score = computeConvergenceScore(a, b, c);
+          expect(score).toBeGreaterThanOrEqual(0);
+          expect(score).toBeLessThanOrEqual(100);
+        },
+      ),
+      { numRuns: 100 },
+    );
+  });
+});

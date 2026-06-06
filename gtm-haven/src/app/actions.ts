@@ -17,7 +17,9 @@ import { runBrightDataSweep } from "@/lib/integrations/bright-data";
 import { executeThresholdDelivery } from "@/lib/integrations/delivery";
 import { transcribeAudioSignal } from "@/lib/integrations/speechmatics";
 import { buildProfileFromSignals } from "@/lib/profile-from-signals";
-import { computeUrgency } from "@/lib/convergence";
+import { fetchWithTimeout, validateExternal } from "@/lib/security/response-validator";
+import { painClassificationSchema } from "@/lib/security/schemas";
+import { newCorrelationId } from "@/lib/security/correlation";
 import { z } from "zod";
 
 const intelBriefPayloadSchema = z.object({
@@ -126,7 +128,7 @@ Return ONLY valid JSON (no markdown):
 }`;
 
     try {
-      const res = await fetch(`${config.endpoint}/chat/completions`, {
+      const res = await fetchWithTimeout(`${config.endpoint}/chat/completions`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -138,7 +140,6 @@ Return ONLY valid JSON (no markdown):
           temperature: 0.4,
           max_tokens: 1200,
         }),
-        signal: AbortSignal.timeout(90_000),
       });
 
       if (res.ok) {
@@ -363,7 +364,7 @@ JSON shape:
 }`;
 
   try {
-    const res = await fetch(`${config.endpoint}/chat/completions`, {
+    const res = await fetchWithTimeout(`${config.endpoint}/chat/completions`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -375,13 +376,31 @@ JSON shape:
         temperature: 0.2,
         max_tokens: 400,
       }),
-      signal: AbortSignal.timeout(60_000),
     });
 
     const data = await res.json();
     const content = data.choices?.[0]?.message?.content || "{}";
     const parsed = JSON.parse(content.replace(/```json|```/g, "").trim());
-    return { ...parsed, model: config.model };
+
+    // Validate the model response against an explicit schema before use (Req 5.4).
+    const validated = validateExternal(
+      painClassificationSchema,
+      parsed,
+      "pain-classifier",
+      newCorrelationId(),
+    );
+    if (!validated.ok) {
+      return {
+        signalType: "evaluation_pending",
+        urgency: "unknown",
+        competitorMentioned: null,
+        inferredSeniority: "unknown",
+        companyAttribution: "Classification response failed validation — applied safe fallback.",
+        confidence: 0,
+        model: "validation_fallback",
+      };
+    }
+    return { ...validated.value, model: config.model };
   } catch (e) {
     console.error("[PainClassifier] Classification failed:", e);
     return {

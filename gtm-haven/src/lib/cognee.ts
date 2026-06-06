@@ -10,40 +10,129 @@ import type {
   EngineType,
 } from "./domain";
 import { computeConvergenceScore, computeUrgency } from "./convergence";
+import {
+  profileMapSchema,
+  profileRecordSchema,
+  MAX_PROFILE_RECORDS,
+} from "./security/schemas";
+import { logger } from "./security/logger";
+import { newCorrelationId } from "./security/correlation";
 
 const STORAGE_KEY = "preintent:cognee:profiles:v1";
+const LOG_SOURCE = "cognee-store";
 
-function safeParse<T>(raw: string | null): T | null {
-  if (!raw) return null;
-  try {
-    return JSON.parse(raw) as T;
-  } catch {
-    return null;
-  }
+/** A null-prototype profile map so pathological keys cannot pollute prototypes. */
+function emptyProfileMap(): Record<string, AccountIntelligenceProfile> {
+  return Object.create(null) as Record<string, AccountIntelligenceProfile>;
 }
 
+function readKey(
+  map: Record<string, AccountIntelligenceProfile>,
+  account: string,
+): AccountIntelligenceProfile | null {
+  return Object.prototype.hasOwnProperty.call(map, account) ? map[account] : null;
+}
+
+/**
+ * Load and validate all persisted profiles.
+ *
+ * Discard-and-recover: a JSON parse failure (Req 7.2), schema validation
+ * failure (Req 7.3), or a collection exceeding MAX_PROFILE_RECORDS (Req 7.1,
+ * 7.4) results in an empty profile set, with the discard reason logged
+ * (Req 7.5). Never throws to the UI.
+ */
 function loadAll(): Record<string, AccountIntelligenceProfile> {
-  if (typeof window === "undefined") return {};
+  if (typeof window === "undefined") return emptyProfileMap();
+
   const raw = localStorage.getItem(STORAGE_KEY);
-  return safeParse<Record<string, AccountIntelligenceProfile>>(raw) || {};
+  if (!raw) return emptyProfileMap();
+
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(raw);
+  } catch {
+    logger.warn(LOG_SOURCE, newCorrelationId(), "discarded cognee data", {
+      reason: "json_parse_failure",
+    });
+    return emptyProfileMap();
+  }
+
+  // Enforce the maximum collection size before deep validation (Req 7.1, 7.4).
+  if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) {
+    if (Object.keys(parsed as Record<string, unknown>).length > MAX_PROFILE_RECORDS) {
+      logger.warn(LOG_SOURCE, newCorrelationId(), "discarded cognee data", {
+        reason: "record_count_limit_exceeded",
+      });
+      return emptyProfileMap();
+    }
+  }
+
+  const result = profileMapSchema.safeParse(parsed);
+  if (!result.success) {
+    logger.warn(LOG_SOURCE, newCorrelationId(), "discarded cognee data", {
+      reason: "schema_validation_failure",
+    });
+    return emptyProfileMap();
+  }
+
+  // Use a null-prototype container so pathological account keys (e.g.
+  // "__proto__", "constructor") are stored/read as plain own properties and
+  // cannot pollute the prototype chain.
+  const safe = emptyProfileMap();
+  for (const [key, value] of Object.entries(result.data)) {
+    Object.defineProperty(safe, key, {
+      value,
+      enumerable: true,
+      writable: true,
+      configurable: true,
+    });
+  }
+  return safe;
 }
 
+/**
+ * Persist the full profile map. Only schema-conformant records are written;
+ * a `localStorage` write failure (e.g. quota) leaves the prior value unchanged
+ * and is logged (Req 7.6, 7.7). Never throws to the UI.
+ */
 function saveAll(profiles: Record<string, AccountIntelligenceProfile>) {
   if (typeof window === "undefined") return;
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(profiles));
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(profiles));
+  } catch {
+    logger.warn(LOG_SOURCE, newCorrelationId(), "cognee write failed; prior value preserved", {
+      reason: "write_failure",
+    });
+  }
 }
 
 export function loadProfile(account: string): AccountIntelligenceProfile | null {
   const all = loadAll();
-  return all[account] || null;
+  return readKey(all, account);
 }
 
 export function saveProfile(profile: AccountIntelligenceProfile) {
-  const all = loadAll();
-  all[profile.account] = {
+  const candidate = {
     ...profile,
     lastUpdated: new Date().toISOString(),
   };
+
+  // Persist only schema-conformant records; reject without persisting (Req 7.6).
+  if (!profileRecordSchema.safeParse(candidate).success) {
+    logger.warn(LOG_SOURCE, newCorrelationId(), "rejected non-conformant profile write", {
+      reason: "schema_validation_failure",
+      account: profile.account,
+    });
+    return;
+  }
+
+  const all = loadAll();
+  Object.defineProperty(all, profile.account, {
+    value: candidate,
+    enumerable: true,
+    writable: true,
+    configurable: true,
+  });
   saveAll(all);
 }
 
