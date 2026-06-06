@@ -145,6 +145,8 @@ function ToastItem({ toast, onClose }: { toast: Toast; onClose: () => void }) {
         stiffness: 400,
         damping: 30,
       }}
+      role="alert"
+      aria-live={toast.type === "error" ? "assertive" : "polite"}
       style={{
         background: C.surface,
         backgroundImage: gradient,
@@ -207,6 +209,7 @@ function ToastItem({ toast, onClose }: { toast: Toast; onClose: () => void }) {
         whileHover={{ scale: 1.1 }}
         whileTap={{ scale: 0.9 }}
         onClick={onClose}
+        aria-label="Close notification"
         style={{
           background: "transparent",
           border: "none",
