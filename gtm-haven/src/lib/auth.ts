@@ -149,10 +149,14 @@ export async function markOnboardingComplete(): Promise<void> {
       throw userError ?? new Error("Authentication required");
     }
 
+    // Use upsert so this works even if the profile row doesn't exist yet
+    // (e.g. the trigger didn't fire, or the migration ran after user creation).
     const { error } = await supabase
       .from("user_profiles")
-      .update({ setup_status: "complete" })
-      .eq("user_id", user.id)
+      .upsert(
+        { user_id: user.id, setup_status: "complete" },
+        { onConflict: "user_id" },
+      )
       .select("user_id")
       .single();
 
