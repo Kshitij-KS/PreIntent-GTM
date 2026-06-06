@@ -157,6 +157,8 @@ export async function runBrightDataSweep(
 ): Promise<BrightDataSweepResult> {
   const mode = normalizeMode(env.BRIGHT_DATA_MODE);
 
+  console.log(`[BrightData] mode=${mode}, hasKey=${Boolean(env.BRIGHT_DATA_API_KEY?.trim())}, hasAiKey=${Boolean(env.AI_ML_API_KEY?.trim())}, account=${input.account}`);
+
   if (mode === "disabled") {
     return {
       mode,

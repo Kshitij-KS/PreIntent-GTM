@@ -501,9 +501,12 @@ async function buildPainSignal(
 
 export async function runLiveSweep(input: LiveSweepInput): Promise<LiveSweepResult> {
   const notes: string[] = [];
+  const startTime = Date.now();
+  console.log(`[runLiveSweep] START account=${input.account}, competitor=${input.competitor}`);
 
   try {
     // 1. Bright Data sweep (void + compliance signals)
+    console.log(`[runLiveSweep] Step 1: BrightData sweep...`);
     const bright = await runBrightDataSweep(
       {
         account: input.account,
@@ -514,11 +517,13 @@ export async function runLiveSweep(input: LiveSweepInput): Promise<LiveSweepResu
       },
       process.env,
     );
+    console.log(`[runLiveSweep] Step 1 done (${Date.now() - startTime}ms): mode=${bright.mode}, signals=${bright.signals.length}`);
     notes.push(bright.note);
 
     const signals: EngineSignal[] = [...bright.signals];
 
     // 2. Speechmatics audio transcription
+    console.log(`[runLiveSweep] Step 2: Speechmatics...`);
     const speech = await transcribeAudioSignal(
       {
         account: input.account,
@@ -528,6 +533,7 @@ export async function runLiveSweep(input: LiveSweepInput): Promise<LiveSweepResu
       },
       process.env,
     );
+    console.log(`[runLiveSweep] Step 2 done (${Date.now() - startTime}ms): mode=${speech.mode}`);
     // Only include audio signal if it has actual content (non-zero score or real mode)
     if (speech.signal && (speech.signal.subScore > 0 || speech.mode === "real")) {
       signals.push(speech.signal);
@@ -535,6 +541,7 @@ export async function runLiveSweep(input: LiveSweepInput): Promise<LiveSweepResu
     }
 
     // 3. Pain signal classification
+    console.log(`[runLiveSweep] Step 3: Pain classification...`);
     const painText =
       input.painText ||
       `Evaluating alternatives to ${input.competitor}. Contract renewal is coming up in 60 days and we need to assess our options.`;
@@ -543,12 +550,14 @@ export async function runLiveSweep(input: LiveSweepInput): Promise<LiveSweepResu
       painText,
       `Account: ${input.account}, Industry: ${input.industry}, Competitor: ${input.competitor}`,
     );
+    console.log(`[runLiveSweep] Step 3 done (${Date.now() - startTime}ms): model=${classification.model}, urgency=${classification.urgency}`);
     notes.push(`Pain classifier: ${classification.model} — ${classification.signalType} (${classification.urgency})`);
 
     const painSignal = await buildPainSignal(input, classification);
     signals.push(painSignal);
 
     // 4. Build convergence profile
+    console.log(`[runLiveSweep] Step 4: Building convergence profile...`);
     const profile = buildProfileFromSignals(
       {
         account: input.account,
@@ -558,16 +567,23 @@ export async function runLiveSweep(input: LiveSweepInput): Promise<LiveSweepResu
       },
       signals,
     );
+    console.log(`[runLiveSweep] Step 4 done (${Date.now() - startTime}ms): convergence=${profile.convergenceScore}, urgency=${profile.urgency}`);
 
     // 5. Generate Intel Brief only if convergence is meaningful
     let brief: IntelBrief | undefined;
     if (profile.convergenceScore >= 50) {
+      console.log(`[runLiveSweep] Step 5: Generating Intel Brief (convergence ${profile.convergenceScore} >= 50)...`);
       brief = await generateRealIntelBrief(profile);
+      console.log(`[runLiveSweep] Step 5 done (${Date.now() - startTime}ms): generatedBy=${brief.generatedBy}`);
       notes.push(`Intel Brief: ${brief.generatedBy}`);
+    } else {
+      console.log(`[runLiveSweep] Step 5: SKIPPED Intel Brief (convergence ${profile.convergenceScore} < 50)`);
     }
 
     // 6. Threshold delivery (Slack, HubSpot, TriggerWare)
+    console.log(`[runLiveSweep] Step 6: Threshold delivery...`);
     const delivery = await executeThresholdDelivery(profile, brief, process.env);
+    console.log(`[runLiveSweep] COMPLETE (${Date.now() - startTime}ms): convergence=${profile.convergenceScore}, signals=${signals.length}, slackSent=${delivery.slack.sent}`);
     notes.push(delivery.slack.detail);
     if (delivery.triggerware.sent) notes.push(delivery.triggerware.detail);
     if (delivery.hubspot.sent) notes.push(delivery.hubspot.detail);

@@ -5,13 +5,17 @@ import { __setRateStore } from "@/lib/security/rate-limiter";
  * Route-level example tests (task 13.7).
  * Validates: Requirements 10.1, 10.2, 2.8, 8.5
  *
- * Supabase and server actions are mocked — mock-first, zero network.
+ * Auth and server actions are mocked — mock-first, zero network.
  */
 
-const getUser = vi.fn();
+const getSession = vi.fn();
+vi.mock("@/lib/auth", () => ({
+  getSession: () => getSession(),
+}));
+
 vi.mock("@/lib/supabase", () => ({
+  isSupabaseConfigured: () => true,
   createSupabaseServerClient: async () => ({
-    auth: { getUser },
     from: () => ({
       select: () => ({ eq: () => ({ eq: () => ({ maybeSingle: async () => ({ data: { role: "owner" }, error: null }) }) }) }),
     }),
@@ -32,10 +36,10 @@ function jsonReq(body: unknown): Request {
 }
 
 function unauth() {
-  getUser.mockResolvedValue({ data: { user: null }, error: null });
+  getSession.mockResolvedValue({ user: null, onboardingComplete: false });
 }
 function authed() {
-  getUser.mockResolvedValue({ data: { user: { id: "user-1" } }, error: null });
+  getSession.mockResolvedValue({ user: { id: "user-1", email: "a@b.com", name: "Test" }, onboardingComplete: true });
 }
 
 beforeEach(() => {

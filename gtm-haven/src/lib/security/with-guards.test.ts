@@ -14,6 +14,10 @@ vi.mock("./auth-guard", () => ({
   requireOrgMembership: vi.fn(),
 }));
 
+vi.mock("@/lib/auth", () => ({
+  getSession: vi.fn(),
+}));
+
 const bodySchema = z.object({ name: z.string().min(1) });
 
 function makeReq(opts: { contentLength?: number; body?: unknown } = {}): Request {

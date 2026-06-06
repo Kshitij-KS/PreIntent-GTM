@@ -4,20 +4,25 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
  * Auth_Guard example unit tests (task 6.2).
  * Validates: Requirements 10.1, 2.2, 2.3, 2.4, 2.5, 2.6, 2.7
  *
- * Supabase is fully mocked — no real network or credentials (mock-first).
+ * The auth-guard uses `getSession()` from `@/lib/auth` which handles both mock
+ * and Supabase sessions. We mock that module directly.
  */
 
-const getUser = vi.fn();
+const getSession = vi.fn();
 const maybeSingle = vi.fn();
 const createSupabaseServerClient = vi.fn();
 
+vi.mock("@/lib/auth", () => ({
+  getSession: () => getSession(),
+}));
+
 vi.mock("@/lib/supabase", () => ({
+  isSupabaseConfigured: () => true,
   createSupabaseServerClient: () => createSupabaseServerClient(),
 }));
 
 function buildClient() {
   return {
-    auth: { getUser },
     from: () => ({
       select: () => ({
         eq: () => ({
@@ -36,8 +41,8 @@ beforeEach(() => {
 const VALID_UUID = "123e4567-e89b-12d3-a456-426614174000";
 
 describe("requireSession", () => {
-  it("returns 401 when there is no authenticated user", async () => {
-    getUser.mockResolvedValue({ data: { user: null }, error: { message: "no session" } });
+  it("returns 401 when there is no session", async () => {
+    getSession.mockResolvedValue({ user: null, onboardingComplete: false });
     const { requireSession } = await import("./auth-guard");
     const result = await requireSession();
     expect(result.ok).toBe(false);
@@ -45,15 +50,15 @@ describe("requireSession", () => {
   });
 
   it("returns the caller when a valid session exists", async () => {
-    getUser.mockResolvedValue({ data: { user: { id: "user-1" } }, error: null });
+    getSession.mockResolvedValue({ user: { id: "user-1", email: "a@b.com", name: "A" }, onboardingComplete: true });
     const { requireSession } = await import("./auth-guard");
     const result = await requireSession();
     expect(result.ok).toBe(true);
     if (result.ok) expect(result.caller.userId).toBe("user-1");
   });
 
-  it("returns 401 when the client construction throws", async () => {
-    createSupabaseServerClient.mockRejectedValue(new Error("not configured"));
+  it("returns 401 when getSession throws", async () => {
+    getSession.mockRejectedValue(new Error("broken"));
     const { requireSession } = await import("./auth-guard");
     const result = await requireSession();
     expect(result.ok).toBe(false);
@@ -62,16 +67,15 @@ describe("requireSession", () => {
 });
 
 describe("requireOrgMembership", () => {
-  it("returns 400 for a missing/malformed orgId before any client construction", async () => {
+  it("returns 400 for a missing/malformed orgId", async () => {
     const { requireOrgMembership } = await import("./auth-guard");
     const result = await requireOrgMembership("not-a-uuid");
     expect(result.ok).toBe(false);
     if (!result.ok) expect(result.status).toBe(400);
-    expect(createSupabaseServerClient).not.toHaveBeenCalled();
   });
 
   it("returns 401 when unauthenticated", async () => {
-    getUser.mockResolvedValue({ data: { user: null }, error: null });
+    getSession.mockResolvedValue({ user: null, onboardingComplete: false });
     const { requireOrgMembership } = await import("./auth-guard");
     const result = await requireOrgMembership(VALID_UUID);
     expect(result.ok).toBe(false);
@@ -79,7 +83,7 @@ describe("requireOrgMembership", () => {
   });
 
   it("returns 403 when authenticated but not a member", async () => {
-    getUser.mockResolvedValue({ data: { user: { id: "user-1" } }, error: null });
+    getSession.mockResolvedValue({ user: { id: "user-1", email: "a@b.com", name: "A" }, onboardingComplete: true });
     maybeSingle.mockResolvedValue({ data: null, error: null });
     const { requireOrgMembership } = await import("./auth-guard");
     const result = await requireOrgMembership(VALID_UUID);
@@ -88,7 +92,7 @@ describe("requireOrgMembership", () => {
   });
 
   it("returns the caller when authenticated and a member", async () => {
-    getUser.mockResolvedValue({ data: { user: { id: "user-1" } }, error: null });
+    getSession.mockResolvedValue({ user: { id: "user-1", email: "a@b.com", name: "A" }, onboardingComplete: true });
     maybeSingle.mockResolvedValue({ data: { role: "owner" }, error: null });
     const { requireOrgMembership } = await import("./auth-guard");
     const result = await requireOrgMembership(VALID_UUID);
