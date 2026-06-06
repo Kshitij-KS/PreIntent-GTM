@@ -182,6 +182,8 @@ export interface IntegrationStatus {
     | "triggerware";
   mode: ProviderMode;
   status: "healthy" | "degraded" | "disabled" | "not_configured" | "live";
+  /** Presence-only flag: true when the required secret is configured. Never the value. */
+  configured: boolean;
   lastSyncAt: string | null;
   detail: string; // e.g. "Mocked — realistic signals with Bright Data Scraping Browser tags"
 }

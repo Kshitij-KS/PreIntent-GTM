@@ -1,124 +1,147 @@
-import { NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
-import { runLiveSweep } from '@/actions/sweep-actions';
-import { updateOrgStatus } from '@/actions/org-actions';
-import { resolveCompetitors } from '@/actions/competitor-actions';
+import { NextResponse } from "next/server";
+import { runLiveSweep, type LiveSweepResult } from "@/app/actions";
+import { withGuards } from "@/lib/security/with-guards";
+import {
+  onboardingProfileBodySchema,
+  type OnboardingProfileBody,
+} from "@/lib/security/schemas";
+import { logger } from "@/lib/security/logger";
 
-export async function POST(req: Request) {
-  try {
-    const body = await req.json();
+/**
+ * POST /api/onboarding/profile — Mutating_Endpoint.
+ *
+ * Rewritten for security + type-safety:
+ *  - Auth (org membership for `orgId`), input validation (`orgId` +
+ *    `seedAccounts`), and rate-limiting all run (via withGuards) BEFORE any
+ *    service-role client is constructed (Req 2.5, 2.6, 6.5).
+ *  - Calls the real `runLiveSweep(input: LiveSweepInput)` and consumes
+ *    `LiveSweepResult` (`.success` / `.profile` / `.signals` / `.brief`) — no
+ *    non-existent modules or `.data` shape, and no `any` typing (Req 9.3–9.5).
+ */
+interface SweepOutcome {
+  account: string;
+  convergenceScore: number;
+  urgency: string;
+}
+
+interface SweepError {
+  account: string;
+  error: string;
+}
+
+export const POST = withGuards<OnboardingProfileBody>(
+  {
+    endpointId: "onboarding-profile",
+    rateLimit: true,
+    auth: { kind: "org", orgIdFrom: (body) => (body as { orgId?: unknown } | undefined)?.orgId },
+    bodySchema: onboardingProfileBodySchema,
+    mutating: true,
+  },
+  async ({ body, correlationId }) => {
     const { orgId, seedAccounts } = body;
 
-    if (!orgId || !seedAccounts || !Array.isArray(seedAccounts)) {
-      return NextResponse.json(
-        { error: 'Missing orgId or seedAccounts' },
-        { status: 400 }
-      );
-    }
-
-    // Initialize Supabase client
-    const supabase = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.SUPABASE_SERVICE_ROLE_KEY!
+    const hasSupabase = Boolean(
+      process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.SUPABASE_SERVICE_ROLE_KEY,
     );
 
-    console.log(`[InitialSweep] Starting comprehensive sweep for org ${orgId} with ${seedAccounts.length} accounts`);
+    const { createClient } = await import("@supabase/supabase-js");
+    const supabase = hasSupabase
+      ? createClient(
+          process.env.NEXT_PUBLIC_SUPABASE_URL as string,
+          process.env.SUPABASE_SERVICE_ROLE_KEY as string,
+        )
+      : null;
 
-    const sweepResults = [];
-    const errors = [];
+    const results: SweepOutcome[] = [];
+    const errors: SweepError[] = [];
 
-    // Run live sweeps for ALL seed accounts sequentially to avoid rate limits
+    // Run sweeps sequentially to avoid external rate limits.
     for (const account of seedAccounts) {
       try {
-        console.log(`[InitialSweep] Sweeping account: ${account.name}`);
-        
-        // Execute the full live sweep pipeline (BrightData -> AI -> Featherless -> Speechmatics)
-        const result = await runLiveSweep({
-          companyName: account.name,
-          websiteUrl: account.website, // Uses resolved website from onboarding
-          includeCompetitors: true,    // Leverages resolved competitor data
+        const result: LiveSweepResult = await runLiveSweep({
+          account: account.name,
+          industry: "Unknown",
+          employees: "unknown",
+          competitor: "Unknown",
+          competitorPricingUrl: account.website,
         });
 
-        if (result.success && result.data) {
-          sweepResults.push({
+        if (result.success) {
+          results.push({
             account: account.name,
-            ...result.data,
+            convergenceScore: result.profile.convergenceScore,
+            urgency: result.profile.urgency,
           });
 
-          // Persist Account Profile
-          if (result.data.profile) {
-            await supabase.from('account_profiles').insert({
+          if (supabase) {
+            await supabase.from("account_profiles").insert({
               org_id: orgId,
               account_name: account.name,
-              website: account.website,
-              convergence_score: result.data.profile.convergenceScore,
-              urgency_level: result.data.profile.urgencyLevel,
+              website: account.website ?? null,
+              convergence_score: result.profile.convergenceScore,
+              urgency_level: result.profile.urgency,
               last_scanned: new Date().toISOString(),
-              raw_data: result.data.profile,
+              raw_data: result.profile,
             });
-          }
 
-          // Persist Signals
-          if (result.data.signals && result.data.signals.length > 0) {
-            const signalsToInsert = result.data.signals.map((signal: any) => ({
+            if (result.signals.length > 0) {
+              await supabase.from("engine_signals").insert(
+                result.signals.map((signal) => ({
+                  org_id: orgId,
+                  account_name: account.name,
+                  signal_type: signal.engine,
+                  confidence: signal.confidence,
+                  description: signal.description,
+                  source_url: signal.provenance.url ?? null,
+                  detected_at: new Date().toISOString(),
+                })),
+              );
+            }
+
+            await supabase.from("convergence_runs").insert({
               org_id: orgId,
               account_name: account.name,
-              signal_type: signal.type,
-              confidence: signal.confidence,
-              description: signal.description,
-              source_url: signal.sourceUrl,
-              detected_at: new Date().toISOString(),
-            }));
-            await supabase.from('engine_signals').insert(signalsToInsert);
-          }
-
-          // Persist Convergence Run
-          if (result.data.convergence) {
-            await supabase.from('convergence_runs').insert({
-              org_id: orgId,
-              account_name: account.name,
-              overall_score: result.data.convergence.overallScore,
-              pain_score: result.data.convergence.painScore,
-              void_score: result.data.convergence.voidScore,
-              compliance_score: result.data.convergence.complianceScore,
+              overall_score: result.profile.convergenceScore,
+              pain_score: result.profile.pain.subScore,
+              void_score: result.profile.void.subScore,
+              compliance_score: result.profile.compliance.subScore,
               run_date: new Date().toISOString(),
             });
-          }
 
-          // Persist Intel Brief
-          if (result.data.brief) {
-            await supabase.from('intel_briefs').insert({
-              org_id: orgId,
-              account_name: account.name,
-              title: `Initial Intelligence Brief - ${account.name}`,
-              content: result.data.brief,
-              generated_at: new Date().toISOString(),
-            });
+            if (result.brief) {
+              await supabase.from("intel_briefs").insert({
+                org_id: orgId,
+                account_name: account.name,
+                title: `Initial Intelligence Brief - ${account.name}`,
+                content: result.brief,
+                generated_at: new Date().toISOString(),
+              });
+            }
           }
         } else {
-          errors.push({ account: account.name, error: result.error || 'Sweep failed' });
+          errors.push({ account: account.name, error: result.error ?? "Sweep failed" });
         }
-      } catch (err: any) {
-        console.error(`[InitialSweep] Error sweeping ${account.name}:`, err);
-        errors.push({ account: account.name, error: err.message });
+      } catch (err) {
+        const message = err instanceof Error ? err.message : "Sweep failed";
+        logger.error("onboarding-profile", correlationId, "account sweep failed", {
+          account: account.name,
+        });
+        errors.push({ account: account.name, error: message });
       }
     }
 
-    // Update organization status to 'resolved' indicating initial data population is done
-    await updateOrgStatus(orgId, 'resolved');
+    if (supabase) {
+      await supabase
+        .from("organizations")
+        .update({ status: "resolved" })
+        .eq("id", orgId);
+    }
 
     return NextResponse.json({
       success: true,
       message: `Initial sweep completed for ${seedAccounts.length} accounts`,
-      results: sweepResults,
+      results,
       errors: errors.length > 0 ? errors : undefined,
     });
-
-  } catch (error: any) {
-    console.error('[InitialSweep] Critical error:', error);
-    return NextResponse.json(
-      { error: 'Failed to run initial sweep', details: error.message },
-      { status: 500 }
-    );
-  }
-}
+  },
+);

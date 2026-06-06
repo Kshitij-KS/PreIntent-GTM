@@ -3,6 +3,9 @@ import { z } from "zod";
 import { resolveAllCompetitors } from "@/lib/integrations/competitor-resolver";
 import type { ResolvedCompetitor } from "@/lib/integrations/competitor-resolver";
 import type { CompanyKnowledgeDoc } from "@/lib/company-knowledge";
+import { withGuards } from "@/lib/security/with-guards";
+import { requireSession, requireOrgMembership } from "@/lib/security/auth-guard";
+import { authErrorResponse } from "@/lib/security/error-responder";
 
 const requestSchema = z.object({
   /** Supabase organization ID — when provided, reads + writes to Supabase */
@@ -15,21 +18,36 @@ const requestSchema = z.object({
   context: z.record(z.string(), z.unknown()).optional(),
 });
 
-export async function POST(request: Request) {
-  try {
-    const body = requestSchema.parse(await request.json());
+type ResolveBody = z.infer<typeof requestSchema>;
 
+/**
+ * POST /api/competitors/resolve — Mutating_Endpoint.
+ * Guards (via withGuards): payload-size, rate-limit, body validation, error
+ * sanitization, audit. Auth is conditional on path:
+ *  - org-scoped path → requireOrgMembership (Req 2.3, 2.4)
+ *  - inline path → requireSession (Req 2.7)
+ */
+export const POST = withGuards<ResolveBody>(
+  {
+    endpointId: "competitors-resolve",
+    rateLimit: true,
+    auth: { kind: "none" },
+    bodySchema: requestSchema,
+    mutating: true,
+  },
+  async ({ body, correlationId }) => {
     let competitors: string[] = [];
     let context: CompanyKnowledgeDoc | null = null;
-    let orgId: string | null = body.orgId ?? null;
+    const orgId: string | null = body.orgId ?? null;
 
     // ── Path A: resolve from Supabase org ──────────────────────────────────
     if (orgId) {
-      const hasSupabase = Boolean(
-        process.env.NEXT_PUBLIC_SUPABASE_URL &&
-        process.env.SUPABASE_SERVICE_ROLE_KEY,
-      );
+      const auth = await requireOrgMembership(orgId);
+      if (!auth.ok) return authErrorResponse(auth.status, correlationId);
 
+      const hasSupabase = Boolean(
+        process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.SUPABASE_SERVICE_ROLE_KEY,
+      );
       if (!hasSupabase) {
         return NextResponse.json(
           { success: false, error: "Supabase service role key not configured." },
@@ -40,25 +58,6 @@ export async function POST(request: Request) {
       const { createSupabaseServerClient } = await import("@/lib/supabase");
       const supabase = await createSupabaseServerClient();
 
-      // Auth check — only the org owner can trigger resolution
-      const { data: { user }, error: authError } = await supabase.auth.getUser();
-      if (authError || !user) {
-        return NextResponse.json({ success: false, error: "Unauthorized." }, { status: 401 });
-      }
-
-      // Verify user belongs to this org
-      const { data: membership, error: memberError } = await supabase
-        .from("organization_members")
-        .select("role")
-        .eq("organization_id", orgId)
-        .eq("user_id", user.id)
-        .maybeSingle();
-
-      if (memberError || !membership) {
-        return NextResponse.json({ success: false, error: "Access denied to organization." }, { status: 403 });
-      }
-
-      // Load org knowledge doc
       const { data: org, error: orgError } = await supabase
         .from("organizations")
         .select("company_knowledge, resolved_competitors")
@@ -85,7 +84,6 @@ export async function POST(request: Request) {
         }
       }
 
-      // Mark as resolving
       await supabase
         .from("organizations")
         .update({ competitor_resolution_status: "resolving" })
@@ -94,6 +92,8 @@ export async function POST(request: Request) {
 
     // ── Path B: inline mode (fire-and-forget from onboarding) ─────────────
     else if (body.competitors && body.context) {
+      const auth = await requireSession();
+      if (!auth.ok) return authErrorResponse(auth.status, correlationId);
       competitors = body.competitors;
       context = body.context as unknown as CompanyKnowledgeDoc;
     } else {
@@ -136,9 +136,5 @@ export async function POST(request: Request) {
     }
 
     return NextResponse.json({ success: true, resolved });
-  } catch (err) {
-    console.error("[/api/competitors/resolve] Error:", err);
-    const message = err instanceof Error ? err.message : "Resolution failed.";
-    return NextResponse.json({ success: false, error: message }, { status: 500 });
-  }
-}
+  },
+);

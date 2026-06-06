@@ -51,3 +51,53 @@ describe("getIntegrationStatuses", () => {
     );
   });
 });
+
+import fc from "fast-check";
+
+describe("integration status — secret non-leak", () => {
+  // Feature: preintent-security-quality-hardening, Property 3: Integration status never leaks secret values
+  // Validates: Requirements 3.3, 3.4
+  it("Property 3: status never contains a secret value; presence is a boolean", () => {
+    const secretArb = fc.string({ minLength: 8, maxLength: 40 });
+    fc.assert(
+      fc.property(secretArb, secretArb, secretArb, (brightKey, aiKey, featherKey) => {
+        const env: Record<string, string | undefined> = {
+          BRIGHT_DATA_MODE: "real",
+          BRIGHT_DATA_API_KEY: brightKey,
+          AI_ML_MODE: "real",
+          AI_ML_API_KEY: aiKey,
+          FEATHERLESS_MODE: "real",
+          FEATHERLESS_API_KEY: featherKey,
+        };
+        const statuses = getIntegrationStatuses(env);
+        const serialized = JSON.stringify(statuses);
+
+        // No secret value appears anywhere in the serialized status.
+        for (const secret of [brightKey, aiKey, featherKey]) {
+          if (secret.length >= 8) {
+            expect(serialized.includes(secret)).toBe(false);
+          }
+        }
+        // configured is a boolean on every status.
+        for (const status of statuses) {
+          expect(typeof status.configured).toBe("boolean");
+        }
+      }),
+      { numRuns: 100 },
+    );
+  });
+
+  it("real-mode adapter missing its key reports not_configured (mock fallback)", () => {
+    const statuses = getIntegrationStatuses({ BRIGHT_DATA_MODE: "real" });
+    const bright = statuses.find((s) => s.id === "bright_data");
+    expect(bright?.status).toBe("not_configured");
+    expect(bright?.configured).toBe(false);
+  });
+
+  it("configured is true for keyed real-mode adapters", () => {
+    const statuses = getIntegrationStatuses({ BRIGHT_DATA_MODE: "real", BRIGHT_DATA_API_KEY: "secret-value-123" });
+    const bright = statuses.find((s) => s.id === "bright_data");
+    expect(bright?.configured).toBe(true);
+    expect(bright?.status).toBe("live");
+  });
+});
