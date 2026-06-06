@@ -17,7 +17,6 @@ function isAcceptable(value: string): boolean {
   if (value.length > 2048) return false;
   if (!/^https?:\/\//i.test(value)) return false;
   try {
-    // eslint-disable-next-line no-new
     new URL(value);
     return true;
   } catch {

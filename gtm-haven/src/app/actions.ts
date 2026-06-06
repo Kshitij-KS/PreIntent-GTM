@@ -17,7 +17,6 @@ import { runBrightDataSweep } from "@/lib/integrations/bright-data";
 import { executeThresholdDelivery } from "@/lib/integrations/delivery";
 import { transcribeAudioSignal } from "@/lib/integrations/speechmatics";
 import { buildProfileFromSignals } from "@/lib/profile-from-signals";
-import { computeUrgency } from "@/lib/convergence";
 import { fetchWithTimeout, validateExternal } from "@/lib/security/response-validator";
 import { painClassificationSchema } from "@/lib/security/schemas";
 import { newCorrelationId } from "@/lib/security/correlation";

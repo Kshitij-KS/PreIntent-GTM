@@ -102,6 +102,26 @@ describe("cognee load discards invalid data safely", () => {
     localStorage.setItem(COGNEE_STORAGE_KEY, JSON.stringify(oversized));
     expect(loadProfile("acct-0")).toBeNull();
   });
+
+  it("loads a collection of exactly 10,000 valid records (boundary)", () => {
+    const minimal = (account: string): AccountIntelligenceProfile => ({
+      account,
+      industry: "x",
+      employees: 1,
+      crmStage: "x",
+      lastUpdated: new Date().toISOString(),
+      void: { signals: [], subScore: 0 },
+      compliance: { signals: [], subScore: 0 },
+      pain: { signals: [], subScore: 0 },
+      convergenceScore: 0,
+      urgency: "LOW",
+    });
+    const map: Record<string, AccountIntelligenceProfile> = {};
+    for (let i = 0; i < 10_000; i += 1) map[`acct-${i}`] = minimal(`acct-${i}`);
+    localStorage.setItem(COGNEE_STORAGE_KEY, JSON.stringify(map));
+    expect(loadProfile("acct-0")).not.toBeNull();
+    expect(loadProfile("acct-9999")).not.toBeNull();
+  });
 });
 
 describe("cognee write persists only conformant records", () => {
