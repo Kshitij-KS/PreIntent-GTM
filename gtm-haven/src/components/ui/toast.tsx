@@ -275,7 +275,7 @@ export function createToastHelpers(addToast: (toast: Omit<Toast, "id">) => void)
     convergenceAlert: (account: string, score: number) =>
       addToast({
         title: `Convergence Alert: ${account}`,
-        message: `Score reached ${score}/100 — ALERT status triggered`,
+        message: `Score reached ${score}/100  -  ALERT status triggered`,
         type: "warning",
       }),
     

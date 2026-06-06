@@ -97,7 +97,7 @@ function ConvergenceGauge({ target = 87 }: { target?: number }) {
 // ─── Signal ticker (live-feel updates) ───────────────────────────────────────
 const TICKER_SIGNALS = [
   { engine: "void", company: "Stripe Atlas", event: "SMB pricing tier removed from /pricing", ago: "2m", color: "#ff5a52" },
-  { engine: "pain", company: "Acme FinTech", event: "r/fintech: 'evaluating alternatives — contract up in 60 days'", ago: "4m", color: "#24c038" },
+  { engine: "pain", company: "Acme FinTech", event: "r/fintech: 'evaluating alternatives  -  contract up in 60 days'", ago: "4m", color: "#24c038" },
   { engine: "compliance", company: "12 accounts", event: "PCI-DSS 4.0 enforcement in 87 days", ago: "6h", color: "#f0a000" },
   { engine: "void", company: "Carta", event: "Fund admin self-service tier deleted", ago: "44m", color: "#ff5a52" },
   { engine: "pain", company: "Nexus Healthcare", event: "G2: 'looking for Veeva alternatives for 2025 renewal'", ago: "3h", color: "#24c038" },
@@ -138,7 +138,7 @@ function SignalTicker() {
         fontSize: "12px",
         flexShrink: 0,
       }}>
-        {sig.engine === "void" ? "◉" : sig.engine === "compliance" ? "⚖" : "◎"}
+        {sig.engine === "void" ? "� - �" : sig.engine === "compliance" ? "⚖" : "� - �"}
       </div>
       <div style={{ flex: 1, minWidth: 0 }}>
         <div style={{ fontSize: "11px", color: sig.color, fontWeight: 600, letterSpacing: "0.06em" }}>{sig.company}</div>
@@ -437,7 +437,7 @@ export default function LandingPage() {
             marginBottom: "32px",
             letterSpacing: "0.05em",
           }}>
-            <span style={{ animation: "glow-pulse 2s infinite" }}>●</span>
+            <span style={{ animation: "glow-pulse 2s infinite" }}>� - �</span>
             Convergent GTM Intelligence · Live Signals
           </div>
 
@@ -467,7 +467,7 @@ export default function LandingPage() {
             margin: "0 auto 44px",
             lineHeight: 1.8,
           }}>
-            PreIntent triangulates competitor retreats, regulatory shockwaves, and community pain signals into high-confidence buying events — with AI-generated Intel Briefs delivered before any intent vendor knows the signal exists.
+            PreIntent triangulates competitor retreats, regulatory shockwaves, and community pain signals into high-confidence buying events  -  with AI-generated Intel Briefs delivered before any intent vendor knows the signal exists.
           </p>
 
           <div style={{ display: "flex", gap: "12px", justifyContent: "center", flexWrap: "wrap" }}>
@@ -490,7 +490,7 @@ export default function LandingPage() {
               onMouseEnter={(e) => { e.currentTarget.style.transform = "translateY(-2px)"; e.currentTarget.style.boxShadow = "0 16px 40px rgba(144,96,255,0.5)"; }}
               onMouseLeave={(e) => { e.currentTarget.style.transform = "none"; e.currentTarget.style.boxShadow = "0 8px 32px rgba(144,96,255,0.4)"; }}
             >
-              Start Free — Onboard in 3 minutes →
+              Start Free  -  Onboard in 3 minutes →
             </a>
             <a
               href="/demo"
@@ -511,7 +511,7 @@ export default function LandingPage() {
               onMouseEnter={(e) => { e.currentTarget.style.borderColor = C.conv; e.currentTarget.style.color = C.white; }}
               onMouseLeave={(e) => { e.currentTarget.style.borderColor = C.border; e.currentTarget.style.color = C.text; }}
             >
-              See Live Demo ↗
+              See Live Demo � - 
             </a>
           </div>
 
@@ -608,13 +608,13 @@ export default function LandingPage() {
               No single signal is enough.
             </h2>
             <p style={{ fontSize: "16px", color: C.muted, maxWidth: "520px", margin: "0 auto" }}>
-              PreIntent triangulates three distinct data streams into one definitive buying signal — and fires before any intent vendor even picks it up.
+              PreIntent triangulates three distinct data streams into one definitive buying signal  -  and fires before any intent vendor even picks it up.
             </p>
           </div>
 
           <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "20px" }}>
             <FeatureCard
-              icon="◉"
+              icon="� - �"
               color={C.void}
               title="Void Scanner"
               subtitle="COMPETITOR RETREATS"
@@ -638,7 +638,7 @@ export default function LandingPage() {
               ]}
             />
             <FeatureCard
-              icon="◎"
+              icon="� - �"
               color={C.pain}
               title="Pain Listener"
               subtitle="COMMUNITY BUYING SIGNALS"
@@ -686,7 +686,7 @@ export default function LandingPage() {
                 <HowStep
                   num={4}
                   title="Receive Intel Briefs when signals converge"
-                  desc="When all three signals converge on an account, you get an AI-generated Intel Brief with a suggested opening line — ready to send."
+                  desc="When all three signals converge on an account, you get an AI-generated Intel Brief with a suggested opening line  -  ready to send."
                   color={C.pain}
                 />
               </div>
@@ -695,7 +695,7 @@ export default function LandingPage() {
             <div style={{ background: C.bg, border: `1px solid ${C.border}`, borderRadius: "16px", padding: "28px" }}>
               <div style={{ fontSize: "11px", color: C.muted, marginBottom: "16px", letterSpacing: "0.08em" }}>INTEL BRIEF PREVIEW</div>
               <div style={{ fontSize: "12px", color: C.text, fontFamily: "'IBM Plex Mono', monospace", lineHeight: 1.9, whiteSpace: "pre-wrap" }}>
-{`WHY NOW — 3 CONVERGING SIGNALS
+{`WHY NOW  -  3 CONVERGING SIGNALS
 
 ① COMPETITOR RETREAT  [84/100]
 Stripe Atlas silently removed their SMB
@@ -716,7 +716,7 @@ Speechmatics confirms migration intent.
 ━━━━━━━━━━━━━━━━━━━━━━━
 SUGGESTED OPENING LINE
 
-"Hi [Name] — I noticed Stripe recently
+"Hi [Name]  -  I noticed Stripe recently
 restructured their plans, and with PCI-DSS
 enforcement coming in August..."`}
               </div>

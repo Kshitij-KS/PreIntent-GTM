@@ -322,7 +322,7 @@ export function ScanLoadingState({ step, totalSteps, messages }: { step: number;
               border: `1px solid ${i < step ? `${C.pain}30` : i === step ? `${C.conv}40` : `${C.dim}20`}`,
             }}
           >
-            {i < step ? "âœ“ " : i === step ? "â—Œ " : ""}
+            {i < step ? "âœ“ " : i === step ? "â - Œ " : ""}
             {msg}
           </motion.span>
         ))}

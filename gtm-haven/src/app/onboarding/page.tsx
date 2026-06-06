@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import OnboardingWizard from "@/components/onboarding/OnboardingWizard";
 
 export const metadata: Metadata = {
-  title: "Onboarding | PreIntent — Set Up Your Intelligence Workspace",
+  title: "Onboarding | PreIntent  -  Set Up Your Intelligence Workspace",
   description:
     "Tell PreIntent about your company and competitors. Our AI will build your GTM knowledge doc and configure your intelligence workspace.",
 };

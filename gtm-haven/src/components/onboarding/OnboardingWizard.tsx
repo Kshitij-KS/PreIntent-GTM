@@ -259,7 +259,7 @@ function MultiInput({
               onClick={() => onChange(value.filter((x) => x !== v))}
               style={{ background: "none", border: "none", color: C.muted, cursor: "pointer", padding: 0, fontSize: "14px", lineHeight: 1 }}
             >
-              ×
+              � - 
             </button>
           </span>
         ))}
@@ -299,7 +299,7 @@ function KnowledgeDocView({ doc, onProceed }: { doc: CompanyKnowledgeDoc; onProc
           <span style={{ fontSize: "20px" }}>✦</span>
           <div>
             <div style={{ fontSize: "14px", fontWeight: 700, color: C.white }}>
-              Company Knowledge Doc — {doc.companyName}
+              Company Knowledge Doc  -  {doc.companyName}
             </div>
             <div style={{ fontSize: "11px", color: C.muted, marginTop: "2px" }}>
               Generated {new Date(doc.generatedAt).toLocaleString()} · {doc.generatedBy === "ai_ml_api" ? "AI/ML API (live)" : "Intelligence Engine (mock)"}
@@ -567,7 +567,7 @@ function AIProcessingScreen({ companyName, onComplete }: { companyName: string; 
                 flexShrink: 0,
                 transition: "background 0.4s",
               }}>
-                {i < step ? "✓" : i === step ? "◌" : ""}
+                {i < step ? "✓" : i === step ? "� - �" : ""}
               </div>
               <span style={{ fontSize: "13px", color: i < step ? C.pain : i === step ? C.white : C.muted, textAlign: "left" }}>
                 {s}

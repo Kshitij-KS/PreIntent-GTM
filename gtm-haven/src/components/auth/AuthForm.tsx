@@ -262,7 +262,7 @@ export default function AuthForm({ onSuccess, initialTab = "signin" }: AuthFormP
           borderRadius: "6px", fontSize: "10px", color: "#4a6070",
           textAlign: "center", lineHeight: 1.7, letterSpacing: "0.02em",
         }}>
-          Demo mode — any email & password works.{" "}
+          Demo mode  -  any email & password works.{" "}
           <span style={{ color: "#9060ff" }}>No data is stored.</span>
         </div>
       )}

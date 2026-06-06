@@ -374,7 +374,7 @@ export function ScanStep({ active, completed, children }: { active: boolean; com
           height: "10px",
         }}
       >
-        {completed ? "âœ“" : active ? "â—Œ" : ""}
+        {completed ? "âœ“" : active ? "â - Œ" : ""}
       </motion.span>
       {children}
     </motion.span>

@@ -442,7 +442,7 @@ export function DemoAutopilot({ isActive, onEnd, actions }: DemoAutopilotProps) 
     mountedRef.current = false;
   };
 
-  // Run script exactly once per mount — never restart on parent re-renders
+  // Run script exactly once per mount  -  never restart on parent re-renders
   useEffect(() => {
     if (mountedRef.current) return;
     mountedRef.current = true;

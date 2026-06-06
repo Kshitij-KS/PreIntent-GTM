@@ -29,13 +29,13 @@ function makeProvenance(
 
 // === Seed signals (exact from doc example + realistic extensions) ===
 
-// VOID SCANNER — Competitor X (let's call the competitor "Zenith" for continuity with existing data feel, or "Competitor X" — use "Competitor X" in narrative, "Zenith" as the tracked name in UI if needed)
+// VOID SCANNER  -  Competitor X (let's call the competitor "Zenith" for continuity with existing data feel, or "Competitor X"  -  use "Competitor X" in narrative, "Zenith" as the tracked name in UI if needed)
 export const voidPricingRemoval: EngineSignal = {
   id: "void-zenith-smb-tier-2025-06-02",
   engine: "void",
   title: "Competitor X removed SMB pricing tier",
   description:
-    "Pricing page previously listed four tiers (Free, SMB, Pro, Enterprise). Now only three — SMB tier and its $99/mo plan are gone. All existing SMB customers orphaned with no clear upgrade path.",
+    "Pricing page previously listed four tiers (Free, SMB, Pro, Enterprise). Now only three  -  SMB tier and its $99/mo plan are gone. All existing SMB customers orphaned with no clear upgrade path.",
   eventTime: "2025-06-02T08:00:00.000Z",
   subScore: 84,
   confidence: 0.96,
@@ -53,13 +53,13 @@ export const voidPricingRemoval: EngineSignal = {
   },
 };
 
-// COMPLIANCE RADAR — PCI-DSS 4.0
+// COMPLIANCE RADAR  -  PCI-DSS 4.0
 export const compliancePciDss: EngineSignal = {
   id: "compliance-pci-dss-4-2025-05-28",
   engine: "compliance",
   title: "PCI-DSS 4.0 enforcement begins August 31 (87 days)",
   description:
-    "New mandatory controls published. Acme processes card payments (confirmed via recent job postings for 'Payments Infrastructure'). No public compliance blog post, no compliance hiring detected — they are behind.",
+    "New mandatory controls published. Acme processes card payments (confirmed via recent job postings for 'Payments Infrastructure'). No public compliance blog post, no compliance hiring detected  -  they are behind.",
   eventTime: "2025-05-28T10:00:00.000Z",
   subScore: 71,
   confidence: 0.89,
@@ -77,13 +77,13 @@ export const compliancePciDss: EngineSignal = {
   },
 };
 
-// PAIN LISTENER — r/fintech post + Speechmatics
+// PAIN LISTENER  -  r/fintech post + Speechmatics
 export const painRFintechPost: EngineSignal = {
   id: "pain-acme-rfintech-2025-06-01",
   engine: "pain",
   title: "Head of Payments Infrastructure at Acme actively evaluating alternatives",
   description:
-    "\"Our [Competitor X] contract is up in 60 days and we're furious with the recent pricing changes and lack of SMB support. Anyone tried [Your Product] or alternatives?\" — 34 upvotes, multiple replies from practitioners.",
+    "\"Our [Competitor X] contract is up in 60 days and we're furious with the recent pricing changes and lack of SMB support. Anyone tried [Your Product] or alternatives?\"  -  34 upvotes, multiple replies from practitioners.",
   eventTime: "2025-06-01T19:45:00.000Z",
   subScore: 91,
   confidence: 0.93,
@@ -108,7 +108,7 @@ export const painPodcastTranscript: EngineSignal = {
   engine: "pain",
   title: "Same executive voiced frustration on industry podcast two weeks earlier",
   description:
-    "Podcast: 'Payments Unfiltered' Ep 47 — 'We're looking at our vendor relationships very carefully this year, especially after the recent changes at [Competitor X].' (Speaker: Head of Payments Infrastructure, Acme Corp)",
+    "Podcast: 'Payments Unfiltered' Ep 47  -  'We're looking at our vendor relationships very carefully this year, especially after the recent changes at [Competitor X].' (Speaker: Head of Payments Infrastructure, Acme Corp)",
   eventTime: "2025-05-20T11:00:00.000Z",
   subScore: 67,
   confidence: 0.81,
@@ -134,7 +134,7 @@ export function arriveSignal(
   engine: EngineType,
 ): AccountIntelligenceProfile {
   // For demo determinism, we drive the sub-score from the signal itself on first arrival.
-  // Subsequent arrivals can average or take max — here we just set to the signal's subScore for the narrative beats.
+  // Subsequent arrivals can average or take max  -  here we just set to the signal's subScore for the narrative beats.
   const profile = updateProfileWithSignal(account, engine, signal, signal.subScore);
   return profile;
 }
@@ -147,7 +147,7 @@ export function getAcmeSeedProfile(): AccountIntelligenceProfile {
   if (existing.void.signals.length > 0 || existing.compliance.signals.length > 0) {
     return existing;
   }
-  return existing; // empty seed is fine — stepper will populate
+  return existing; // empty seed is fine  -  stepper will populate
 }
 
 export function resetDemoProfile(account = "Acme Corp") {
@@ -167,7 +167,7 @@ export function generateMockIntelBrief(profile: AccountIntelligenceProfile): Int
     id: `brief-${profile.account.toLowerCase().replace(/\s+/g, "-")}-${Date.now()}`,
     account: profile.account,
     convergenceScore: profile.convergenceScore,
-    urgency: profile.urgency === "CRITICAL" ? "CRITICAL — act today" : `${profile.urgency} — act within 5 days`,
+    urgency: profile.urgency === "CRITICAL" ? "CRITICAL  -  act today" : `${profile.urgency}  -  act within 5 days`,
     generatedAt: now,
     generatedBy: "mock",
 
@@ -180,7 +180,7 @@ export function generateMockIntelBrief(profile: AccountIntelligenceProfile): Int
       {
         engine: "compliance",
         subScore: profile.compliance.subScore,
-        narrative: `PCI-DSS 4.0 enforcement begins Aug 31 (87 days). ${profile.account} processes card payments (confirmed via job postings). No compliance blog post, no compliance hiring detected — they are behind. Your product covers 4 of the 6 new mandatory controls.`,
+        narrative: `PCI-DSS 4.0 enforcement begins Aug 31 (87 days). ${profile.account} processes card payments (confirmed via job postings). No compliance blog post, no compliance hiring detected  -  they are behind. Your product covers 4 of the 6 new mandatory controls.`,
       },
       {
         engine: "pain",
@@ -190,7 +190,7 @@ export function generateMockIntelBrief(profile: AccountIntelligenceProfile): Int
     ],
 
     suggestedOpeningLine:
-      `Hi [Name] — I noticed [Competitor X] made some changes to their plans recently, and with PCI-DSS 4.0 coming in August, I thought the timing might be worth a conversation. We've helped three payments companies your size get compliant without replacing their whole stack...`,
+      `Hi [Name]  -  I noticed [Competitor X] made some changes to their plans recently, and with PCI-DSS 4.0 coming in August, I thought the timing might be worth a conversation. We've helped three payments companies your size get compliant without replacing their whole stack...`,
 
     accountContext: {
       industry: profile.industry,
@@ -203,7 +203,7 @@ export function generateMockIntelBrief(profile: AccountIntelligenceProfile): Int
     recommendedActions: [
       "Create HubSpot lead with full signal breakdown",
       "Send personalized Slack alert to assigned AE with brief attached",
-      "Add task: 'Call within 48h — 87/100 convergence, active evaluation signal'",
+      "Add task: 'Call within 48h  -  87/100 convergence, active evaluation signal'",
     ],
   };
 }

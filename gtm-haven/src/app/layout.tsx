@@ -15,7 +15,7 @@ export const metadata: Metadata = {
     template: "%s | PreIntent",
   },
   description:
-    "Three invisible forces. One unfair pipeline advantage. PreIntent triangulates competitor retreats (Void Atlas), regulatory shockwaves (Compliance Radar), and community pain signals (Pain Listener) into high-confidence buying events with AI-generated Intel Briefs — before any intent vendor knows.",
+    "Three invisible forces. One unfair pipeline advantage. PreIntent triangulates competitor retreats (Void Atlas), regulatory shockwaves (Compliance Radar), and community pain signals (Pain Listener) into high-confidence buying events with AI-generated Intel Briefs  -  before any intent vendor knows.",
   keywords: [
     "GTM intelligence",
     "competitor monitoring",

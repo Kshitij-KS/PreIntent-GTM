@@ -1,7 +1,7 @@
 "use client";
 
 /**
- * /dashboard — Authenticated intelligence workspace.
+ * /dashboard  -  Authenticated intelligence workspace.
  *
  * Loads:
  *  1. Supabase auth session (or mock cookie in dev)
@@ -14,7 +14,7 @@ import { useRouter } from "next/navigation";
 import { ToastProvider } from "@/components/ui/toast";
 import type { CompanyKnowledgeDoc } from "@/lib/company-knowledge";
 
-// Loading screen — matches app design language
+// Loading screen  -  matches app design language
 function DashboardLoading() {
   return (
     <div style={{
@@ -147,7 +147,7 @@ export default function DashboardPage() {
                 } catch { /* non-fatal */ }
               }
             } else {
-              // No org yet — try localStorage cache
+              // No org yet  -  try localStorage cache
               try {
                 const cached = localStorage.getItem("preintent_company_kdoc");
                 if (cached) {

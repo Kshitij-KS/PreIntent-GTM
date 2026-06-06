@@ -1,14 +1,14 @@
 "use client";
 
 /**
- * RealDashboard — the authenticated intelligence workspace.
+ * RealDashboard  -  the authenticated intelligence workspace.
  *
  * This is the production version of DemoDashboard, wired to:
- *   • /api/sweep      — runs live 3-engine scan (BrightData + AI/ML + Featherless + Speechmatics)
- *   • /api/health     — reads real integration status from env
- *   • /app/actions    — generateRealIntelBrief (AI/ML API or mock)
- *   • localStorage    — persists scanned accounts between sessions (Cognee MVP layer)
- *   • Supabase        — reads company knowledge doc stored during onboarding
+ *   • /api/sweep       -  runs live 3-engine scan (BrightData + AI/ML + Featherless + Speechmatics)
+ *   • /api/health      -  reads real integration status from env
+ *   • /app/actions     -  generateRealIntelBrief (AI/ML API or mock)
+ *   • localStorage     -  persists scanned accounts between sessions (Cognee MVP layer)
+ *   • Supabase         -  reads company knowledge doc stored during onboarding
  *
  * Company context: loaded from localStorage `preintent_company_kdoc` (set by onboarding
  * wizard + Supabase sync in dashboard/page.tsx).
@@ -141,14 +141,14 @@ const Icon = {
 // ─── SCAN STEPS ───────────────────────────────────────────────────────────────
 const SCAN_STEPS = [
   { msg: "Initializing BrightData MCP Server...", tag: "BrightData", pct: 10 },
-  { msg: "Void Scanner — crawling competitor pricing pages...", tag: "BrightData", pct: 22 },
-  { msg: "Compliance Radar — scanning regulatory RSS feeds...", tag: "BrightData", pct: 35 },
-  { msg: "Pain Listener — accessing community forums...", tag: "BrightData", pct: 47 },
-  { msg: "Speechmatics — transcribing podcast audio signals...", tag: "Speechmatics", pct: 57 },
-  { msg: "Featherless AI — classifying pain signals (Mistral-7B)...", tag: "Featherless AI", pct: 68 },
-  { msg: "AI/ML API — computing convergence vectors...", tag: "AI/ML API", pct: 80 },
-  { msg: "Cognee — updating account intelligence profiles...", tag: "Cognee", pct: 90 },
-  { msg: "TriggerWare — routing alert (threshold check)...", tag: "TriggerWare", pct: 97 },
+  { msg: "Void Scanner  -  crawling competitor pricing pages...", tag: "BrightData", pct: 22 },
+  { msg: "Compliance Radar  -  scanning regulatory RSS feeds...", tag: "BrightData", pct: 35 },
+  { msg: "Pain Listener  -  accessing community forums...", tag: "BrightData", pct: 47 },
+  { msg: "Speechmatics  -  transcribing podcast audio signals...", tag: "Speechmatics", pct: 57 },
+  { msg: "Featherless AI  -  classifying pain signals (Mistral-7B)...", tag: "Featherless AI", pct: 68 },
+  { msg: "AI/ML API  -  computing convergence vectors...", tag: "AI/ML API", pct: 80 },
+  { msg: "Cognee  -  updating account intelligence profiles...", tag: "Cognee", pct: 90 },
+  { msg: "TriggerWare  -  routing alert (threshold check)...", tag: "TriggerWare", pct: 97 },
 ];
 
 const sponsorColors: Record<string, string> = {
@@ -270,11 +270,11 @@ function sweepResultToAccount(
     overallConfidence: result.convergenceScore / 100,
     status: urgencyToStatus(result.urgency),
     voidEvent: result.voidEvent || account.voidEvent,
-    voidEvidence: mkEvidence("Void Scanner — Live", result.voidEvent || account.voidEvent),
+    voidEvidence: mkEvidence("Void Scanner  -  Live", result.voidEvent || account.voidEvent),
     complianceEvent: result.complianceEvent || account.complianceEvent,
-    complianceEvidence: mkEvidence("Compliance Radar — Live", result.complianceEvent || account.complianceEvent),
+    complianceEvidence: mkEvidence("Compliance Radar  -  Live", result.complianceEvent || account.complianceEvent),
     painEvent: result.painEvent || account.painEvent,
-    painEvidence: mkEvidence("Pain Listener — Live", result.painEvent || account.painEvent),
+    painEvidence: mkEvidence("Pain Listener  -  Live", result.painEvent || account.painEvent),
     lastUpdated: now,
   };
 }
@@ -455,7 +455,7 @@ const ScanPanel = ({ isScanning, step, done, onScan, result }: {
           }}
         >
           {isScanning
-            ? <span style={{ display: "inline-block", animation: "spin 0.9s linear infinite" }}>◌</span>
+            ? <span style={{ display: "inline-block", animation: "spin 0.9s linear infinite" }}>� - �</span>
             : <Icon.Play />
           }
           {isScanning ? "SCANNING..." : "RUN FULL SCAN"}
@@ -512,7 +512,7 @@ const ScanPanel = ({ isScanning, step, done, onScan, result }: {
                   opacity: i <= step ? 1 : 0.25, transition: "opacity 0.3s",
                 }}>
                   <span style={{ fontSize: "9px", color: i < step ? C.pain : i === step ? C.conv : C.muted }}>
-                    {i < step ? "✓" : i === step ? "▷" : "○"}
+                    {i < step ? "✓" : i === step ? "▷" : "� - �"}
                   </span>
                   <span style={{ fontSize: "9px", color: C.muted }}>{s.tag}</span>
                 </div>
@@ -579,7 +579,7 @@ const AddAccountModal = ({
             <div style={{ fontSize: "14px", fontWeight: 700, color: C.white }}>Add Account to Monitor</div>
             <div style={{ fontSize: "11px", color: C.muted, marginTop: "3px" }}>Triggers a live sweep immediately</div>
           </div>
-          <button onClick={onClose} aria-label="Close modal" style={{ background: "none", border: "none", color: C.muted, cursor: "pointer", fontSize: "18px" }}>×</button>
+          <button onClick={onClose} aria-label="Close modal" style={{ background: "none", border: "none", color: C.muted, cursor: "pointer", fontSize: "18px" }}>� - </button>
         </div>
 
         <div style={{ display: "grid", gap: "16px" }}>
@@ -706,7 +706,7 @@ const CompetitorIntelPanel = ({ doc }: { doc: CompanyKnowledgeDoc }) => {
   const statusIcon = (s: string) => {
     if (s === "resolved") return { icon: "✓", color: C.pain };
     if (s === "ambiguous") return { icon: "~", color: C.compliance };
-    if (s === "mock") return { icon: "◎", color: C.conv };
+    if (s === "mock") return { icon: "� - �", color: C.conv };
     return { icon: "?", color: C.muted };
   };
 
@@ -723,7 +723,7 @@ const CompetitorIntelPanel = ({ doc }: { doc: CompanyKnowledgeDoc }) => {
             COMPETITOR INTELLIGENCE
           </div>
           {isResolving && (
-            <span style={{ fontSize: "9px", color: C.conv }}>◌ Resolving...</span>
+            <span style={{ fontSize: "9px", color: C.conv }}>� - � Resolving...</span>
           )}
           {resolutionStatus === "resolved" && !isResolving && (
             <span style={{
@@ -735,7 +735,7 @@ const CompetitorIntelPanel = ({ doc }: { doc: CompanyKnowledgeDoc }) => {
             <span style={{
               fontSize: "8px", padding: "1px 6px", borderRadius: "3px",
               background: `${C.void}15`, color: C.void, border: `1px solid ${C.void}30`,
-            }}>✗ FAILED</span>
+            }}>� -  FAILED</span>
           )}
         </div>
         <button
@@ -749,7 +749,7 @@ const CompetitorIntelPanel = ({ doc }: { doc: CompanyKnowledgeDoc }) => {
             fontFamily: "inherit", letterSpacing: "0.06em", transition: "all 0.15s",
           }}
         >
-          {isResolving ? "◌" : "↻"} {isResolving ? "Resolving" : "Re-resolve"}
+          {isResolving ? "� - �" : "↻"} {isResolving ? "Resolving" : "Re-resolve"}
         </button>
       </div>
 
@@ -794,7 +794,7 @@ const CompetitorIntelPanel = ({ doc }: { doc: CompanyKnowledgeDoc }) => {
                         onMouseEnter={(e) => (e.currentTarget.style.textDecoration = "underline")}
                         onMouseLeave={(e) => (e.currentTarget.style.textDecoration = "none")}
                       >
-                        ↗ {comp.website.replace(/^https?:\/\//, "")}
+                        � -  {comp.website.replace(/^https?:\/\//, "")}
                       </a>
                     )}
                     {comp.pricingUrl && comp.pricingUrl !== comp.website && (
@@ -836,7 +836,7 @@ const CompetitorIntelPanel = ({ doc }: { doc: CompanyKnowledgeDoc }) => {
               display: "flex", alignItems: "center", gap: "10px",
             }}>
               {isResolving
-                ? <span style={{ fontSize: "9px", color: C.conv, flexShrink: 0 }}>◌</span>
+                ? <span style={{ fontSize: "9px", color: C.conv, flexShrink: 0 }}>� - �</span>
                 : <span style={{ fontSize: "9px", color: C.muted, flexShrink: 0 }}>▸</span>
               }
               <span style={{ fontSize: "12px", color: isResolving ? C.muted : C.void }}>{c}</span>
@@ -881,7 +881,7 @@ const KnowledgeView = ({ doc }: { doc: CompanyKnowledgeDoc | null }) => {
           <span style={{ fontSize: "18px" }}>✦</span>
           <div>
             <div style={{ fontSize: "13px", fontWeight: 700, color: C.white }}>
-              Company Knowledge Doc — {doc.companyName}
+              Company Knowledge Doc  -  {doc.companyName}
             </div>
             <div style={{ fontSize: "10px", color: C.muted, marginTop: "2px" }}>
               Generated {new Date(doc.generatedAt).toLocaleString()} · {doc.generatedBy === "ai_ml_api" ? "AI/ML API (live)" : "Intelligence Engine (mock)"}
@@ -1177,7 +1177,7 @@ const IntelView = ({
       <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: "7px", padding: "12px 14px" }}>
         <div style={{ fontSize: "8px", color: C.muted, letterSpacing: "0.1em", marginBottom: "8px" }}>NEXT ACTION</div>
         <div style={{ fontSize: "10px", color: C.white, lineHeight: 1.6 }}>
-          {account.status === "ALERT" ? `Reach out to ${account.contact.name} — urgency window is open now` : "Monitor for 14 more days before outreach"}
+          {account.status === "ALERT" ? `Reach out to ${account.contact.name}  -  urgency window is open now` : "Monitor for 14 more days before outreach"}
         </div>
         <button
           onClick={onGenerateBrief}
@@ -1211,7 +1211,7 @@ const BriefView = ({
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} style={{ padding: "18px" }}>
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "14px" }}>
         <div>
-          <div style={{ fontSize: "11px", color: C.white, fontWeight: 600 }}>Intel Brief — {account.name}</div>
+          <div style={{ fontSize: "11px", color: C.white, fontWeight: 600 }}>Intel Brief  -  {account.name}</div>
           <div style={{ fontSize: "9px", color: C.muted, marginTop: "2px" }}>AI-generated convergence analysis</div>
         </div>
         <div style={{ display: "flex", gap: "8px" }}>
@@ -1237,7 +1237,7 @@ const BriefView = ({
               boxShadow: `0 4px 14px ${C.conv}30`,
             }}
           >
-            {loading ? <span style={{ animation: "spin 0.8s linear infinite" }}>◌</span> : "✦"}
+            {loading ? <span style={{ animation: "spin 0.8s linear infinite" }}>� - �</span> : "✦"}
             {loading ? "Generating..." : "Generate Brief"}
           </button>
         </div>
@@ -1362,7 +1362,7 @@ const SettingsView = ({
                 border: `1px solid ${e.live ? C.pain : C.muted}28`,
                 whiteSpace: "nowrap",
               }}>
-                {e.live ? "● LIVE" : "○ MOCK"}
+                {e.live ? "� - � LIVE" : "� - � MOCK"}
               </span>
             </div>
           ))}
@@ -1486,7 +1486,7 @@ export default function RealDashboard({
               // Check setup status from knowledge doc
               if (Array.isArray(doc.seedAccounts) && doc.seedAccounts.length > 0) {
                 setSetupComplete(true);
-                // Convert seed accounts — pass doc so resolved URLs can be used
+                // Convert seed accounts  -  pass doc so resolved URLs can be used
                 const seedPremium = doc.seedAccounts.map((s, i) => seedAccountToPremium(s, i, doc));
                 if (seedPremium.length > 0) {
                   setAccounts((prev) => {
@@ -1582,7 +1582,7 @@ export default function RealDashboard({
     await handleSignOutClient();
   };
 
-  // ── LIVE SWEEP — calls real /api/sweep ─────────────────────────────────────
+  // ── LIVE SWEEP  -  calls real /api/sweep ─────────────────────────────────────
   const runScan = useCallback(async () => {
     if (isScanning) return;
     setIsScanning(true);
@@ -1694,8 +1694,8 @@ export default function RealDashboard({
     setScanDone(true);
     setScanResult(
       highAlerts > 0
-        ? `${highAlerts} account${highAlerts > 1 ? "s" : ""} at threshold — TriggerWare fired${slackSent ? " — Slack delivered" : ""}${hubspotSent ? " — HubSpot updated" : ""}`
-        : `Scan complete — ${accounts.length} accounts updated`
+        ? `${highAlerts} account${highAlerts > 1 ? "s" : ""} at threshold  -  TriggerWare fired${slackSent ? "  -  Slack delivered" : ""}${hubspotSent ? "  -  HubSpot updated" : ""}`
+        : `Scan complete  -  ${accounts.length} accounts updated`
     );
   }, [isScanning, accounts, knowledgeDoc, toast]);
 
@@ -1726,19 +1726,19 @@ export default function RealDashboard({
       voidEvidence: {
         title: "Awaiting Scan", type: "document",
         source: "Run a sweep to populate evidence", capturedAt: new Date().toISOString(),
-        details: ["Account just added — run a scan to get live signals"],
+        details: ["Account just added  -  run a scan to get live signals"],
       },
       complianceEvent: "Regulatory window analysis pending",
       complianceEvidence: {
         title: "Awaiting Scan", type: "document",
         source: "Run a sweep to populate evidence", capturedAt: new Date().toISOString(),
-        details: ["Account just added — run a scan to get live signals"],
+        details: ["Account just added  -  run a scan to get live signals"],
       },
       painEvent: "Community signal analysis pending",
       painEvidence: {
         title: "Awaiting Scan", type: "document",
         source: "Run a sweep to populate evidence", capturedAt: new Date().toISOString(),
-        details: ["Account just added — run a scan to get live signals"],
+        details: ["Account just added  -  run a scan to get live signals"],
       },
       lastUpdated: new Date().toISOString(),
     };
@@ -1790,7 +1790,7 @@ export default function RealDashboard({
     }
   }, [accounts, toast]);
 
-  // ── GENERATE BRIEF — uses real AI/ML API ─────────────────────────────────
+  // ── GENERATE BRIEF  -  uses real AI/ML API ─────────────────────────────────
   const generateBrief = useCallback(async () => {
     const acc = selectedAccount;
     if (!acc) return;
@@ -1823,7 +1823,7 @@ export default function RealDashboard({
       };
 
       const realBrief = await generateRealIntelBrief(mockProfile as unknown as AccountIntelligenceProfile);
-      const formatted = `WHY NOW — 3 CONVERGING SIGNALS
+      const formatted = `WHY NOW  -  3 CONVERGING SIGNALS
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 ① COMPETITOR RETREAT  [${acc.voidScore}/100]  ${Math.round(acc.voidConfidence * 100)}% confidence
@@ -1842,7 +1842,7 @@ Detected: ${formatRelativeTime(acc.painEvidence?.capturedAt ?? acc.lastUpdated)}
 
 SUGGESTED OPENING LINE
 
-"${realBrief.suggestedOpeningLine || `Hi [Name] — I noticed ${acc.competitor} made some changes recently. Given that and the regulatory tailwinds, the timing feels right for a quick conversation.`}"
+"${realBrief.suggestedOpeningLine || `Hi [Name]  -  I noticed ${acc.competitor} made some changes recently. Given that and the regulatory tailwinds, the timing feels right for a quick conversation.`}"
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
@@ -1967,7 +1967,7 @@ ${realBrief.whyNow?.map((w, i) => `[${["VOID", "COMPLIANCE", "PAIN"][i] || w.eng
             </span>
             <span style={{ fontSize: "10px", color: C.text }}>
               <span style={{ color: C.white }}>{dynamicTickerSignals[tickerIdx]?.company}</span>
-              {" — "}
+              {"  -  "}
               {dynamicTickerSignals[tickerIdx]?.event}
             </span>
             <span style={{ marginLeft: "auto", fontSize: "9px", color: C.muted, flexShrink: 0 }}>
@@ -2239,7 +2239,7 @@ ${realBrief.whyNow?.map((w, i) => `[${["VOID", "COMPLIANCE", "PAIN"][i] || w.eng
                 }}
               >
                 {a.name}
-                {a.status === "ALERT" && <span style={{ marginLeft: "5px", color: C.void, fontSize: "8px" }}>●</span>}
+                {a.status === "ALERT" && <span style={{ marginLeft: "5px", color: C.void, fontSize: "8px" }}>� - �</span>}
               </button>
             ))}
           </div>

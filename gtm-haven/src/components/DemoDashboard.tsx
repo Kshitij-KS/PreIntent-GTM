@@ -128,14 +128,14 @@ const C = {
 // ─── SCAN STEPS ───────────────────────────────────────────────────────────────
 const SCAN_STEPS = [
   { msg: "Initializing BrightData MCP Server...", tag: "BrightData", pct: 10 },
-  { msg: "Void Scanner — crawling competitor pricing pages...", tag: "BrightData", pct: 22 },
-  { msg: "Compliance Radar — scanning regulatory RSS feeds...", tag: "BrightData", pct: 35 },
-  { msg: "Pain Listener — accessing community forums...", tag: "BrightData", pct: 47 },
-  { msg: "Speechmatics — transcribing podcast audio signals...", tag: "Speechmatics", pct: 57 },
-  { msg: "Featherless AI — classifying pain signals (Mistral-7B)...", tag: "Featherless AI", pct: 68 },
-  { msg: "AI/ML API — computing convergence vectors...", tag: "AI/ML API", pct: 80 },
-  { msg: "Cognee — updating account intelligence profiles...", tag: "Cognee", pct: 90 },
-  { msg: "TriggerWare — routing alert for Brex (threshold crossed)...", tag: "TriggerWare", pct: 97 },
+  { msg: "Void Scanner  -  crawling competitor pricing pages...", tag: "BrightData", pct: 22 },
+  { msg: "Compliance Radar  -  scanning regulatory RSS feeds...", tag: "BrightData", pct: 35 },
+  { msg: "Pain Listener  -  accessing community forums...", tag: "BrightData", pct: 47 },
+  { msg: "Speechmatics  -  transcribing podcast audio signals...", tag: "Speechmatics", pct: 57 },
+  { msg: "Featherless AI  -  classifying pain signals (Mistral-7B)...", tag: "Featherless AI", pct: 68 },
+  { msg: "AI/ML API  -  computing convergence vectors...", tag: "AI/ML API", pct: 80 },
+  { msg: "Cognee  -  updating account intelligence profiles...", tag: "Cognee", pct: 90 },
+  { msg: "TriggerWare  -  routing alert for Brex (threshold crossed)...", tag: "TriggerWare", pct: 97 },
 ];
 
 const sponsorColors: Record<string, string> = {
@@ -319,7 +319,7 @@ const ScanPanel = ({ isScanning, step, done, onScan, result }: {
           }}
         >
           {isScanning
-            ? <span style={{ display: "inline-block", animation: "spin 0.9s linear infinite" }}>◌</span>
+            ? <span style={{ display: "inline-block", animation: "spin 0.9s linear infinite" }}>� - �</span>
             : <Icon.Play />
           }
           {isScanning ? "SCANNING..." : "RUN FULL SCAN"}
@@ -377,7 +377,7 @@ const ScanPanel = ({ isScanning, step, done, onScan, result }: {
                   opacity: i <= step ? 1 : 0.25, transition: "opacity 0.3s",
                 }}>
                   <span style={{ fontSize: "9px", color: i < step ? C.pain : i === step ? C.conv : C.muted }}>
-                    {i < step ? "✓" : i === step ? "▷" : "○"}
+                    {i < step ? "✓" : i === step ? "▷" : "� - �"}
                   </span>
                   <span style={{ fontSize: "9px", color: C.muted }}>{s.tag}</span>
                 </div>
@@ -393,10 +393,10 @@ const ScanPanel = ({ isScanning, step, done, onScan, result }: {
 // ─── SIGNAL TICKER ───────────────────────────────────────────────────────────
 const LIVE_SIGNALS = [
   { engine: "VOID",   company: "Brex",     event: "Stripe Atlas SMB fast-track tier silently removed", time: "3d", color: "#ff5a52" },
-  { engine: "PAIN",   company: "Notion",   event: "r/saas: 'HubSpot pricing opaque — evaluating alternatives'", time: "1d", color: "#24c038" },
-  { engine: "COMPL.", company: "Rippling", event: "SOC 2 Type II renewal window opens — 6 accounts affected", time: "6h", color: "#f0a000" },
+  { engine: "PAIN",   company: "Notion",   event: "r/saas: 'HubSpot pricing opaque  -  evaluating alternatives'", time: "1d", color: "#24c038" },
+  { engine: "COMPL.", company: "Rippling", event: "SOC 2 Type II renewal window opens  -  6 accounts affected", time: "6h", color: "#f0a000" },
   { engine: "VOID",   company: "Vercel",   event: "Datadog removed enterprise observability bundle", time: "2d", color: "#ff5a52" },
-  { engine: "PAIN",   company: "Mercury",  event: "CFO posted LinkedIn: 'fintech consolidation — open to demos'", time: "23m", color: "#24c038" },
+  { engine: "PAIN",   company: "Mercury",  event: "CFO posted LinkedIn: 'fintech consolidation  -  open to demos'", time: "23m", color: "#24c038" },
 ];
 
 // ─── SIGNALS VIEW ─────────────────────────────────────────────────────────────
@@ -596,7 +596,7 @@ const IntelView = ({
         <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: "7px", padding: "12px 14px" }}>
           <div style={{ fontSize: "8px", color: C.muted, letterSpacing: "0.1em", marginBottom: "8px" }}>NEXT ACTION</div>
           <div style={{ fontSize: "10px", color: C.white, lineHeight: 1.6 }}>
-            Reach out to {account.contact.name} — {account.status === "ALERT" ? "urgency window is open now" : "monitor for 14 more days before outreach"}
+            Reach out to {account.contact.name}  -  {account.status === "ALERT" ? "urgency window is open now" : "monitor for 14 more days before outreach"}
           </div>
         <button
           data-demo="generate-brief-btn"
@@ -631,7 +631,7 @@ const BriefView = ({
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} style={{ padding: "18px" }}>
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "14px" }}>
         <div>
-          <div style={{ fontSize: "11px", color: C.white, fontWeight: 600 }}>Intel Brief — {account.name}</div>
+          <div style={{ fontSize: "11px", color: C.white, fontWeight: 600 }}>Intel Brief  -  {account.name}</div>
           <div style={{ fontSize: "9px", color: C.muted, marginTop: "2px" }}>AI-generated convergence analysis</div>
         </div>
         <div style={{ display: "flex", gap: "8px" }}>
@@ -658,7 +658,7 @@ const BriefView = ({
             }}
           >
             {loading
-              ? <span style={{ animation: "spin 0.8s linear infinite" }}>◌</span>
+              ? <span style={{ animation: "spin 0.8s linear infinite" }}>� - �</span>
               : "✦"}
             {loading ? "Generating..." : "Generate Brief"}
           </button>
@@ -772,7 +772,7 @@ const SettingsView = ({
                 color: e.live ? C.pain : C.muted,
                 border: `1px solid ${e.live ? C.pain : C.muted}28`,
               }}>
-                {e.live ? "● LIVE" : "○ MOCK"}
+                {e.live ? "� - � LIVE" : "� - � MOCK"}
               </span>
             </div>
           ))}
@@ -794,7 +794,7 @@ const SettingsView = ({
         ))}
       </div>
 
-      {/* Env hint — hidden on public demo */}
+      {/* Env hint  -  hidden on public demo */}
       {!isDemoPage && (
         <div style={{
           background: `${C.conv}08`, border: `1px solid ${C.conv}20`, borderRadius: "7px",
@@ -939,7 +939,7 @@ export default function PreIntentDashboard({ demoMode = false }: { demoMode?: bo
           const newConv = Math.min(95, accounts[0].convergence + 5);
           setAccounts((prev) => prev.map((a, i) => i === 0 ? { ...a, convergence: newConv, status: "ALERT" as const } : a));
           setTriggerFired(true); setIsScanning(false); setScanDone(true);
-          setScanResult(`Brex at ${newConv}/100 — TriggerWare fired — Slack delivered`);
+          setScanResult(`Brex at ${newConv}/100  -  TriggerWare fired  -  Slack delivered`);
           toast.convergenceAlert("Brex", newConv);
           setTimeout(() => toast.triggerWareFired("Brex"), 900);
         }, 500);
@@ -978,7 +978,7 @@ export default function PreIntentDashboard({ demoMode = false }: { demoMode?: bo
         contact: selectedAccount.contact,
       };
       const realBrief = await generateRealIntelBrief(mockProfile as unknown as AccountIntelligenceProfile);
-      const formatted = `WHY NOW — 3 CONVERGING SIGNALS
+      const formatted = `WHY NOW  -  3 CONVERGING SIGNALS
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 ① COMPETITOR RETREAT  [${selectedAccount.voidScore}/100]  ${Math.round(selectedAccount.voidConfidence * 100)}% confidence
@@ -997,7 +997,7 @@ Detected: ${formatRelativeTime(selectedAccount.painEvidence?.capturedAt ?? selec
 
 SUGGESTED OPENING LINE
 
-"${realBrief.suggestedOpeningLine || `Hi [Name] — I noticed ${selectedAccount.competitor} made some changes recently. Given that and the regulatory tailwinds, the timing feels right for a quick conversation about how we've helped companies like ${selectedAccount.name}.`}"
+"${realBrief.suggestedOpeningLine || `Hi [Name]  -  I noticed ${selectedAccount.competitor} made some changes recently. Given that and the regulatory tailwinds, the timing feels right for a quick conversation about how we've helped companies like ${selectedAccount.name}.`}"
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
@@ -1082,7 +1082,7 @@ ACCOUNT CONTEXT
           </span>
           <span style={{ fontSize: "10px", color: C.text }}>
             <span style={{ color: C.white }}>{LIVE_SIGNALS[tickerIdx].company}</span>
-            {" — "}
+            {"  -  "}
             {LIVE_SIGNALS[tickerIdx].event}
           </span>
           <span style={{ marginLeft: "auto", fontSize: "9px", color: C.muted, flexShrink: 0 }}>
@@ -1329,7 +1329,7 @@ ACCOUNT CONTEXT
               >
                 {a.name}
                 {a.status === "ALERT" && (
-                  <span style={{ marginLeft: "5px", color: C.void, fontSize: "8px" }}>●</span>
+                  <span style={{ marginLeft: "5px", color: C.void, fontSize: "8px" }}>� - �</span>
                 )}
               </button>
             ))}

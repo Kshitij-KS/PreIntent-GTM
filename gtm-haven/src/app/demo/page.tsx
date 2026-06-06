@@ -3,9 +3,9 @@ import Link from "next/link";
 import DemoDashboard from "@/components/DemoDashboard";
 
 export const metadata: Metadata = {
-  title: "Live Demo | PreIntent — Convergent GTM Intelligence",
+  title: "Live Demo | PreIntent  -  Convergent GTM Intelligence",
   description:
-    "Try the full PreIntent dashboard — no sign-up required. See how we detect competitor retreats, regulatory signals, and community pain signals before anyone else.",
+    "Try the full PreIntent dashboard  -  no sign-up required. See how we detect competitor retreats, regulatory signals, and community pain signals before anyone else.",
 };
 
 export default function DemoPage() {
@@ -32,7 +32,7 @@ export default function DemoPage() {
             LIVE DEMO
           </span>
           <span style={{ fontSize: "10px", color: "#4a6070", letterSpacing: "0.04em" }}>
-            You&apos;re viewing a live demo with real signal data — no account required.
+            You&apos;re viewing a live demo with real signal data  -  no account required.
           </span>
         </div>
         <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
@@ -61,7 +61,7 @@ export default function DemoPage() {
         </div>
       </div>
 
-      {/* The actual dashboard — identical to authenticated experience */}
+      {/* The actual dashboard  -  identical to authenticated experience */}
       <DemoDashboard demoMode />
     </div>
   );

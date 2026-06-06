@@ -83,7 +83,7 @@ export function BriefSharing({ isOpen, onClose, accountName, briefContent, accou
   const linkedinHandle = account?.contact.linkedin ? account.contact.linkedin.split("/").pop() : contactName.toLowerCase().replace(/\s/g, "");
 
   const formatAsEmail = () => {
-    return `Subject: Intel Brief: ${accountName} — Convergence Alert (${score}/100)
+    return `Subject: Intel Brief: ${accountName}  -  Convergence Alert (${score}/100)
 
 Hi [AE Name],
 
@@ -93,7 +93,7 @@ ${briefContent.split("━━━━━━━━━━━━━━━━━━━�
 
 Full brief attached. Recommend outreach within 48 hours.
 
-—
+ - 
 PreIntent Intelligence Platform`;
   };
 
@@ -110,7 +110,7 @@ PreIntent Intelligence Platform`;
 • Active evaluation: ${painEvent.slice(0, 80)}
 
 *Suggested Opening:*
-> "Hi ${contactFirstName} — I noticed ${competitor} made some changes recently, and given the regulatory tailwinds, the timing feels right for a quick conversation..."
+> "Hi ${contactFirstName}  -  I noticed ${competitor} made some changes recently, and given the regulatory tailwinds, the timing feels right for a quick conversation..."
 
 *Next Steps:*
 1. Review full brief in PreIntent
@@ -472,13 +472,13 @@ Contact: ${contactTitle} (${contactName})${linkedinHandle ? `\nLinkedIn: linkedi
                       whileHover={{ scale: 1.01, backgroundColor: `${C.void}08` }}
                       whileTap={{ scale: 0.99 }}
                       onClick={() => {
-                        // Open print dialog — browser will render as PDF
+                        // Open print dialog  -  browser will render as PDF
                         const win = window.open("", "_blank");
                         if (win) {
-                          win.document.write(`<html><head><title>PreIntent Intel Brief — ${accountName}</title>
+                          win.document.write(`<html><head><title>PreIntent Intel Brief  -  ${accountName}</title>
                             <style>body{font-family:monospace;padding:40px;max-width:800px;margin:auto;color:#111;line-height:1.7;}
                             h1{font-size:16px;margin-bottom:4px;}p{font-size:13px;}pre{white-space:pre-wrap;font-size:12px;}</style></head>
-                            <body><h1>PreIntent — Intel Brief</h1><p><strong>${accountName}</strong> · Convergence ${score}/100 · ${status}</p>
+                            <body><h1>PreIntent  -  Intel Brief</h1><p><strong>${accountName}</strong> · Convergence ${score}/100 · ${status}</p>
                             <hr/><pre>${briefContent}</pre></body></html>`);
                           win.document.close();
                           win.print();
@@ -495,7 +495,7 @@ Contact: ${contactTitle} (${contactName})${linkedinHandle ? `\nLinkedIn: linkedi
                       </div>
                       <div style={{ flex: 1 }}>
                         <div style={{ fontSize: "12px", fontWeight: 500, color: C.text, marginBottom: "2px" }}>Export as PDF</div>
-                        <div style={{ fontSize: "10px", color: C.muted }}>Opens print dialog — save as PDF from browser</div>
+                        <div style={{ fontSize: "10px", color: C.muted }}>Opens print dialog  -  save as PDF from browser</div>
                       </div>
                       <Download size={18} color={C.muted} />
                     </motion.button>
