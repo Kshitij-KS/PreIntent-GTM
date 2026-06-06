@@ -1,13 +1,11 @@
-import { NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
-import { runLiveSweep } from '@/app/actions';
-
-async function updateOrgStatus(orgId: string, status: string, supabase: any) {
-  return await supabase
-    .from('organizations')
-    .update({ status })
-    .eq('id', orgId);
-}
+import { NextResponse } from "next/server";
+import { runLiveSweep, type LiveSweepResult } from "@/app/actions";
+import { withGuards } from "@/lib/security/with-guards";
+import {
+  onboardingProfileBodySchema,
+  type OnboardingProfileBody,
+} from "@/lib/security/schemas";
+import { logger } from "@/lib/security/logger";
 
 /**
  * POST /api/onboarding/profile — Mutating_Endpoint.
@@ -60,51 +58,47 @@ export const POST = withGuards<OnboardingProfileBody>(
     // Run sweeps sequentially to avoid external rate limits.
     for (const account of seedAccounts) {
       try {
-        console.log(`[InitialSweep] Sweeping account: ${account.name}`);
-        
-        // Execute the full live sweep pipeline (BrightData -> AI -> Featherless -> Speechmatics)
-        const result = await runLiveSweep({
+        const result: LiveSweepResult = await runLiveSweep({
           account: account.name,
-          industry: 'Unknown',
-          employees: 'Unknown',
-          competitor: 'Unknown',
+          industry: "Unknown",
+          employees: "unknown",
+          competitor: "Unknown",
+          competitorPricingUrl: account.website,
         });
 
         if (result.success) {
-          sweepResults.push({
+          results.push({
             account: account.name,
-            ...result,
+            convergenceScore: result.profile.convergenceScore,
+            urgency: result.profile.urgency,
           });
 
-          // Persist Account Profile
-          if (result.profile) {
-            await supabase.from('account_profiles').insert({
+          if (supabase) {
+            await supabase.from("account_profiles").insert({
               org_id: orgId,
               account_name: account.name,
-              website: account.website,
+              website: account.website ?? null,
               convergence_score: result.profile.convergenceScore,
               urgency_level: result.profile.urgency,
               last_scanned: new Date().toISOString(),
               raw_data: result.profile,
             });
 
-          // Persist Signals
-          if (result.signals && result.signals.length > 0) {
-            const signalsToInsert = result.signals.map((signal: any) => ({
-              org_id: orgId,
-              account_name: account.name,
-              signal_type: signal.engine,
-              confidence: signal.confidence,
-              description: signal.description,
-              source_url: signal.provenance?.url || '',
-              detected_at: new Date().toISOString(),
-            }));
-            await supabase.from('engine_signals').insert(signalsToInsert);
-          }
+            if (result.signals.length > 0) {
+              await supabase.from("engine_signals").insert(
+                result.signals.map((signal) => ({
+                  org_id: orgId,
+                  account_name: account.name,
+                  signal_type: signal.engine,
+                  confidence: signal.confidence,
+                  description: signal.description,
+                  source_url: signal.provenance.url ?? null,
+                  detected_at: new Date().toISOString(),
+                })),
+              );
+            }
 
-          // Persist Convergence Run
-          if (result.profile) {
-            await supabase.from('convergence_runs').insert({
+            await supabase.from("convergence_runs").insert({
               org_id: orgId,
               account_name: account.name,
               overall_score: result.profile.convergenceScore,
@@ -114,15 +108,15 @@ export const POST = withGuards<OnboardingProfileBody>(
               run_date: new Date().toISOString(),
             });
 
-          // Persist Intel Brief
-          if (result.brief) {
-            await supabase.from('intel_briefs').insert({
-              org_id: orgId,
-              account_name: account.name,
-              title: `Initial Intelligence Brief - ${account.name}`,
-              content: result.brief,
-              generated_at: new Date().toISOString(),
-            });
+            if (result.brief) {
+              await supabase.from("intel_briefs").insert({
+                org_id: orgId,
+                account_name: account.name,
+                title: `Initial Intelligence Brief - ${account.name}`,
+                content: result.brief,
+                generated_at: new Date().toISOString(),
+              });
+            }
           }
         } else {
           errors.push({ account: account.name, error: result.error ?? "Sweep failed" });
@@ -136,8 +130,12 @@ export const POST = withGuards<OnboardingProfileBody>(
       }
     }
 
-    // Update organization status to 'resolved' indicating initial data population is done
-    await updateOrgStatus(orgId, 'resolved', supabase);
+    if (supabase) {
+      await supabase
+        .from("organizations")
+        .update({ status: "resolved" })
+        .eq("id", orgId);
+    }
 
     return NextResponse.json({
       success: true,
