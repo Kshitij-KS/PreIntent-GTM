@@ -71,6 +71,30 @@ export const onboardingProfileBodySchema = z.object({
 });
 export type OnboardingProfileBody = z.infer<typeof onboardingProfileBodySchema>;
 
+/**
+ * Real onboarding payload (`CompanyOnboardingData`) posted by the onboarding
+ * wizard. companyName is required; the remaining fields default so downstream
+ * knowledge-doc generation never dereferences undefined. `website` is a
+ * descriptive, bounded string (not used for any server-side fetch here), so it
+ * is not constrained to the strict http(s) URL schema.
+ */
+export const onboardingDataSchema = z.object({
+  companyName: z.string().trim().min(1).max(200),
+  website: z.string().max(2048).optional(),
+  industry: z.string().max(200).optional().default(""),
+  teamSize: z.string().max(100).optional().default(""),
+  hq: z.string().max(200).optional().default(""),
+  icpDescription: z.string().max(5000).optional().default(""),
+  targetVerticals: z.array(z.string().max(200)).max(100).optional().default([]),
+  topCompetitors: z.array(z.string().max(200)).max(100).optional().default([]),
+  mainPainPoints: z.string().max(5000).optional().default(""),
+  crm: z.string().max(100).optional().default(""),
+  existingTools: z.array(z.string().max(200)).max(200).optional().default([]),
+  gtmGoals: z.string().max(5000).optional().default(""),
+  revenueTarget: z.string().max(100).optional(),
+});
+export type OnboardingData = z.infer<typeof onboardingDataSchema>;
+
 export const orgIdParamSchema = z.string().uuid();
 
 // ─── External / model response schemas ──────────────────────────────────────────
