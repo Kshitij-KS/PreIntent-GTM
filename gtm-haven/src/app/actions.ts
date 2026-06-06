@@ -59,6 +59,10 @@ export interface LiveSweepInput {
   audioUrl?: string;
   audioTranscript?: string;
   crmStage?: string;
+  /** The PreIntent customer's own company name (for relevance-aware analysis). */
+  selfCompany?: string;
+  /** Short description of what the PreIntent customer sells / their segment. */
+  selfContext?: string;
 }
 
 export interface LiveSweepResult {
@@ -82,6 +86,7 @@ export interface LiveSweepResult {
  */
 export async function generateRealIntelBrief(
   profile: AccountIntelligenceProfile,
+  self?: { company?: string; context?: string },
 ): Promise<IntelBrief> {
   const config = getAiMlConfig();
   const now = new Date().toISOString();
@@ -89,9 +94,13 @@ export async function generateRealIntelBrief(
 
   // ── AI-powered brief ───────────────────────────────────────────────────────
   if (config.enabled && config.apiKey) {
-    const prompt = `You are an elite GTM intelligence analyst for PreIntent.
+    const selfBlock = self?.company || self?.context
+      ? `\nYOU ARE WRITING THIS BRIEF ON BEHALF OF: ${self.company ?? "the user's company"}${self.context ? `\nWhat they do / their segment: ${self.context}` : ""}\nThe brief and opening line must be written from THIS company's perspective, positioning THEM as the vendor reaching out to ${profile.account}. Do not invent facts not supported by the signals below.\n`
+      : "";
 
-Generate a concise, high-impact Intel Brief for the following account. Be specific, cite the signal data, and write a natural, sales-ready suggested opening line.
+    const prompt = `You are an elite GTM intelligence analyst for PreIntent.
+${selfBlock}
+Generate a concise, high-impact Intel Brief for the following target account. Be specific, cite the signal data, and write a natural, sales-ready suggested opening line.
 
 Account: ${profile.account}
 Industry: ${profile.industry}
@@ -427,11 +436,9 @@ JSON shape:
 async function buildPainSignal(
   input: LiveSweepInput,
   classification: PainClassification,
+  painText: string,
 ): Promise<EngineSignal> {
   const now = new Date().toISOString();
-  const painText =
-    input.painText ||
-    `Evaluating alternatives to ${input.competitor}  -  contract renewal approaching, need a decision soon.`;
 
   // If classifier had no config, return a zero-score pending pain signal
   if (classification.model === "pending_configuration" || classification.confidence === 0) {
@@ -439,7 +446,7 @@ async function buildPainSignal(
       id: `pain-${input.account.toLowerCase().replace(/\s+/g, "-")}-${Date.now()}`,
       engine: "pain",
       title: `Pain signals  -  ${input.account} (pending)`,
-      description: `Pain signal classification requires a classifier API key (FEATHERLESS_API_KEY, GROQ_API_KEY, or GEMINI_API_KEY). Configure one to enable live community signal analysis for ${input.account}.`,
+      description: `No community buying signals found for ${input.account} yet. Provide pain text, or configure BRIGHT_DATA_API_KEY (community search) plus a classifier key (FEATHERLESS_API_KEY, GROQ_API_KEY, or GEMINI_API_KEY) to surface live signals.`,
       eventTime: now,
       subScore: 0,
       confidence: 0,
@@ -447,7 +454,7 @@ async function buildPainSignal(
         sponsor: "featherless",
         tool: "Featherless (open model)",
         capturedAt: now,
-        note: "Pending  -  configure classifier API key to enable live pain signal classification.",
+        note: "Pending  -  no real community signal detected for this account.",
       },
       rawEvidence: { status: "pending_configuration", competitor: input.competitor },
     };
@@ -465,6 +472,7 @@ async function buildPainSignal(
       competitor: input.competitor,
       painText,
       classification,
+      self: input.selfContext || input.selfCompany,
     });
     title = scored.title;
     description = scored.description;
@@ -514,6 +522,7 @@ export async function runLiveSweep(input: LiveSweepInput): Promise<LiveSweepResu
         competitor: input.competitor,
         competitorPricingUrl: input.competitorPricingUrl,
         regulatoryQuery: input.regulatoryQuery,
+        self: input.selfContext || input.selfCompany,
       },
       process.env,
     );
@@ -541,19 +550,43 @@ export async function runLiveSweep(input: LiveSweepInput): Promise<LiveSweepResu
     }
 
     // 3. Pain signal classification
+    // Use real input when provided; otherwise search public community
+    // discussions for genuine buying signals. Never fabricate a narrative.
     console.log(`[runLiveSweep] Step 3: Pain classification...`);
-    const painText =
-      input.painText ||
-      `Evaluating alternatives to ${input.competitor}. Contract renewal is coming up in 60 days and we need to assess our options.`;
+    let painText = input.painText?.trim() ?? "";
+    let painSource: "user" | "community" | "none" = painText ? "user" : "none";
+    if (!painText) {
+      try {
+        const { gatherCommunityPainSnippets } = await import("@/lib/integrations/bright-data");
+        const community = await gatherCommunityPainSnippets(input.competitor, process.env);
+        if (community) {
+          painText = community;
+          painSource = "community";
+        }
+      } catch (e) {
+        console.warn("[runLiveSweep] community pain search failed:", e);
+      }
+    }
 
-    const classification = await classifyPainSignal(
-      painText,
-      `Account: ${input.account}, Industry: ${input.industry}, Competitor: ${input.competitor}`,
-    );
-    console.log(`[runLiveSweep] Step 3 done (${Date.now() - startTime}ms): model=${classification.model}, urgency=${classification.urgency}`);
-    notes.push(`Pain classifier: ${classification.model}  -  ${classification.signalType} (${classification.urgency})`);
+    // Only classify when we have real text to analyze.
+    const classification = painText
+      ? await classifyPainSignal(
+          painText,
+          `Account: ${input.account}, Industry: ${input.industry}, Competitor: ${input.competitor}`,
+        )
+      : {
+          signalType: "no_signal",
+          urgency: "unknown",
+          competitorMentioned: null,
+          inferredSeniority: "unknown",
+          companyAttribution: "No community pain signal detected for this account.",
+          confidence: 0,
+          model: "pending_configuration",
+        };
+    console.log(`[runLiveSweep] Step 3 done (${Date.now() - startTime}ms): source=${painSource}, model=${classification.model}, urgency=${classification.urgency}`);
+    notes.push(`Pain (${painSource}): ${classification.model}  -  ${classification.signalType} (${classification.urgency})`);
 
-    const painSignal = await buildPainSignal(input, classification);
+    const painSignal = await buildPainSignal(input, classification, painText);
     signals.push(painSignal);
 
     // 4. Build convergence profile
@@ -573,7 +606,10 @@ export async function runLiveSweep(input: LiveSweepInput): Promise<LiveSweepResu
     let brief: IntelBrief | undefined;
     if (profile.convergenceScore >= 50) {
       console.log(`[runLiveSweep] Step 5: Generating Intel Brief (convergence ${profile.convergenceScore} >= 50)...`);
-      brief = await generateRealIntelBrief(profile);
+      brief = await generateRealIntelBrief(profile, {
+        company: input.selfCompany,
+        context: input.selfContext,
+      });
       console.log(`[runLiveSweep] Step 5 done (${Date.now() - startTime}ms): generatedBy=${brief.generatedBy}`);
       notes.push(`Intel Brief: ${brief.generatedBy}`);
     } else {

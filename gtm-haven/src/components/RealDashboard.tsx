@@ -22,7 +22,6 @@ import { computeUrgency } from "@/lib/convergence";
 import { useToast, createToastHelpers } from "@/components/ui/toast";
 import { EvidenceModal } from "@/components/ui/evidence-panel";
 import { BriefSharing } from "@/components/ui/brief-sharing";
-import { CompetitiveComparison, ComparisonTrigger } from "@/components/ui/competitive-comparison";
 import {
   formatRelativeTime,
   getConfidenceLevel,
@@ -145,7 +144,7 @@ const SCAN_STEPS = [
   { msg: "Compliance Radar  -  scanning regulatory RSS feeds...", tag: "BrightData", pct: 35 },
   { msg: "Pain Listener  -  accessing community forums...", tag: "BrightData", pct: 47 },
   { msg: "Speechmatics  -  transcribing podcast audio signals...", tag: "Speechmatics", pct: 57 },
-  { msg: "Featherless AI  -  classifying pain signals (Mistral-7B)...", tag: "Featherless AI", pct: 68 },
+  { msg: "Featherless AI  -  classifying pain signals...", tag: "Featherless AI", pct: 68 },
   { msg: "AI/ML API  -  computing convergence vectors...", tag: "AI/ML API", pct: 80 },
   { msg: "Cognee  -  updating account intelligence profiles...", tag: "Cognee", pct: 90 },
   { msg: "TriggerWare  -  routing alert (threshold check)...", tag: "TriggerWare", pct: 97 },
@@ -1442,7 +1441,6 @@ export default function RealDashboard({
   const [evidenceType, setEvidenceType] = useState<"void" | "compliance" | "pain" | "audio">("void");
   const [evidenceAccount, setEvidenceAccount] = useState<PremiumAccount | null>(null);
   const [shareOpen, setShareOpen] = useState(false);
-  const [comparisonOpen, setComparisonOpen] = useState(false);
   const [signalFilter, setSignalFilter] = useState<"all" | "void" | "compliance" | "pain">("all");
   const [tickerIdx, setTickerIdx] = useState(0);
   const [addModalOpen, setAddModalOpen] = useState(false);
@@ -1628,6 +1626,8 @@ export default function RealDashboard({
             competitorPricingUrl,
             regulatoryQuery: doc?.scanConfig.regulatoryKeywords[0],
             crmStage: "Not in pipeline",
+            selfCompany: doc?.companyName,
+            selfContext: doc?.segmentSummary,
           }),
         });
 
@@ -1758,6 +1758,8 @@ export default function RealDashboard({
           competitor: data.competitor,
           competitorPricingUrl: data.competitorPricingUrl || undefined,
           crmStage: "Not in pipeline",
+          selfCompany: knowledgeDoc?.companyName,
+          selfContext: knowledgeDoc?.segmentSummary,
         }),
       });
 
@@ -1822,7 +1824,10 @@ export default function RealDashboard({
         urgency: computeUrgency(acc.convergence, Math.max(acc.voidScore, acc.complianceScore, acc.painScore)),
       };
 
-      const realBrief = await generateRealIntelBrief(mockProfile as unknown as AccountIntelligenceProfile);
+      const realBrief = await generateRealIntelBrief(mockProfile as unknown as AccountIntelligenceProfile, {
+        company: knowledgeDoc?.companyName,
+        context: knowledgeDoc?.segmentSummary,
+      });
       const formatted = `WHY NOW  -  3 CONVERGING SIGNALS
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
@@ -2100,7 +2105,6 @@ ${realBrief.whyNow?.map((w, i) => `[${["VOID", "COMPLIANCE", "PAIN"][i] || w.eng
         >
           <Icon.Plus /> Add Account to Monitor
         </button>
-        <ComparisonTrigger onOpen={() => setComparisonOpen(true)} />
       </div>
     </motion.div>
   );
@@ -2303,12 +2307,6 @@ ${realBrief.whyNow?.map((w, i) => `[${["VOID", "COMPLIANCE", "PAIN"][i] || w.eng
         accountName={selectedAccount?.name || ""}
         briefContent={brief}
         account={selectedAccount ?? undefined}
-      />
-
-      <CompetitiveComparison
-        isOpen={comparisonOpen}
-        onClose={() => setComparisonOpen(false)}
-        acv={50000}
       />
 
       {/* Add Account Modal */}

@@ -42,6 +42,10 @@ export const sweepBodySchema = z.object({
   audioUrl: httpUrlSchema.optional(),
   audioTranscript: z.string().optional(),
   crmStage: z.string().optional(),
+  /** The PreIntent customer's own company name (for relevance-aware analysis). */
+  selfCompany: z.string().max(200).optional(),
+  /** Short description of what the PreIntent customer sells / their segment. */
+  selfContext: z.string().max(2000).optional(),
 });
 export type SweepBody = z.infer<typeof sweepBodySchema>;
 

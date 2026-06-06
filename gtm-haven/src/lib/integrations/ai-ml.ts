@@ -7,7 +7,7 @@ export function getAiMlConfig(env: EnvMap = process.env) {
     mode: normalizeMode(env.AI_ML_MODE),
     apiKey: env.AI_ML_API_KEY,
     endpoint: env.AI_ML_ENDPOINT || "https://api.aimlapi.com/v1",
-    model: env.AI_ML_MODEL || "mistralai/Mistral-7B-Instruct-v0.2",
+    model: env.AI_ML_MODEL || "gpt-4o",
     enabled: isRealMode(env, "AI_ML_MODE", ["AI_ML_API_KEY"]),
   };
 }
@@ -76,18 +76,22 @@ export async function scoreVoidFromPageContent(
     competitor: string;
     url: string;
     htmlSnippet: string;
+    self?: string;
   },
 ) {
+  const selfLine = params.self
+    ? `\nYou are doing this analysis on behalf of: ${params.self}. Judge how this competitor change creates a displacement opportunity for THEM specifically.`
+    : "";
   const parsed = await chatCompletionJson(
     env,
-    `You are a GTM void scanner. Analyze this competitor page snippet for pricing/product removals relevant to ${params.account} (competitor: ${params.competitor}).
+    `You are a GTM void scanner. Analyze this competitor page snippet for pricing/product removals or gaps relevant to ${params.account} (competitor: ${params.competitor}).${selfLine}
 
 URL: ${params.url}
 Snippet (truncated):
 ${params.htmlSnippet.slice(0, 8000)}
 
-Return ONLY JSON:
-{"subScore":0-100,"title":"short headline","description":"2-3 sentences","confidence":0.0-1.0}`,
+Score 0-100 how strong a competitive-displacement signal this is. Be specific and cite what changed. Return ONLY JSON:
+{"subScore":0-100,"title":"short specific headline","description":"2-3 sentences citing the concrete change","confidence":0.0-1.0}`,
     voidScoreSchema,
   );
 
@@ -105,18 +109,22 @@ export async function scoreComplianceFromResearch(
     industry: string;
     query: string;
     researchSnippet: string;
+    self?: string;
   },
 ) {
+  const selfLine = params.self
+    ? `\nYou are doing this analysis on behalf of: ${params.self}. Judge regulatory urgency in terms of how it creates a buying window for THEM.`
+    : "";
   const parsed = await chatCompletionJson(
     env,
-    `You are a compliance radar for B2B GTM. Score regulatory urgency for ${params.account} (${params.industry}).
+    `You are a compliance radar for B2B GTM. Score regulatory urgency for ${params.account} (${params.industry}).${selfLine}
 
 Query: ${params.query}
 Research snippet:
 ${params.researchSnippet.slice(0, 6000)}
 
-Return ONLY JSON:
-{"subScore":0-100,"title":"short headline","description":"2-3 sentences","confidence":0.0-1.0}`,
+If the snippet contains no concrete regulation, deadline, or enforcement event, return a low subScore (under 25). Do not invent regulations. Return ONLY JSON:
+{"subScore":0-100,"title":"short specific headline","description":"2-3 sentences citing the concrete regulation/deadline","confidence":0.0-1.0}`,
     complianceScoreSchema,
   );
 
@@ -134,20 +142,24 @@ export async function scorePainFromText(
     competitor: string;
     painText: string;
     classification?: Record<string, unknown>;
+    self?: string;
   },
 ) {
   const classHint = params.classification
     ? `\nClassifier output: ${JSON.stringify(params.classification)}`
     : "";
+  const selfLine = params.self
+    ? `\nYou are doing this analysis on behalf of: ${params.self}.`
+    : "";
 
   const parsed = await chatCompletionJson(
     env,
-    `Score buying intent for ${params.account} (competitor: ${params.competitor}).
+    `Score buying intent for ${params.account} (competitor: ${params.competitor}).${selfLine}
 
 Pain text: "${params.painText}"${classHint}
 
-Return ONLY JSON:
-{"subScore":0-100,"title":"short headline","description":"2-3 sentences","confidence":0.0-1.0}`,
+Base the score ONLY on the evidence in the pain text. If it shows no real dissatisfaction or evaluation intent, return a low subScore. Return ONLY JSON:
+{"subScore":0-100,"title":"short specific headline","description":"2-3 sentences grounded in the pain text","confidence":0.0-1.0}`,
     painScoreSchema,
   );
 

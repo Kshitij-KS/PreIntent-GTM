@@ -199,7 +199,12 @@ Their business context:
 From a web search for "${originalName} company software B2B", here are the top results:
 ${candidateList || "No results found."}
 
-Task: Identify which result (if any) is the correct B2B software competitor to "${context.companyName}". Consider industry fit, company type (B2B vs B2C), and relevance to the context.
+Task: Identify which result (if any) is the correct company that DIRECTLY competes with "${context.companyName}" in the SAME product category.
+
+Rules:
+- The match must operate in the same core category as "${context.companyName}" and compete for the same customers.
+- A company in a different category (even a famous brand in the same country or market) is NOT a valid match. If the only candidates are out-of-category, return confidence <= 0.2.
+- Prefer the official primary website (not a directory, news article, or aggregator).
 
 Return ONLY valid JSON  -  no markdown, no explanation:
 {
@@ -208,10 +213,10 @@ Return ONLY valid JSON  -  no markdown, no explanation:
   "pricingUrl": "https://example.com/pricing",
   "description": "one sentence description of what they do",
   "confidence": 0.0-1.0,
-  "reasoning": "brief explanation of why this is the right match"
+  "reasoning": "brief explanation of why this is the right match and that it is the same category"
 }
 
-If no candidate is a plausible B2B competitor, set confidence to 0.1 and use the first result as a best guess.`;
+If no candidate is a plausible same-category competitor, set confidence to 0.1 and use the first result as a best guess.`;
 
   try {
     const res = await fetch(`${endpoint}/chat/completions`, {

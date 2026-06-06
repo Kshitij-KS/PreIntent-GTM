@@ -8,6 +8,8 @@ export interface BrightDataSweepInput {
   competitor: string;
   competitorPricingUrl?: string;
   regulatoryQuery?: string;
+  /** The PreIntent customer's own company context, for relevance-aware scoring. */
+  self?: string;
 }
 
 export interface BrightDataSweepResult {
@@ -64,6 +66,51 @@ async function fetchViaBrightData(
   }
 
   return { body: "", source: "none" };
+}
+
+/** Strip HTML tags and collapse whitespace, returning readable text. */
+function htmlToText(html: string): string {
+  return html
+    .replace(/<script[\s\S]*?<\/script>/gi, " ")
+    .replace(/<style[\s\S]*?<\/style>/gi, " ")
+    .replace(/<[^>]+>/g, " ")
+    .replace(/&amp;/g, "&")
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'")
+    .replace(/&nbsp;/g, " ")
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+/**
+ * Pain Listener community search.
+ *
+ * Searches public community discussions (Reddit, Hacker News, review sites) for
+ * real buying-intent signals about a competitor, so the Pain Listener reflects
+ * actual chatter instead of a fabricated narrative. Returns aggregated snippet
+ * text, or an empty string when nothing usable is found / no Bright Data key.
+ */
+export async function gatherCommunityPainSnippets(
+  competitor: string,
+  env: EnvMap = process.env,
+): Promise<string> {
+  const comp = competitor.trim();
+  if (!comp) return "";
+  // Only attempt a live search when Bright Data is configured for SERP access.
+  if (!env.BRIGHT_DATA_API_KEY?.trim()) return "";
+
+  const query = `"${comp}" (alternatives OR complaints OR "switching from" OR "evaluating") (site:reddit.com OR site:news.ycombinator.com OR site:trustpilot.com OR site:g2.com)`;
+  const serpUrl = `https://www.google.com/search?q=${encodeURIComponent(query)}&num=10&hl=en`;
+  const zone = env.BRIGHT_DATA_SERP_ZONE || env.BRIGHT_DATA_ZONE || "serp";
+
+  const { body } = await fetchViaBrightData(serpUrl, env, zone);
+  if (!body) return "";
+
+  const text = htmlToText(body);
+  // Keep a bounded, model-friendly window of the most relevant text.
+  return text.slice(0, 1_500);
 }
 
 /** Build a zero-signal stub for when real data isn't available yet. */
@@ -171,19 +218,22 @@ export async function runBrightDataSweep(
   const notes: string[] = [];
   const signals: EngineSignal[] = [];
 
-  // Determine the pricing URL to scrape:
-  // 1. Explicit input URL (e.g. from resolved competitors)
+  // Determine the pricing/product URL to scrape:
+  // 1. Explicit input URL (e.g. from the resolved-competitor agent) - preferred
   // 2. Env default
-  // 3. Construct from competitor name (best effort)
+  // 3. Last-resort best-effort guess from the competitor name
   const pricingUrl =
     input.competitorPricingUrl?.trim() ||
     env.BRIGHT_DATA_DEFAULT_PRICING_URL?.trim() ||
     `https://www.${input.competitor.toLowerCase().replace(/[^a-z0-9]/g, "")}.com/pricing`;
 
+  // Year-agnostic, region-neutral regulatory query (was hardcoded to "2025" and
+  // a US-centric "enforcement deadline" framing).
+  const currentYear = new Date().getFullYear();
   const regulatoryQuery =
     input.regulatoryQuery?.trim() ||
     env.BRIGHT_DATA_DEFAULT_REGULATORY_QUERY?.trim() ||
-    `${input.industry} compliance regulation 2025 enforcement deadline`;
+    `${input.industry} regulation compliance ${currentYear} new rules`;
 
   const serpUrl = `https://www.google.com/search?q=${encodeURIComponent(regulatoryQuery)}&num=10`;
 
@@ -218,6 +268,7 @@ export async function runBrightDataSweep(
           competitor: input.competitor,
           url: pricingUrl,
           htmlSnippet: pricingFetch.body,
+          self: input.self,
         });
         signals.push({
           id: `void-${input.account.toLowerCase().replace(/\s+/g, "-")}-${Date.now()}`,
@@ -255,6 +306,7 @@ export async function runBrightDataSweep(
         industry: input.industry,
         query: regulatoryQuery,
         researchSnippet: researchBody,
+        self: input.self,
       });
       signals.push({
         id: `compliance-${input.account.toLowerCase().replace(/\s+/g, "-")}-${Date.now()}`,
@@ -296,6 +348,7 @@ export async function runBrightDataSweep(
         competitor: input.competitor,
         url: pricingUrl,
         htmlSnippet: pricingFetch.body,
+        self: input.self,
       });
       signals.push({
         id: `void-${input.account.toLowerCase().replace(/\s+/g, "-")}-${Date.now()}`,
@@ -342,6 +395,7 @@ export async function runBrightDataSweep(
       industry: input.industry,
       query: regulatoryQuery,
       researchSnippet: researchBody,
+      self: input.self,
     });
     signals.push({
       id: `compliance-${input.account.toLowerCase().replace(/\s+/g, "-")}-${Date.now()}`,
