@@ -319,7 +319,7 @@ const ScanPanel = ({ isScanning, step, done, onScan, result }: {
           }}
         >
           {isScanning
-            ? <span style={{ display: "inline-block", animation: "spin 0.9s linear infinite" }}>� - �</span>
+            ? <span style={{ display: "inline-block", animation: "spin 0.9s linear infinite" }}>◌</span>
             : <Icon.Play />
           }
           {isScanning ? "SCANNING..." : "RUN FULL SCAN"}
@@ -377,7 +377,7 @@ const ScanPanel = ({ isScanning, step, done, onScan, result }: {
                   opacity: i <= step ? 1 : 0.25, transition: "opacity 0.3s",
                 }}>
                   <span style={{ fontSize: "9px", color: i < step ? C.pain : i === step ? C.conv : C.muted }}>
-                    {i < step ? "✓" : i === step ? "▷" : "� - �"}
+                    {i < step ? "✓" : i === step ? "▷" : "○"}
                   </span>
                   <span style={{ fontSize: "9px", color: C.muted }}>{s.tag}</span>
                 </div>
@@ -658,7 +658,7 @@ const BriefView = ({
             }}
           >
             {loading
-              ? <span style={{ animation: "spin 0.8s linear infinite" }}>� - �</span>
+              ? <span style={{ animation: "spin 0.8s linear infinite" }}>◌</span>
               : "✦"}
             {loading ? "Generating..." : "Generate Brief"}
           </button>
@@ -772,7 +772,7 @@ const SettingsView = ({
                 color: e.live ? C.pain : C.muted,
                 border: `1px solid ${e.live ? C.pain : C.muted}28`,
               }}>
-                {e.live ? "� - � LIVE" : "� - � MOCK"}
+                {e.live ? "● LIVE" : "○ MOCK"}
               </span>
             </div>
           ))}
@@ -1329,7 +1329,7 @@ ACCOUNT CONTEXT
               >
                 {a.name}
                 {a.status === "ALERT" && (
-                  <span style={{ marginLeft: "5px", color: C.void, fontSize: "8px" }}>� - �</span>
+                  <span style={{ marginLeft: "5px", color: C.void, fontSize: "8px" }}>●</span>
                 )}
               </button>
             ))}

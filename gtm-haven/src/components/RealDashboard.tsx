@@ -455,7 +455,7 @@ const ScanPanel = ({ isScanning, step, done, onScan, result }: {
           }}
         >
           {isScanning
-            ? <span style={{ display: "inline-block", animation: "spin 0.9s linear infinite" }}>� - �</span>
+            ? <span style={{ display: "inline-block", animation: "spin 0.9s linear infinite" }}>◌</span>
             : <Icon.Play />
           }
           {isScanning ? "SCANNING..." : "RUN FULL SCAN"}
@@ -512,7 +512,7 @@ const ScanPanel = ({ isScanning, step, done, onScan, result }: {
                   opacity: i <= step ? 1 : 0.25, transition: "opacity 0.3s",
                 }}>
                   <span style={{ fontSize: "9px", color: i < step ? C.pain : i === step ? C.conv : C.muted }}>
-                    {i < step ? "✓" : i === step ? "▷" : "� - �"}
+                    {i < step ? "✓" : i === step ? "▷" : "○"}
                   </span>
                   <span style={{ fontSize: "9px", color: C.muted }}>{s.tag}</span>
                 </div>
@@ -579,7 +579,7 @@ const AddAccountModal = ({
             <div style={{ fontSize: "14px", fontWeight: 700, color: C.white }}>Add Account to Monitor</div>
             <div style={{ fontSize: "11px", color: C.muted, marginTop: "3px" }}>Triggers a live sweep immediately</div>
           </div>
-          <button onClick={onClose} aria-label="Close modal" style={{ background: "none", border: "none", color: C.muted, cursor: "pointer", fontSize: "18px" }}>� - </button>
+          <button onClick={onClose} aria-label="Close modal" style={{ background: "none", border: "none", color: C.muted, cursor: "pointer", fontSize: "18px" }}>×</button>
         </div>
 
         <div style={{ display: "grid", gap: "16px" }}>
@@ -706,7 +706,7 @@ const CompetitorIntelPanel = ({ doc }: { doc: CompanyKnowledgeDoc }) => {
   const statusIcon = (s: string) => {
     if (s === "resolved") return { icon: "✓", color: C.pain };
     if (s === "ambiguous") return { icon: "~", color: C.compliance };
-    if (s === "mock") return { icon: "� - �", color: C.conv };
+    if (s === "mock") return { icon: "◎", color: C.conv };
     return { icon: "?", color: C.muted };
   };
 
@@ -723,7 +723,7 @@ const CompetitorIntelPanel = ({ doc }: { doc: CompanyKnowledgeDoc }) => {
             COMPETITOR INTELLIGENCE
           </div>
           {isResolving && (
-            <span style={{ fontSize: "9px", color: C.conv }}>� - � Resolving...</span>
+            <span style={{ fontSize: "9px", color: C.conv }}>◌ Resolving...</span>
           )}
           {resolutionStatus === "resolved" && !isResolving && (
             <span style={{
@@ -735,7 +735,7 @@ const CompetitorIntelPanel = ({ doc }: { doc: CompanyKnowledgeDoc }) => {
             <span style={{
               fontSize: "8px", padding: "1px 6px", borderRadius: "3px",
               background: `${C.void}15`, color: C.void, border: `1px solid ${C.void}30`,
-            }}>� -  FAILED</span>
+            }}>✗ FAILED</span>
           )}
         </div>
         <button
@@ -749,7 +749,7 @@ const CompetitorIntelPanel = ({ doc }: { doc: CompanyKnowledgeDoc }) => {
             fontFamily: "inherit", letterSpacing: "0.06em", transition: "all 0.15s",
           }}
         >
-          {isResolving ? "� - �" : "↻"} {isResolving ? "Resolving" : "Re-resolve"}
+          {isResolving ? "◌" : "↻"} {isResolving ? "Resolving" : "Re-resolve"}
         </button>
       </div>
 
@@ -794,7 +794,7 @@ const CompetitorIntelPanel = ({ doc }: { doc: CompanyKnowledgeDoc }) => {
                         onMouseEnter={(e) => (e.currentTarget.style.textDecoration = "underline")}
                         onMouseLeave={(e) => (e.currentTarget.style.textDecoration = "none")}
                       >
-                        � -  {comp.website.replace(/^https?:\/\//, "")}
+                        ↗ {comp.website.replace(/^https?:\/\//, "")}
                       </a>
                     )}
                     {comp.pricingUrl && comp.pricingUrl !== comp.website && (
@@ -836,7 +836,7 @@ const CompetitorIntelPanel = ({ doc }: { doc: CompanyKnowledgeDoc }) => {
               display: "flex", alignItems: "center", gap: "10px",
             }}>
               {isResolving
-                ? <span style={{ fontSize: "9px", color: C.conv, flexShrink: 0 }}>� - �</span>
+                ? <span style={{ fontSize: "9px", color: C.conv, flexShrink: 0 }}>◌</span>
                 : <span style={{ fontSize: "9px", color: C.muted, flexShrink: 0 }}>▸</span>
               }
               <span style={{ fontSize: "12px", color: isResolving ? C.muted : C.void }}>{c}</span>
@@ -1237,7 +1237,7 @@ const BriefView = ({
               boxShadow: `0 4px 14px ${C.conv}30`,
             }}
           >
-            {loading ? <span style={{ animation: "spin 0.8s linear infinite" }}>� - �</span> : "✦"}
+            {loading ? <span style={{ animation: "spin 0.8s linear infinite" }}>◌</span> : "✦"}
             {loading ? "Generating..." : "Generate Brief"}
           </button>
         </div>
@@ -1362,7 +1362,7 @@ const SettingsView = ({
                 border: `1px solid ${e.live ? C.pain : C.muted}28`,
                 whiteSpace: "nowrap",
               }}>
-                {e.live ? "� - � LIVE" : "� - � MOCK"}
+                {e.live ? "● LIVE" : "○ MOCK"}
               </span>
             </div>
           ))}
@@ -2239,7 +2239,7 @@ ${realBrief.whyNow?.map((w, i) => `[${["VOID", "COMPLIANCE", "PAIN"][i] || w.eng
                 }}
               >
                 {a.name}
-                {a.status === "ALERT" && <span style={{ marginLeft: "5px", color: C.void, fontSize: "8px" }}>� - �</span>}
+                {a.status === "ALERT" && <span style={{ marginLeft: "5px", color: C.void, fontSize: "8px" }}>●</span>}
               </button>
             ))}
           </div>

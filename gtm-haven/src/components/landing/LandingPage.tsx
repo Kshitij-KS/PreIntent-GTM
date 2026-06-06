@@ -138,7 +138,7 @@ function SignalTicker() {
         fontSize: "12px",
         flexShrink: 0,
       }}>
-        {sig.engine === "void" ? "� - �" : sig.engine === "compliance" ? "⚖" : "� - �"}
+        {sig.engine === "void" ? "◉" : sig.engine === "compliance" ? "⚖" : "◎"}
       </div>
       <div style={{ flex: 1, minWidth: 0 }}>
         <div style={{ fontSize: "11px", color: sig.color, fontWeight: 600, letterSpacing: "0.06em" }}>{sig.company}</div>
@@ -437,7 +437,7 @@ export default function LandingPage() {
             marginBottom: "32px",
             letterSpacing: "0.05em",
           }}>
-            <span style={{ animation: "glow-pulse 2s infinite" }}>� - �</span>
+            <span style={{ animation: "glow-pulse 2s infinite" }}>●</span>
             Convergent GTM Intelligence · Live Signals
           </div>
 
@@ -511,7 +511,7 @@ export default function LandingPage() {
               onMouseEnter={(e) => { e.currentTarget.style.borderColor = C.conv; e.currentTarget.style.color = C.white; }}
               onMouseLeave={(e) => { e.currentTarget.style.borderColor = C.border; e.currentTarget.style.color = C.text; }}
             >
-              See Live Demo � - 
+              See Live Demo ↗
             </a>
           </div>
 
@@ -614,7 +614,7 @@ export default function LandingPage() {
 
           <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "20px" }}>
             <FeatureCard
-              icon="� - �"
+              icon="◉"
               color={C.void}
               title="Void Scanner"
               subtitle="COMPETITOR RETREATS"
@@ -638,7 +638,7 @@ export default function LandingPage() {
               ]}
             />
             <FeatureCard
-              icon="� - �"
+              icon="◎"
               color={C.pain}
               title="Pain Listener"
               subtitle="COMMUNITY BUYING SIGNALS"
