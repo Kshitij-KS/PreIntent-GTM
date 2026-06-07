@@ -11,7 +11,7 @@ import { ROICalculator, ROIPreview } from "@/components/ui/roi-calculator";
 import { EvidenceModal } from "@/components/ui/evidence-panel";
 import { BriefSharing } from "@/components/ui/brief-sharing";
 import { CompetitiveComparison, ComparisonTrigger } from "@/components/ui/competitive-comparison";
-import { GuidedTour, TourTrigger, TourShortcut } from "@/components/demo/guided-tour";
+import { GuidedTour, TourTrigger, TourShortcut, TourNudge } from "@/components/demo/guided-tour";
 import { DemoAutopilot, AutoplayTrigger, type AutopilotActions } from "@/components/demo/autopilot";
 import {
   PREMIUM_ACCOUNTS,
@@ -1422,6 +1422,11 @@ ACCOUNT CONTEXT
       )}
 
       {!cleanMode && <TourShortcut />}
+
+      {/* First-visit nudge toward the guided tour (demo only) */}
+      {isDemoPage && !cleanMode && !tourActive && !autopilotActive && (
+        <TourNudge onStart={() => setTourActive(true)} />
+      )}
     </div>
   );
 }

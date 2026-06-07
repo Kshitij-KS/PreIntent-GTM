@@ -207,7 +207,7 @@ const SCRIPT: AutopilotStep[] = [
   { at: 80000, type: "narrate", narration: "That was one account. PreIntent monitors your entire TAM, twenty-four seven. This is elite GTM intelligence." },
 ];
 
-const TOTAL_DURATION = 105000;
+const TOTAL_DURATION = 86000;
 
 // ─── SPOTLIGHT CURSOR ─────────────────────────────────────────────────────────
 
@@ -598,7 +598,7 @@ export function AutoplayTrigger({ onStart, disabled }: AutoplayTriggerProps) {
           flexShrink: 0,
         }} />
       )}
-      ▶ Autoplay · 75s
+      ▶ Autoplay · 85s
     </motion.button>
   );
 }

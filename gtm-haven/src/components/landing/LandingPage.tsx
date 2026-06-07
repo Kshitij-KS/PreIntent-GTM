@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import Link from "next/link";
 
 // ─── Design tokens ─────────────────────────────────────────────────────────────
@@ -178,6 +178,40 @@ function StatCounter({ from = 0, to, suffix = "", duration = 1500 }: { from?: nu
   }, [started, from, to, duration]);
 
   return <span ref={ref}>{val.toLocaleString()}{suffix}</span>;
+}
+
+// ─── Scroll reveal wrapper ─────────────────────────────────────────────────────
+function Reveal({ children, delay = 0 }: { children: ReactNode; delay?: number }) {
+  const ref = useRef<HTMLDivElement>(null);
+  const [shown, setShown] = useState(false);
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const obs = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setShown(true);
+          obs.disconnect();
+        }
+      },
+      { threshold: 0.15 },
+    );
+    obs.observe(el);
+    return () => obs.disconnect();
+  }, []);
+  return (
+    <div
+      ref={ref}
+      style={{
+        opacity: shown ? 1 : 0,
+        transform: shown ? "translateY(0)" : "translateY(28px)",
+        transition: `opacity 0.7s cubic-bezier(.22,.61,.36,1) ${delay}s, transform 0.7s cubic-bezier(.22,.61,.36,1) ${delay}s`,
+        willChange: "opacity, transform",
+      }}
+    >
+      {children}
+    </div>
+  );
 }
 
 // ─── Feature card ─────────────────────────────────────────────────────────────
@@ -395,6 +429,34 @@ export default function LandingPage() {
         overflow: "hidden",
         textAlign: "center",
       }}>
+        {/* Premium data-grid backdrop + aurora for depth */}
+        <div
+          aria-hidden
+          style={{
+            position: "absolute",
+            inset: 0,
+            backgroundImage:
+              "linear-gradient(rgba(144,96,255,0.05) 1px, transparent 1px), linear-gradient(90deg, rgba(144,96,255,0.05) 1px, transparent 1px)",
+            backgroundSize: "44px 44px",
+            maskImage: "radial-gradient(ellipse 80% 60% at 50% 38%, #000 0%, transparent 78%)",
+            WebkitMaskImage: "radial-gradient(ellipse 80% 60% at 50% 38%, #000 0%, transparent 78%)",
+            pointerEvents: "none",
+          }}
+        />
+        <div
+          aria-hidden
+          style={{
+            position: "absolute",
+            top: 0,
+            left: 0,
+            right: 0,
+            height: "1px",
+            background:
+              "linear-gradient(90deg, transparent, rgba(144,96,255,0.4), rgba(32,112,255,0.4), transparent)",
+            pointerEvents: "none",
+          }}
+        />
+
         {/* Background orbs */}
         {[
           { top: "-300px", left: "50%", size: "800px", color: "rgba(124,58,237,0.07)", ml: "-400px" },
@@ -600,6 +662,7 @@ export default function LandingPage() {
       {/* ── THREE ENGINES ── */}
       <section style={{ padding: "100px 32px" }}>
         <div style={{ maxWidth: "1100px", margin: "0 auto" }}>
+          <Reveal>
           <div style={{ textAlign: "center", marginBottom: "64px" }}>
             <div style={{ fontSize: "11px", color: C.conv, fontWeight: 700, letterSpacing: "0.12em", marginBottom: "12px" }}>
               THREE ENGINES. ONE CONVERGENCE.
@@ -611,7 +674,9 @@ export default function LandingPage() {
               PreIntent triangulates three distinct data streams into one definitive buying signal  -  and fires before any intent vendor even picks it up.
             </p>
           </div>
+          </Reveal>
 
+          <Reveal delay={0.1}>
           <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "20px" }}>
             <FeatureCard
               icon="◉"
@@ -650,6 +715,7 @@ export default function LandingPage() {
               ]}
             />
           </div>
+          </Reveal>
         </div>
       </section>
 
@@ -798,6 +864,7 @@ enforcement coming in August..."`}
           pointerEvents: "none",
         }} />
         <div style={{ position: "relative", zIndex: 1 }}>
+          <Reveal>
           <div style={{ fontSize: "11px", color: C.conv, fontWeight: 700, letterSpacing: "0.12em", marginBottom: "16px" }}>
             READY TO GET THE UNFAIR ADVANTAGE?
           </div>
@@ -828,6 +895,7 @@ enforcement coming in August..."`}
           >
             Create your free workspace →
           </a>
+          </Reveal>
         </div>
       </section>
 

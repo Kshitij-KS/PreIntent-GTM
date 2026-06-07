@@ -558,6 +558,165 @@ export function GuidedTour({ isActive, onClose, onStepChange, accounts }: Guided
   );
 }
 
+// ─── FIRST-VISIT TOUR NUDGE ───────────────────────────────────────────────────
+const TOUR_NUDGE_KEY = "preintent_demo_tour_nudge_v1";
+
+interface TourNudgeProps {
+  onStart: () => void;
+}
+
+/**
+ * One-time, dismissible callout that points first-time demo visitors at the
+ * Guided Tour button. Appears once per browser (localStorage-gated) shortly
+ * after load, anchored under the top-right nav where the tour button lives.
+ */
+export function TourNudge({ onStart }: TourNudgeProps) {
+  const [visible, setVisible] = useState(false);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    let seen = false;
+    try {
+      seen = localStorage.getItem(TOUR_NUDGE_KEY) === "1";
+    } catch {
+      seen = false;
+    }
+    if (seen) return;
+    const t = setTimeout(() => setVisible(true), 1400);
+    return () => clearTimeout(t);
+  }, []);
+
+  const dismiss = useCallback(() => {
+    setVisible(false);
+    try {
+      localStorage.setItem(TOUR_NUDGE_KEY, "1");
+    } catch {
+      /* non-fatal */
+    }
+  }, []);
+
+  const handleStart = useCallback(() => {
+    dismiss();
+    onStart();
+  }, [dismiss, onStart]);
+
+  return (
+    <AnimatePresence>
+      {visible && (
+        <motion.div
+          initial={{ opacity: 0, y: -10, scale: 0.96 }}
+          animate={{ opacity: 1, y: 0, scale: 1 }}
+          exit={{ opacity: 0, y: -8, scale: 0.96 }}
+          transition={{ type: "spring", stiffness: 380, damping: 28 }}
+          style={{
+            position: "fixed",
+            top: "60px",
+            right: "16px",
+            zIndex: 70,
+            width: "260px",
+            background: "linear-gradient(160deg, rgba(20,16,34,0.98), rgba(12,16,24,0.98))",
+            border: "1px solid rgba(144,96,255,0.4)",
+            borderRadius: "10px",
+            padding: "14px 14px 12px",
+            boxShadow: "0 16px 40px rgba(0,0,0,0.5), 0 0 0 1px rgba(144,96,255,0.08)",
+            fontFamily: "inherit",
+          }}
+        >
+          {/* Upward caret pointing at the nav tour button */}
+          <span
+            style={{
+              position: "absolute",
+              top: "-6px",
+              right: "44px",
+              width: "10px",
+              height: "10px",
+              background: "rgba(20,16,34,0.98)",
+              borderLeft: "1px solid rgba(144,96,255,0.4)",
+              borderTop: "1px solid rgba(144,96,255,0.4)",
+              transform: "rotate(45deg)",
+            }}
+          />
+          <div style={{ display: "flex", alignItems: "center", gap: "7px", marginBottom: "6px" }}>
+            <span
+              style={{
+                width: "6px",
+                height: "6px",
+                borderRadius: "50%",
+                background: "#9060ff",
+                boxShadow: "0 0 0 3px rgba(144,96,255,0.22)",
+                animation: "dot-blink 2s ease-in-out infinite",
+              }}
+            />
+            <span style={{ fontSize: "9px", fontWeight: 700, letterSpacing: "0.12em", color: "#b794ff" }}>
+              NEW HERE?
+            </span>
+            <button
+              onClick={dismiss}
+              aria-label="Dismiss"
+              style={{
+                marginLeft: "auto",
+                background: "transparent",
+                border: "none",
+                color: C.muted,
+                cursor: "pointer",
+                fontSize: "13px",
+                lineHeight: 1,
+                fontFamily: "inherit",
+                padding: 0,
+              }}
+            >
+              ✕
+            </button>
+          </div>
+          <div style={{ fontSize: "11px", color: C.text, lineHeight: 1.55, marginBottom: "11px" }}>
+            Take the 90-second guided tour to see how three converging signals become a certified buying event.
+          </div>
+          <div style={{ display: "flex", gap: "8px" }}>
+            <button
+              onClick={handleStart}
+              style={{
+                flex: 1,
+                display: "inline-flex",
+                alignItems: "center",
+                justifyContent: "center",
+                gap: "6px",
+                background: "linear-gradient(135deg, #7c3aed, #9060ff)",
+                border: "none",
+                borderRadius: "6px",
+                padding: "7px 10px",
+                fontSize: "10px",
+                fontWeight: 600,
+                letterSpacing: "0.06em",
+                color: "#fff",
+                cursor: "pointer",
+                fontFamily: "inherit",
+                boxShadow: "0 4px 14px rgba(144,96,255,0.34)",
+              }}
+            >
+              ▶ Start tour
+            </button>
+            <button
+              onClick={dismiss}
+              style={{
+                background: "transparent",
+                border: `1px solid ${C.border}`,
+                borderRadius: "6px",
+                padding: "7px 12px",
+                fontSize: "10px",
+                color: C.muted,
+                cursor: "pointer",
+                fontFamily: "inherit",
+              }}
+            >
+              Explore on my own
+            </button>
+          </div>
+        </motion.div>
+      )}
+    </AnimatePresence>
+  );
+}
+
 // ─── TOUR TRIGGER ─────────────────────────────────────────────────────────────
 interface TourTriggerProps {
   onStart: () => void;
@@ -592,7 +751,7 @@ export function TourTrigger({ onStart, disabled }: TourTriggerProps) {
           flexShrink: 0,
         }} />
       )}
-      ▶ Present
+      ▶ Guided Tour
     </motion.button>
   );
 }

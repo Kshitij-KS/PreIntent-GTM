@@ -1445,6 +1445,7 @@ export default function RealDashboard({
   const [tickerIdx, setTickerIdx] = useState(0);
   const [addModalOpen, setAddModalOpen] = useState(false);
   const [setupComplete, setSetupComplete] = useState(true);
+  const [scanningIds, setScanningIds] = useState<Set<number>>(new Set());
   const scanRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   // ── Load persisted accounts + knowledge doc from localStorage ─────────────
@@ -1615,6 +1616,11 @@ export default function RealDashboard({
         (account.competitorUrl ? `https://${account.competitorUrl}` : undefined);
 
       try {
+        setScanningIds((prev) => {
+          const next = new Set(prev);
+          next.add(account.id);
+          return next;
+        });
         const res = await fetch("/api/sweep", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -1653,6 +1659,12 @@ export default function RealDashboard({
         };
       } catch {
         return null;
+      } finally {
+        setScanningIds((prev) => {
+          const next = new Set(prev);
+          next.delete(account.id);
+          return next;
+        });
       }
     };
 
@@ -1692,6 +1704,7 @@ export default function RealDashboard({
 
     setIsScanning(false);
     setScanDone(true);
+    setScanningIds(new Set());
     setScanResult(
       highAlerts > 0
         ? `${highAlerts} account${highAlerts > 1 ? "s" : ""} at threshold  -  TriggerWare fired${slackSent ? "  -  Slack delivered" : ""}${hubspotSent ? "  -  HubSpot updated" : ""}`
@@ -2047,7 +2060,48 @@ ${realBrief.whyNow?.map((w, i) => `[${["VOID", "COMPLIANCE", "PAIN"][i] || w.eng
           <span>CONV.</span><span>STATUS</span><span>CONFIDENCE</span>
         </div>
 
-        {accounts.map((a, idx) => (
+        {accounts.length === 0 ? (
+          <div style={{ padding: "44px 24px", textAlign: "center" }}>
+            <div style={{ fontSize: "26px", marginBottom: "12px", opacity: 0.5 }}>✦</div>
+            <div style={{ fontSize: "13px", color: C.white, fontWeight: 600, marginBottom: "6px" }}>
+              No accounts yet
+            </div>
+            <div style={{ fontSize: "11px", color: C.muted, lineHeight: 1.6, maxWidth: "420px", margin: "0 auto 16px" }}>
+              {knowledgeDoc
+                ? "Add a target account to start monitoring competitor retreats, regulatory pressure, and community buying signals."
+                : "Complete onboarding to auto-seed target accounts from your company profile, or add one manually to get started."}
+            </div>
+            <div style={{ display: "flex", gap: "10px", justifyContent: "center", flexWrap: "wrap" }}>
+              <button
+                onClick={() => setAddModalOpen(true)}
+                style={{
+                  display: "inline-flex", alignItems: "center", gap: "6px",
+                  background: "linear-gradient(135deg, #7c3aed, #9060ff)", border: "none",
+                  borderRadius: "6px", padding: "8px 16px", fontSize: "10px", fontWeight: 600,
+                  letterSpacing: "0.06em", color: "#fff", cursor: "pointer", fontFamily: "inherit",
+                  boxShadow: "0 4px 14px rgba(144,96,255,0.3)",
+                }}
+              >
+                <Icon.Plus /> Add your first account
+              </button>
+              {!knowledgeDoc && (
+                <a
+                  href="/onboarding"
+                  style={{
+                    display: "inline-flex", alignItems: "center",
+                    background: "transparent", border: `1px solid ${C.border}`,
+                    borderRadius: "6px", padding: "8px 16px", fontSize: "10px",
+                    color: C.muted, textDecoration: "none", fontFamily: "inherit",
+                  }}
+                >
+                  Complete onboarding →
+                </a>
+              )}
+            </div>
+          </div>
+        ) : accounts.map((a, idx) => {
+          const isRowScanning = scanningIds.has(a.id);
+          return (
           <motion.div
             key={a.id}
             initial={{ opacity: 0, x: -8 }}
@@ -2059,12 +2113,21 @@ ${realBrief.whyNow?.map((w, i) => `[${["VOID", "COMPLIANCE", "PAIN"][i] || w.eng
               gridTemplateColumns: "1.8fr 0.9fr 60px 60px 60px 64px 90px 90px",
               padding: "11px 16px", gap: "8px", alignItems: "center",
               borderBottom: idx < accounts.length - 1 ? `1px solid ${C.border}` : "none",
+              borderLeft: isRowScanning ? `2px solid ${C.conv}` : "2px solid transparent",
               cursor: "pointer",
             }}
             whileHover={{ background: C.surface2 }}
           >
             <div>
-              <div style={{ fontSize: "12px", color: C.white, fontWeight: 500 }}>{a.name}</div>
+              <div style={{ fontSize: "12px", color: C.white, fontWeight: 500, display: "flex", alignItems: "center", gap: "7px" }}>
+                {a.name}
+                {isRowScanning && (
+                  <span style={{ display: "inline-flex", alignItems: "center", gap: "4px", fontSize: "8px", color: C.conv, letterSpacing: "0.08em" }}>
+                    <span style={{ display: "inline-block", animation: "spin 0.9s linear infinite" }}>◌</span>
+                    SCANNING
+                  </span>
+                )}
+              </div>
               <div style={{ fontSize: "9px", color: C.muted, marginTop: "2px" }}>
                 {a.employees.toLocaleString()} · {a.location}
               </div>
@@ -2076,17 +2139,18 @@ ${realBrief.whyNow?.map((w, i) => `[${["VOID", "COMPLIANCE", "PAIN"][i] || w.eng
               [a.painScore, C.pain],
             ].map(([score, color], i) => (
               <div key={i}>
-                <div style={{ fontSize: "12px", color: color as string, fontWeight: 600, marginBottom: "4px" }}>{score}</div>
-                <ScoreBar value={score as number} color={color as string} delay={idx} />
+                <div style={{ fontSize: "12px", color: color as string, fontWeight: 600, marginBottom: "4px" }}>{isRowScanning ? "·" : score}</div>
+                <ScoreBar value={isRowScanning ? 0 : (score as number)} color={color as string} delay={idx} />
               </div>
             ))}
             <div style={{ fontSize: "18px", fontWeight: 700, color: (a.convergence >= 75 ? C.void : a.convergence >= 55 ? C.compliance : C.muted) }}>
-              {a.convergence}
+              {isRowScanning ? <span style={{ fontSize: "12px", color: C.conv, display: "inline-block", animation: "spin 0.9s linear infinite" }}>◌</span> : a.convergence}
             </div>
             <div><StatusBadge status={a.status} /></div>
             <div><ConfidenceBadge confidence={a.overallConfidence} /></div>
           </motion.div>
-        ))}
+          );
+        })}
       </div>
 
       {/* Add account button */}
