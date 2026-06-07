@@ -11,6 +11,8 @@
  *   mock   -  deterministic mock data (demo / CI)
  */
 
+import pMap from "p-map";
+
 import { type EnvMap, isRealMode } from "./env";
 import type { CompanyKnowledgeDoc } from "../company-knowledge";
 
@@ -405,8 +407,9 @@ export async function resolveAllCompetitors(
   const unique = [...new Set(competitors.filter(Boolean))];
   if (unique.length === 0) return [];
 
-  const results = await Promise.all(
-    unique.map(async (name) => {
+  const results = await pMap(
+    unique,
+    async (name) => {
       try {
         return await resolveCompetitor(name, context, env);
       } catch (err) {
@@ -422,7 +425,8 @@ export async function resolveAllCompetitors(
           resolvedAt: new Date().toISOString(),
         };
       }
-    }),
+    },
+    { concurrency: 5 }
   );
 
   return results;
