@@ -36,7 +36,7 @@ export async function GET(request: Request) {
 
     return NextResponse.redirect(new URL(destination, requestUrl.origin));
   } catch (error) {
-    console.error("Supabase auth callback error:", error);
+    console.error("Supabase auth callback error:", error instanceof Error ? error.message : String(error));
     return NextResponse.redirect(new URL("/sign-in?error=auth", request.url));
   }
 }
