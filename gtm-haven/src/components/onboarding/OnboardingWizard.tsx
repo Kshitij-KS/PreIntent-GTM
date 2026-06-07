@@ -22,6 +22,16 @@ const C = {
 
 // ─── Step definitions ─────────────────────────────────────────────────────────
 
+function LogoMark({ size = 22 }: { size?: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 20 20" fill="none" aria-hidden>
+      <path d="M10 2L16.93 6V14L10 18L3.07 14V6L10 2Z" stroke="#9060ff" strokeWidth="1.5" fill="none" />
+      <path d="M10 5.2L14.2 7.6V12.4L10 14.8L5.8 12.4V7.6L10 5.2Z" fill="#9060ff" fillOpacity="0.3" />
+      <circle cx="10" cy="10" r="2" fill="#9060ff" />
+    </svg>
+  );
+}
+
 const STEPS = [
   { id: 1, label: "Company", title: "Tell us about your company" },
   { id: 2, label: "GTM Context", title: "Your GTM context" },
@@ -666,7 +676,7 @@ export default function OnboardingWizard() {
       }}>
         {/* Logo */}
         <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "48px" }}>
-          <span style={{ color: C.conv, fontSize: "22px", fontWeight: 700 }}>▼</span>
+          <LogoMark size={24} />
           <span style={{ fontSize: "18px", fontWeight: 700, color: C.white, letterSpacing: "0.12em" }}>PREINTENT</span>
         </div>
 
@@ -735,8 +745,22 @@ export default function OnboardingWizard() {
       </div>
 
       {/* Main content */}
-      <div style={{ flex: 1, overflowY: "auto", padding: "48px" }}>
-        <div style={{ maxWidth: "680px", margin: "0 auto" }}>
+      <div style={{ flex: 1, overflowY: "auto", padding: "48px", position: "relative" }}>
+        {/* Subtle data-grid backdrop (matches landing hero) */}
+        <div
+          aria-hidden
+          style={{
+            position: "absolute",
+            inset: 0,
+            backgroundImage:
+              "linear-gradient(rgba(144,96,255,0.045) 1px, transparent 1px), linear-gradient(90deg, rgba(144,96,255,0.045) 1px, transparent 1px)",
+            backgroundSize: "40px 40px",
+            maskImage: "radial-gradient(ellipse 70% 55% at 50% 24%, #000 0%, transparent 76%)",
+            WebkitMaskImage: "radial-gradient(ellipse 70% 55% at 50% 24%, #000 0%, transparent 76%)",
+            pointerEvents: "none",
+          }}
+        />
+        <div style={{ maxWidth: "680px", margin: "0 auto", position: "relative", zIndex: 1 }}>
 
           {/* Step indicator */}
           {!showDoc && (

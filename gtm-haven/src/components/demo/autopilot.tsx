@@ -140,74 +140,79 @@ function useVoiceNarrator(enabled: boolean) {
   return { speak, stop };
 }
 
-// ─── DEMO SCRIPT (~76s) ──────────────────────────────────────────────────────
+// ─── DEMO SCRIPT ─────────────────────────────────────────────────────────────
+// Timing is calibrated so each narration finishes within its window before the
+// next line begins (speech ≈ 2.3 words/sec at rate 0.88), and every spotlight /
+// action coincides with the moment it is described. Non-spotlight steps auto-
+// clear the previous highlight, so a ring never lingers on a changed screen.
 
 const SCRIPT: AutopilotStep[] = [
   // ── OPEN ──────────────────────────────────────────────────────────────────
   { at: 0, type: "navigate", view: "dashboard" },
-  { at: 600, type: "narrate", narration: "Welcome to PreIntent. Elite GTM intelligence for revenue teams who cannot afford to miss a buying window." },
-  { at: 4500, type: "spotlight", target: "stat-cards", ringColor: C.conv,
-    narration: "Six real companies. Three intelligence engines. Every account scored in real time." },
+  { at: 900, type: "narrate",
+    narration: "Welcome to PreIntent  -  intelligence that catches buying windows before anyone else." },
+  { at: 8000, type: "spotlight", target: "stat-cards", ringColor: C.conv,
+    narration: "Six target accounts, three live engines, every one scored in real time." },
 
   // ── SCAN ──────────────────────────────────────────────────────────────────
-  { at: 9000, type: "spotlight", target: "scan-panel", ringColor: C.conv,
-    narration: "One click triggers a full-stack intelligence sweep across your entire target account list." },
-  { at: 12000, type: "action", fn: (a) => a.runScan() },
-  { at: 13500, type: "narrate", narration: "Bright Data is crawling competitor pricing pages and product changelogs." },
-  { at: 17000, type: "narrate", narration: "Compliance Radar is scanning regulatory feeds for new pressure on your accounts." },
-  { at: 20500, type: "narrate", narration: "Speechmatics is transcribing podcast and audio signals in the background." },
-  { at: 24000, type: "narrate", narration: "Featherless AI is classifying pain signals. Convergence scores are updating live." },
-  { at: 27500, type: "narrate", narration: "TriggerWare is standing by. When the threshold crosses, Slack and HubSpot fire automatically." },
+  { at: 15000, type: "spotlight", target: "scan-panel", ringColor: C.conv,
+    narration: "Watch one click launch a full intelligence sweep across all of them." },
+  { at: 18500, type: "action", fn: (a) => a.runScan() },
+  { at: 21500, type: "narrate",
+    narration: "Bright Data is crawling competitor pricing pages right now." },
+  { at: 27000, type: "narrate",
+    narration: "Compliance Radar sweeps regulatory feeds while Speechmatics transcribes audio." },
+  { at: 32500, type: "narrate",
+    narration: "Featherless AI classifies the pain signals, and convergence scores update live." },
 
   // ── SIGNALS ───────────────────────────────────────────────────────────────
-  { at: 31000, type: "navigate", view: "signals" },
-  { at: 31800, type: "narrate", narration: "Let's filter for competitor retreats. These are the highest-urgency void signals." },
-  { at: 32500, type: "spotlight", target: "void-filter", ringColor: C.void },
-  { at: 33200, type: "action", fn: (a) => a.filterSignals("void") },
-  { at: 35000, type: "spotlight", target: "brex-void-row", ringColor: C.void,
-    narration: "Stripe Atlas silently removed their SMB tier three days ago. Brex has twelve orphaned subsidiaries still on that stack." },
-  { at: 39500, type: "action", fn: (a) => {
-    const brex = a.getAccounts().find((acc) => acc.name === "Brex");
-    if (brex) a.openEvidence(brex, "void");
-  }},
-  { at: 41000, type: "narrate", narration: "Every signal ships with linked evidence. Before and after. Source URL. Confidence score." },
-  { at: 45000, type: "action", fn: (a) => a.closeEvidence() },
+  { at: 39000, type: "navigate", view: "signals",
+    narration: "Here is the live signal stream. Let's isolate the competitor retreats." },
+  { at: 42500, type: "spotlight", target: "void-filter", ringColor: C.void },
+  { at: 44000, type: "action", fn: (a) => a.filterSignals("void") },
+  { at: 45500, type: "spotlight", target: "brex-void-row", ringColor: C.void,
+    narration: "Stripe Atlas pulled its SMB tier three days ago, and Brex has twelve subsidiaries stranded on it." },
+  { at: 54500, type: "action",
+    fn: (a) => {
+      const brex = a.getAccounts().find((acc) => acc.name === "Brex");
+      if (brex) a.openEvidence(brex, "void");
+    },
+    narration: "Every signal links to hard evidence: source, timestamp, and a confidence score." },
 
   // ── INTEL ─────────────────────────────────────────────────────────────────
-  { at: 46500, type: "action", fn: (a) => {
-    const brex = a.getAccounts().find((acc) => acc.name === "Brex");
-    if (brex) a.selectAccount(brex);
-    a.setView("intel");
-  }},
-  { at: 47500, type: "narrate", narration: "Eighty-five out of one hundred. Three independent signals. One account. One timeline." },
-  { at: 48500, type: "spotlight", target: "convergence-gauge", ringColor: C.conv },
-  { at: 52000, type: "spotlight", target: "audio-card", ringColor: "#c084fc",
-    narration: "Speechmatics caught it in a podcast transcript. Brex's own team, on the record, two weeks before the pricing change." },
-  { at: 56500, type: "spotlight", target: "generate-brief-btn", ringColor: C.conv,
-    narration: "One click. AI/ML API synthesizes all three signals into a personalized opening line." },
-  { at: 59500, type: "action", fn: (a) => { a.setView("brief"); a.generateBrief(); }},
+  { at: 62000, type: "action",
+    fn: (a) => {
+      a.closeEvidence();
+      const brex = a.getAccounts().find((acc) => acc.name === "Brex");
+      if (brex) a.selectAccount(brex);
+      a.setView("intel");
+    },
+    narration: "Three independent signals, one account, one timeline  -  convergence hits eighty-nine." },
+  { at: 65000, type: "spotlight", target: "convergence-gauge", ringColor: C.conv },
+  { at: 69000, type: "spotlight", target: "audio-card", ringColor: "#c084fc",
+    narration: "Speechmatics caught it in a podcast too  -  Brex's own team, on record, two weeks earlier." },
+  { at: 77500, type: "spotlight", target: "generate-brief-btn", ringColor: C.conv,
+    narration: "One click fuses all three signals into a ready-to-send brief." },
+  { at: 81500, type: "action", fn: (a) => { a.setView("brief"); a.generateBrief(); } },
 
   // ── BRIEF ─────────────────────────────────────────────────────────────────
-  { at: 60500, type: "navigate", view: "brief" },
-  { at: 61500, type: "narrate", narration: "The brief streams in real time. Why now. Signal context. Account details. A ready-to-send opening line." },
-  { at: 66500, type: "spotlight", target: "brief-share-btn", ringColor: C.conv,
-    narration: "Formatted for Slack, HubSpot, and email. One click to copy or export as PDF." },
-  { at: 68500, type: "action", fn: (a) => a.openShare() },
-  { at: 70000, type: "narrate", narration: "Your rep gets a battle-ready message. No manual research. No stale CRM notes." },
-  { at: 73000, type: "action", fn: (a) => a.closeShare() },
+  { at: 83500, type: "narrate",
+    narration: "The brief writes itself: why now, the evidence, and a tailored opening line." },
+  { at: 91000, type: "spotlight", target: "brief-share-btn", ringColor: C.conv,
+    narration: "Formatted for Slack, HubSpot, or email, ready to copy or export." },
+  { at: 94500, type: "action", fn: (a) => a.openShare() },
 
   // ── SETTINGS ──────────────────────────────────────────────────────────────
-  { at: 74000, type: "navigate", view: "settings" },
-  { at: 75000, type: "spotlight", target: "integration-list", ringColor: C.pain,
-    narration: "Live APIs powering every signal. Bright Data. AI/ML. Featherless. Speechmatics. Zero manual research." },
+  { at: 99500, type: "action", fn: (a) => { a.closeShare(); a.setView("settings"); },
+    narration: "Every engine here runs on a live API, not a mock." },
+  { at: 102500, type: "spotlight", target: "integration-list", ringColor: C.pain },
 
   // ── CLOSE ─────────────────────────────────────────────────────────────────
-  { at: 79000, type: "navigate", view: "dashboard" },
-  { at: 79500, type: "clear" },
-  { at: 80000, type: "narrate", narration: "That was one account. PreIntent monitors your entire TAM, twenty-four seven. This is elite GTM intelligence." },
+  { at: 107000, type: "navigate", view: "dashboard",
+    narration: "That's a single account. PreIntent watches your entire market, around the clock." },
 ];
 
-const TOTAL_DURATION = 86000;
+const TOTAL_DURATION = 116000;
 
 // ─── SPOTLIGHT CURSOR ─────────────────────────────────────────────────────────
 
@@ -457,8 +462,15 @@ export function DemoAutopilot({ isActive, onEnd, actions }: DemoAutopilotProps) 
       const t = setTimeout(() => {
         const currentActions = actionsRef.current;
 
+        // Any non-spotlight step clears the active highlight first, so a ring
+        // can never linger on a stale element after the view/state changes.
+        if (step.type !== "spotlight") {
+          setSpotlight(null);
+        }
+
         if (step.type === "navigate" && step.view) {
           currentActions.setView(step.view);
+          if (step.narration) narrate(step.narration);
         }
         if (step.type === "spotlight" && step.target) {
           setSpotlight({ target: step.target, color: step.ringColor ?? C.conv });
@@ -598,7 +610,7 @@ export function AutoplayTrigger({ onStart, disabled }: AutoplayTriggerProps) {
           flexShrink: 0,
         }} />
       )}
-      ▶ Autoplay · 85s
+      ▶ Autoplay · 115s
     </motion.button>
   );
 }

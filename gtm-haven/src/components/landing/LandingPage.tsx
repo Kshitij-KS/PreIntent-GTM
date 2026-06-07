@@ -180,6 +180,17 @@ function StatCounter({ from = 0, to, suffix = "", duration = 1500 }: { from?: nu
   return <span ref={ref}>{val.toLocaleString()}{suffix}</span>;
 }
 
+// ─── Logo mark (matches dashboard) ─────────────────────────────────────────────
+function LogoMark({ size = 22 }: { size?: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 20 20" fill="none" aria-hidden>
+      <path d="M10 2L16.93 6V14L10 18L3.07 14V6L10 2Z" stroke="#9060ff" strokeWidth="1.5" fill="none" />
+      <path d="M10 5.2L14.2 7.6V12.4L10 14.8L5.8 12.4V7.6L10 5.2Z" fill="#9060ff" fillOpacity="0.3" />
+      <circle cx="10" cy="10" r="2" fill="#9060ff" />
+    </svg>
+  );
+}
+
 // ─── Scroll reveal wrapper ─────────────────────────────────────────────────────
 function Reveal({ children, delay = 0 }: { children: ReactNode; delay?: number }) {
   const ref = useRef<HTMLDivElement>(null);
@@ -373,7 +384,7 @@ export default function LandingPage() {
         gap: "24px",
       }}>
         <Link href="/" style={{ display: "flex", alignItems: "center", gap: "10px", fontWeight: 800, fontSize: "18px", color: C.white, letterSpacing: "0.1em", textDecoration: "none" }}>
-          <span style={{ color: C.conv }}>▼</span>
+          <LogoMark size={22} />
           PREINTENT
         </Link>
         <div style={{ flex: 1 }} />
@@ -604,6 +615,7 @@ export default function LandingPage() {
       {/* ── LIVE SIGNAL PREVIEW ── */}
       <section style={{ padding: "80px 32px", background: C.surface }}>
         <div style={{ maxWidth: "1100px", margin: "0 auto" }}>
+          <Reveal>
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "60px", alignItems: "center" }}>
             <div>
               <div style={{ fontSize: "11px", color: C.conv, fontWeight: 700, letterSpacing: "0.1em", marginBottom: "12px" }}>
@@ -656,6 +668,7 @@ export default function LandingPage() {
               </div>
             </div>
           </div>
+          </Reveal>
         </div>
       </section>
 
@@ -722,6 +735,7 @@ export default function LandingPage() {
       {/* ── HOW IT WORKS ── */}
       <section style={{ padding: "100px 32px", background: C.surface }}>
         <div style={{ maxWidth: "1000px", margin: "0 auto" }}>
+          <Reveal>
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "80px", alignItems: "center" }}>
             <div>
               <div style={{ fontSize: "11px", color: C.conv, fontWeight: 700, letterSpacing: "0.12em", marginBottom: "16px" }}>
@@ -788,6 +802,7 @@ enforcement coming in August..."`}
               </div>
             </div>
           </div>
+          </Reveal>
         </div>
       </section>
 
@@ -798,6 +813,7 @@ enforcement coming in August..."`}
         borderTop: `1px solid ${C.border}`,
         borderBottom: `1px solid ${C.border}`,
       }}>
+        <Reveal>
         <div style={{ maxWidth: "1000px", margin: "0 auto", display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: "40px", textAlign: "center" }}>
           {[
             { stat: <StatCounter to={94} suffix="%" />, label: "Accuracy on buying intent", color: C.conv },
@@ -811,16 +827,20 @@ enforcement coming in August..."`}
             </div>
           ))}
         </div>
+        </Reveal>
       </section>
 
       {/* ── TESTIMONIALS ── */}
       <section style={{ padding: "100px 32px" }}>
         <div style={{ maxWidth: "1100px", margin: "0 auto" }}>
+          <Reveal>
           <div style={{ textAlign: "center", marginBottom: "60px" }}>
             <h2 style={{ fontSize: "36px", fontWeight: 800, color: C.white, margin: "0 0 16px", letterSpacing: "-0.03em" }}>
               What GTM teams say
             </h2>
           </div>
+          </Reveal>
+          <Reveal delay={0.1}>
           <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "20px" }}>
             <Testimonial
               quote="We caught a Stripe pricing change 3 days before our competitor did. That's 3 days of outreach advantage in an active deal. PreIntent paid for itself in week one."
@@ -841,6 +861,7 @@ enforcement coming in August..."`}
               company="B2B SaaS"
             />
           </div>
+          </Reveal>
         </div>
       </section>
 
@@ -910,7 +931,7 @@ enforcement coming in August..."`}
         gap: "16px",
       }}>
         <div style={{ display: "flex", alignItems: "center", gap: "10px", fontWeight: 700, fontSize: "16px", color: C.white, letterSpacing: "0.1em" }}>
-          <span style={{ color: C.conv }}>▼</span>
+          <LogoMark size={20} />
           PREINTENT
         </div>
         <div style={{ fontSize: "12px", color: C.muted }}>

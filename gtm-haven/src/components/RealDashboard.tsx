@@ -52,10 +52,10 @@ const C = {
 // ─── ICONS ───────────────────────────────────────────────────────────────────
 const Icon = {
   Logo: () => (
-    <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
-      <path d="M9 2L16 6V12L9 16L2 12V6L9 2Z" stroke="#9060ff" strokeWidth="1.5" fill="none" />
-      <path d="M9 5L13 7.5V12.5L9 15L5 12.5V7.5L9 5Z" fill="#9060ff" fillOpacity="0.3" />
-      <circle cx="9" cy="9" r="2" fill="#9060ff" />
+    <svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden>
+      <path d="M10 2L16.93 6V14L10 18L3.07 14V6L10 2Z" stroke="#9060ff" strokeWidth="1.5" fill="none" />
+      <path d="M10 5.2L14.2 7.6V12.4L10 14.8L5.8 12.4V7.6L10 5.2Z" fill="#9060ff" fillOpacity="0.3" />
+      <circle cx="10" cy="10" r="2" fill="#9060ff" />
     </svg>
   ),
   Dashboard: () => (

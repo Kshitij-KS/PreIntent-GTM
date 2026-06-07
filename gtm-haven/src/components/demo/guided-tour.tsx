@@ -268,15 +268,14 @@ export function GuidedTour({ isActive, onClose, onStepChange, accounts }: Guided
       <AnimatePresence mode="wait">
         <motion.div
           key={currentStep}
-          initial={{ opacity: 0, y: 28, scale: 0.97 }}
-          animate={{ opacity: 1, y: 0, scale: 1 }}
-          exit={{ opacity: 0, y: -20, scale: 0.97 }}
+          initial={{ opacity: 0, y: 28, x: "-50%", scale: 0.97 }}
+          animate={{ opacity: 1, y: 0, x: "-50%", scale: 1 }}
+          exit={{ opacity: 0, y: -20, x: "-50%", scale: 0.97 }}
           transition={{ type: "spring", stiffness: 380, damping: 32 }}
           style={{
             position: "fixed",
             bottom: "28px",
             left: "50%",
-            transform: "translateX(-50%)",
             width: "min(700px, calc(100vw - 32px))",
             zIndex: 1000,
           }}
