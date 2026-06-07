@@ -16,7 +16,12 @@ function getAuthIntent(value: string | null): AuthIntent {
 export async function GET(request: Request) {
   const requestUrl = new URL(request.url);
   const code = requestUrl.searchParams.get("code");
-  const intent = getAuthIntent(requestUrl.searchParams.get("next"));
+  const nextParam = requestUrl.searchParams.get("next");
+
+  // Enforce strictly relative path for next parameter to prevent open redirect
+  const isSafeNext = nextParam && nextParam.startsWith("/") && !nextParam.startsWith("//") && !nextParam.startsWith("/\\");
+  const safeNext = isSafeNext ? nextParam : null;
+  const intent = getAuthIntent(safeNext);
 
   if (!code) {
     return NextResponse.redirect(new URL("/sign-in?error=auth", request.url));
@@ -34,7 +39,7 @@ export async function GET(request: Request) {
       await markFirstOnboardingRoute(supabase, data.user.id);
     }
 
-    return NextResponse.redirect(new URL(destination, requestUrl.origin));
+    return NextResponse.redirect(new URL(destination, request.url));
   } catch (error) {
     console.error("Supabase auth callback error:", error);
     return NextResponse.redirect(new URL("/sign-in?error=auth", request.url));
