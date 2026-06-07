@@ -405,32 +405,25 @@ export async function resolveAllCompetitors(
   const unique = [...new Set(competitors.filter(Boolean))];
   if (unique.length === 0) return [];
 
-  const CONCURRENCY = 2;
-  const results: ResolvedCompetitor[] = [];
-
-  for (let i = 0; i < unique.length; i += CONCURRENCY) {
-    const batch = unique.slice(i, i + CONCURRENCY);
-    const batchResults = await Promise.all(
-      batch.map(async (name) => {
-        try {
-          return await resolveCompetitor(name, context, env);
-        } catch (err) {
-          console.error(`[CompetitorResolver] Failed to resolve "${name}":`, err);
-          return {
-            originalName: name,
-            resolvedName: name,
-            website: "",
-            pricingUrl: "",
-            description: "Resolution failed  -  will retry on next sweep.",
-            confidence: 0,
-            status: "not_found" as ResolutionStatus,
-            resolvedAt: new Date().toISOString(),
-          };
-        }
-      }),
-    );
-    results.push(...batchResults);
-  }
+  const results = await Promise.all(
+    unique.map(async (name) => {
+      try {
+        return await resolveCompetitor(name, context, env);
+      } catch (err) {
+        console.error(`[CompetitorResolver] Failed to resolve "${name}":`, err);
+        return {
+          originalName: name,
+          resolvedName: name,
+          website: "",
+          pricingUrl: "",
+          description: "Resolution failed  -  will retry on next sweep.",
+          confidence: 0,
+          status: "not_found" as ResolutionStatus,
+          resolvedAt: new Date().toISOString(),
+        };
+      }
+    }),
+  );
 
   return results;
 }
