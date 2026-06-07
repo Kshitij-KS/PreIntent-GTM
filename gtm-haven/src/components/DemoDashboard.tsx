@@ -936,7 +936,7 @@ export default function PreIntentDashboard({ demoMode = false }: { demoMode?: bo
       if (step >= SCAN_STEPS.length - 1) {
         clearInterval(scanRef.current!);
         setTimeout(() => {
-          const newConv = Math.min(95, accounts[0].convergence + 5);
+          const newConv = Math.min(89, accounts[0].convergence + 5);
           setAccounts((prev) => prev.map((a, i) => i === 0 ? { ...a, convergence: newConv, status: "ALERT" as const } : a));
           setTriggerFired(true); setIsScanning(false); setScanDone(true);
           setScanResult(`Brex at ${newConv}/100  -  TriggerWare fired  -  Slack delivered`);
