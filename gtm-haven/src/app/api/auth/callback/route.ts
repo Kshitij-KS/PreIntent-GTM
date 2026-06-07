@@ -19,8 +19,9 @@ export async function GET(request: Request) {
   const nextParam = requestUrl.searchParams.get("next");
 
   // Enforce strictly relative path for next parameter to prevent open redirect
-  const isSafeNext = nextParam && nextParam.startsWith("/") && !nextParam.startsWith("//") && !nextParam.startsWith("/\\");
-  const safeNext = isSafeNext ? nextParam : null;
+  const isSafePath = nextParam && nextParam.startsWith("/") && !nextParam.startsWith("//") && !nextParam.startsWith("/\\");
+  const isIntent = nextParam === "signin" || nextParam === "signup" || nextParam === "auto";
+  const safeNext = (isSafePath || isIntent) ? nextParam : null;
   const intent = getAuthIntent(safeNext);
 
   if (!code) {
