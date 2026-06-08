@@ -2,6 +2,11 @@ import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 import { getActiveSessionAuthDestination } from "@/lib/auth-routing";
 import { getUserSetupProfile } from "@/lib/user-profile";
+import { jwtVerify } from "jose";
+
+const MOCK_SECRET = new TextEncoder().encode(
+  process.env.JWT_SECRET || "preintent_mock_secret_12345",
+);
 
 // Routes that require authentication
 const PROTECTED_PREFIXES = ["/dashboard", "/onboarding"];
@@ -19,29 +24,27 @@ export async function proxy(request: NextRequest) {
 
   if (!supabaseUrl || !supabaseKey) {
     // Fallback if env vars are missing
-    return handleMissingEnvFallback(request);
+    return await handleMissingEnvFallback(request);
   }
 
-  const supabase = createServerClient(
-    supabaseUrl,
-    supabaseKey,
-    {
-      cookies: {
-        getAll() {
-          return request.cookies.getAll();
-        },
-        setAll(cookiesToSet) {
-          cookiesToSet.forEach(({ name, value }) => request.cookies.set(name, value));
-          supabaseResponse = NextResponse.next({
-            request,
-          });
-          cookiesToSet.forEach(({ name, value, options }) =>
-            supabaseResponse.cookies.set(name, value, options)
-          );
-        },
+  const supabase = createServerClient(supabaseUrl, supabaseKey, {
+    cookies: {
+      getAll() {
+        return request.cookies.getAll();
       },
-    }
-  );
+      setAll(cookiesToSet) {
+        cookiesToSet.forEach(({ name, value }) =>
+          request.cookies.set(name, value),
+        );
+        supabaseResponse = NextResponse.next({
+          request,
+        });
+        cookiesToSet.forEach(({ name, value, options }) =>
+          supabaseResponse.cookies.set(name, value, options),
+        );
+      },
+    },
+  });
 
   // IMPORTANT: Do NOT use getSession in middleware. Always use getUser.
   const {
@@ -53,7 +56,7 @@ export async function proxy(request: NextRequest) {
 
   // Protect dashboard and onboarding routes
   const isProtected = PROTECTED_PREFIXES.some((prefix) =>
-    pathname.startsWith(prefix)
+    pathname.startsWith(prefix),
   );
 
   if (isProtected && !isAuthenticated) {
@@ -71,7 +74,11 @@ export async function proxy(request: NextRequest) {
     );
   }
 
-  if (isAuthenticated && profile?.setup_status === "complete" && pathname.startsWith("/onboarding")) {
+  if (
+    isAuthenticated &&
+    profile?.setup_status === "complete" &&
+    pathname.startsWith("/onboarding")
+  ) {
     return NextResponse.redirect(new URL("/dashboard", request.url));
   }
 
@@ -79,16 +86,26 @@ export async function proxy(request: NextRequest) {
 }
 
 // Fallback logic for when Supabase is not configured (mock mode)
-function handleMissingEnvFallback(request: NextRequest) {
+async function handleMissingEnvFallback(request: NextRequest) {
   const { pathname } = request.nextUrl;
   const mockSession = request.cookies.get("preintent_mock_session")?.value;
-  const isAuthenticated = Boolean(mockSession);
-  
+  let isAuthenticated = false;
+
+  if (mockSession) {
+    try {
+      await jwtVerify(mockSession, MOCK_SECRET);
+      isAuthenticated = true;
+    } catch {
+      isAuthenticated = false;
+    }
+  }
+
   const isProtected = PROTECTED_PREFIXES.some((prefix) =>
-    pathname.startsWith(prefix)
+    pathname.startsWith(prefix),
   );
 
-  const onboardingDone = request.cookies.get("preintent_onboarding_done")?.value === "1";
+  const onboardingDone =
+    request.cookies.get("preintent_onboarding_done")?.value === "1";
 
   if (isProtected && !isAuthenticated) {
     const signInUrl = new URL("/sign-in", request.url);
