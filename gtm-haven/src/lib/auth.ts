@@ -11,9 +11,14 @@
 "use server";
 
 import { cookies } from "next/headers";
+import { SignJWT, jwtVerify } from "jose";
 
 const MOCK_SESSION_COOKIE = "preintent_mock_session";
 const ONBOARDING_DONE_COOKIE = "preintent_onboarding_done";
+
+const MOCK_SECRET = new TextEncoder().encode(
+  process.env.JWT_SECRET || "preintent_mock_secret_12345",
+);
 
 export interface MockUser {
   id: string;
@@ -31,7 +36,7 @@ export interface SessionResult {
 function isSupabaseConfigured(): boolean {
   return Boolean(
     process.env.NEXT_PUBLIC_SUPABASE_URL &&
-      process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY,
+    process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY,
   );
 }
 
@@ -71,7 +76,9 @@ export async function getSession(): Promise<SessionResult> {
   if (!raw) return { user: null, onboardingComplete: false };
 
   try {
-    const user = JSON.parse(raw) as MockUser;
+    const { payload } = await jwtVerify(raw, MOCK_SECRET);
+    const user = payload as unknown as MockUser;
+
     const onboardingDone =
       cookieStore.get(ONBOARDING_DONE_COOKIE)?.value === "1";
     return { user, onboardingComplete: onboardingDone };
@@ -103,8 +110,14 @@ export async function mockSignIn(
     createdAt: new Date().toISOString(),
   };
 
+  const token = await new SignJWT({ ...user })
+    .setProtectedHeader({ alg: "HS256" })
+    .setIssuedAt()
+    .setExpirationTime("30d")
+    .sign(MOCK_SECRET);
+
   const cookieStore = await cookies();
-  cookieStore.set(MOCK_SESSION_COOKIE, JSON.stringify(user), {
+  cookieStore.set(MOCK_SESSION_COOKIE, token, {
     // Mock mode is intentionally browser-readable so the client dashboard can
     // mirror session state without a real auth provider.
     httpOnly: false,
