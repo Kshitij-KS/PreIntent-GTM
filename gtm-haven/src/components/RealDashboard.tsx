@@ -1668,13 +1668,20 @@ export default function RealDashboard({
       }
     };
 
-    const results = [];
-    const concurrencyLimit = 2;
-    for (let i = 0; i < accounts.length; i += concurrencyLimit) {
-      const batch = accounts.slice(i, i + concurrencyLimit);
-      const batchResults = await Promise.all(batch.map(runAccountSweep));
-      results.push(...batchResults);
-    }
+    const results: ({ accountId: number; result: SweepResult } | null)[] = new Array(accounts.length);
+    let index = 0;
+    const concurrencyLimit = 5;
+
+    const worker = async () => {
+      while (index < accounts.length) {
+        const currentIndex = index++;
+        results[currentIndex] = await runAccountSweep(accounts[currentIndex]);
+      }
+    };
+
+    await Promise.all(
+      Array.from({ length: Math.min(concurrencyLimit, accounts.length) }).map(worker)
+    );
 
     // Apply results to accounts
     const resultMap = new Map<number, SweepResult>();
